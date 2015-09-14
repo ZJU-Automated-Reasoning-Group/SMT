@@ -8,7 +8,7 @@
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/Debug.h>
 
-#include "Utils/SMT/SMTExpr.h"
+#include "SMTExpr.h"
 
 SMTExpr SMTExpr::substitute(SMTExprVec& From, SMTExprVec& To) {
 	return SMTExpr(z3_expr.substitute(From.z3_expr_vec, To.z3_expr_vec));

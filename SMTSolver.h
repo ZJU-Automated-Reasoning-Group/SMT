@@ -7,9 +7,8 @@
 
 #include <z3++.h>
 
-#include "Utils/SMT/SMTExpr.h"
-#include "Utils/SMT/SMTModel.h"
-#include "Debug/PPDebug.hh"
+#include "SMTExpr.h"
+#include "SMTModel.h"
 
 enum SMTResult {
 	UNSAT, SAT, UNKNOWN
@@ -42,7 +41,7 @@ public:
 		try {
 			return SMTModel(z3_solver.get_model());
 		} catch (z3::exception & e) {
-			std::cerr << SFLINFO << e << "\n";
+			std::cerr << __FILE__ << " : " << __LINE__ << " : " << e << "\n";
 			exit(1);
 		}
 	}

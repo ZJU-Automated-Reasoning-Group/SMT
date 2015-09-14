@@ -7,9 +7,9 @@
 
 #include <z3++.h>
 
-#include "Utils/SMT/SMTExpr.h"
-#include "Utils/SMT/SMTModel.h"
-#include "Utils/SMT/SMTSolver.h"
+#include "SMTExpr.h"
+#include "SMTModel.h"
+#include "SMTSolver.h"
 #include "Utils/stringutil.h"
 
 class SMTExprPruner {

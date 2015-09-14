@@ -5,8 +5,7 @@
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/Debug.h>
 
-#include "Utils/SMT/SMTSolver.h"
-#include "Utils/signal_handler.h"
+#include "SMTSolver.h"
 
 #include <time.h>
 #include <map>
@@ -40,7 +39,7 @@ SMTResult SMTSolver::check(SMTExprVec* Assumptions) {
 
 	z3::check_result res;
 	try {
-		DEBUG(std::cerr << "\nStart solving! ("<< ExecInfo::getInfo("func") << ")\n"; start = std::clock());
+		DEBUG(std::cerr << "\nStart solving!\n"; start = std::clock());
 
 		if (UsingSimplify.getNumOccurrences()) {
 			std::clock_t start;
@@ -80,9 +79,9 @@ SMTResult SMTSolver::check(SMTExprVec* Assumptions) {
 			res = z3_solver.check(Assumptions->z3_expr_vec);
 		}
 		DEBUG(
-				std::cerr << "Solving done: (" << ExecInfo::getInfo("func") << ", " << (double)(std::clock() - start) * 1000 / CLOCKS_PER_SEC << ", " << res << ")\n");
+				std::cerr << "Solving done: (" << (double)(std::clock() - start) * 1000 / CLOCKS_PER_SEC << ", " << res << ")\n");
 	} catch (z3::exception & e) {
-		std::cerr << SFLINFO << e << "\n";
+		std::cerr << __FILE__ << " : " << __LINE__ << " : " << e << "\n";
 		// std::cerr << z3_solver.to_smt2() << "\n";
 		return SMTResult::UNKNOWN;
 	}
@@ -109,7 +108,7 @@ void SMTSolver::push() {
 	try {
 		z3_solver.push();
 	} catch (z3::exception & e) {
-		std::cerr << SFLINFO << e << "\n";
+                std::cerr << __FILE__ << " : " << __LINE__ << " : " << e << "\n";
 		exit(1);
 	}
 }
@@ -118,7 +117,7 @@ void SMTSolver::pop(unsigned N) {
 	try {
 		z3_solver.pop(N);
 	} catch (z3::exception & e) {
-		std::cerr << SFLINFO << e << "\n";
+		std::cerr << __FILE__ << " : " << __LINE__ << " : " << e << "\n";
 		exit(1);
 	}
 }
@@ -133,7 +132,7 @@ void SMTSolver::add(SMTExpr e) {
 		// simplify() will seriously affect the performance.
 		z3_solver.add(e.z3_expr/*.simplify()*/);
 	} catch (z3::exception & e) {
-		std::cerr << SFLINFO << e << "\n";
+                std::cerr << __FILE__ << " : " << __LINE__ << " : " << e << "\n";
 		exit(1);
 	}
 }
