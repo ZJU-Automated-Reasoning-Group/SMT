@@ -10,7 +10,27 @@
 #include "SMTExpr.h"
 #include "SMTModel.h"
 #include "SMTSolver.h"
-#include "Utils/stringutil.h"
+
+
+template<typename ... Args>
+void format_str(string& res_str, const char* format, Args ... args)
+{
+	// First we try it with a small stack buffer
+	const int BUF_SIZE = 256;
+	char stack_buf[BUF_SIZE];
+    size_t size = snprintf(stack_buf, BUF_SIZE, format, args ...) + 1;
+
+    if (size <= BUF_SIZE) {
+    	res_str.assign(stack_buf);
+    }
+    else {
+    	// Scale the string to enough memory size and try again.
+		res_str.resize(size);
+		// Directly writing to string internal buffer is not a good practice, but very efficient
+		snprintf(const_cast<char*>(res_str.data()), size, format, args ...);
+    }
+}
+
 
 class SMTExprPruner {
 public:
