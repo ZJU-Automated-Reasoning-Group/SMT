@@ -35,15 +35,15 @@ SMTSolver& SMTSolver::operator=(const SMTSolver& Solver) {
 }
 
 SMTResult SMTSolver::check(SMTExprVec* Assumptions) {
-	std::clock_t start;
+	clock_t start;
 
 	z3::check_result res;
 	try {
-		DEBUG(std::cerr << "\nStart solving!\n"; start = std::clock());
+		DEBUG(std::cerr << "\nStart solving!\n"; start = clock());
 
 		if (UsingSimplify.getNumOccurrences()) {
-			std::clock_t start;
-			DEBUG(std::cerr << "Start simplifying!\n"; start = std::clock());
+			clock_t start;
+			DEBUG(std::cerr << "Start simplifying!\n"; start = clock());
 
 			z3::solver solver4sim(z3_solver.ctx());
 
@@ -70,7 +70,7 @@ SMTResult SMTSolver::check(SMTExprVec* Assumptions) {
 				solver4sim.add(Whole.z3_expr);
 			}
 
-			DEBUG(std::cerr << "Simplifying Done: (" << (double)(std::clock() - start) * 1000 / CLOCKS_PER_SEC << ")\n");
+			DEBUG(std::cerr << "Simplifying Done: (" << (double)(clock() - start) * 1000 / CLOCKS_PER_SEC << ")\n");
 
 			res = solver4sim.check();
 		} else if (Assumptions == nullptr || Assumptions->size() == 0) {
@@ -79,7 +79,7 @@ SMTResult SMTSolver::check(SMTExprVec* Assumptions) {
 			res = z3_solver.check(Assumptions->z3_expr_vec);
 		}
 		DEBUG(
-				std::cerr << "Solving done: (" << (double)(std::clock() - start) * 1000 / CLOCKS_PER_SEC << ", " << res << ")\n");
+				std::cerr << "Solving done: (" << (double)(clock() - start) * 1000 / CLOCKS_PER_SEC << ", " << res << ")\n");
 	} catch (z3::exception & e) {
 		std::cerr << __FILE__ << " : " << __LINE__ << " : " << e << "\n";
 		// std::cerr << z3_solver.to_smt2() << "\n";
