@@ -6,6 +6,8 @@
 #define UTILS_SMT_SMTFACTORY_H
 
 #include <z3++.h>
+#include <string>
+#include <stdio.h>
 
 #include "SMTExpr.h"
 #include "SMTModel.h"
@@ -13,7 +15,7 @@
 
 
 template<typename ... Args>
-void format_str(string& res_str, const char* format, Args ... args)
+void format_str(std::string& res_str, const char* format, Args ... args)
 {
 	// First we try it with a small stack buffer
 	const int BUF_SIZE = 256;
