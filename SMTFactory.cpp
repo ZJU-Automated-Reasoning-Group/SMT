@@ -4,12 +4,12 @@
 
 #include <map>
 #include <set>
+#include <vector>
 #include <algorithm>
 #include <llvm/Support/Debug.h>
 #include <llvm/Support/CommandLine.h>
 
 #include "Utils/SMT/SMTFactory.h"
-#include "Utils/ADT/kvec.hh"
 
 #define DEBUG_TYPE "smt-fctry"
 
@@ -99,7 +99,7 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::map<std::string, SMTExpr>& Mapp
 		return Visited[Expr2Visit];
 	} else {
 		unsigned NumArgs = Expr2Visit.numArgs();
-		kvec<bool> Arg2Prune(NumArgs);
+		std::vector<bool> Arg2Prune(NumArgs);
 		bool All2Prune = true;
 		bool One2Prune = false;
 		for (unsigned I = 0; I < NumArgs; I++) {

@@ -7,7 +7,6 @@
 
 #include "Utils/SMT/SMTSolver.h"
 #include "Utils/signal_handler.h"
-#include "Debug/PPDebug.hh"
 
 #include <time.h>
 #include <map>
@@ -72,7 +71,7 @@ SMTResult SMTSolver::check(SMTExprVec* Assumptions) {
 				solver4sim.add(Whole.z3_expr);
 			}
 
-			MTDEBUG(std::cerr << "Simplifying Done: (" << (double)(std::clock() - start) * 1000 / CLOCKS_PER_SEC << ")\n");
+			DEBUG(std::cerr << "Simplifying Done: (" << (double)(std::clock() - start) * 1000 / CLOCKS_PER_SEC << ")\n");
 
 			res = solver4sim.check();
 		} else if (Assumptions == nullptr || Assumptions->size() == 0) {
@@ -80,7 +79,7 @@ SMTResult SMTSolver::check(SMTExprVec* Assumptions) {
 		} else {
 			res = z3_solver.check(Assumptions->z3_expr_vec);
 		}
-		MTDEBUG(
+		DEBUG(
 				std::cerr << "Solving done: (" << ExecInfo::getInfo("func") << ", " << (double)(std::clock() - start) * 1000 / CLOCKS_PER_SEC << ", " << res << ")\n");
 	} catch (z3::exception & e) {
 		std::cerr << SFLINFO << e << "\n";
