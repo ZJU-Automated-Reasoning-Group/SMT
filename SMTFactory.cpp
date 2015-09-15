@@ -15,46 +15,35 @@
 
 static llvm::cl::opt<unsigned> SolverTimeOut("solver-time-out", llvm::cl::init(-1), llvm::cl::desc("Set the timeout (ms) of the smt solver."));
 
-std::pair<SMTExprVec, bool> SMTFactory::translate(const SMTExprVec& Exprs, const std::string& RenamingSuffix,
-		std::map<std::string, SMTExpr>& Mapping, SMTExprPruner* Pruner) {
+std::pair<SMTExprVec, bool> SMTFactory::translate(const SMTExprVec& Exprs, const std::string& RenamingSuffix, std::map<std::string, SMTExpr>& Mapping,
+		SMTExprPruner* Pruner) {
 
 	DEBUG(llvm::dbgs() << "Start translating and pruning ...\n");
 
 	SMTExprVec RetExprVec = this->createEmptySMTExprVec();
 	bool RetBool = false; // the constraint is pruned?
 
-	std::map<SMTExpr, bool, SMTExprComparator> Visited; // an ast node in a constraint should be pruned?
-
 	for (unsigned ExprIdx = 0; ExprIdx < Exprs.size(); ExprIdx++) {
 		SMTExpr OrigExpr = Exprs[ExprIdx];
 		SMTExpr Ret(to_expr(ctx, Z3_translate(OrigExpr.z3_expr.ctx(), OrigExpr.z3_expr, ctx)));
 
-		bool Cached = CachedSymbolConstMap.count(Ret) && CachedPrunedExprMap.count(Ret);
-
-		std::map<std::string, SMTExpr>& LocalMapping = CachedSymbolConstMap[Ret];
-		if (!Cached) {
-			SMTExprVec ToPrune = this->createEmptySMTExprVec();
-			if (visit(Ret, LocalMapping, ToPrune, Visited, Pruner)) {
-				CachedPrunedExprMap.insert(std::pair<SMTExpr, SMTExpr>(Ret, this->createBoolVal(true)));
+		SMTExprVec ToPrune = this->createEmptySMTExprVec();
+		std::map<std::string, SMTExpr> LocalMapping;
+		std::map<SMTExpr, bool, SMTExprComparator> Visited; // an ast node in a constraint should be pruned?
+		if (visit(Ret, LocalMapping, ToPrune, Visited, Pruner)) {
+			RetBool = true;
+			continue;
+		} else {
+			// prune
+			if (ToPrune.size()) {
+				SMTExprVec TrueVec = this->createBoolSMTExprVec(true, ToPrune.size());
+				assert(ToPrune.size() == TrueVec.size());
+				Ret = Ret.substitute(ToPrune, TrueVec);
 				RetBool = true;
-				continue;
-			} else {
-				// prune
-				if (ToPrune.size()) {
-					SMTExprVec TrueVec = this->createBoolSMTExprVec(true, ToPrune.size());
-					assert(ToPrune.size() == TrueVec.size());
-					CachedPrunedExprMap.insert(std::pair<SMTExpr, SMTExpr>(Ret, Ret.substitute(ToPrune, TrueVec)));
-				} else {
-					CachedPrunedExprMap.insert(std::pair<SMTExpr, SMTExpr>(Ret, Ret));
-				}
 			}
 		}
 
-		auto It = CachedPrunedExprMap.find(Ret);
-		RetBool = RetBool || !z3::eq(Ret.z3_expr, It->second.z3_expr); // exist a pruned constraint in the input vec?
-		Ret = It->second.z3_expr;
-
-		if(z3::eq(Ret.z3_expr, this->createBoolVal(true).z3_expr)) {
+		if (z3::eq(Ret.z3_expr, this->createBoolVal(true).z3_expr)) {
 			continue;
 		}
 
@@ -91,8 +80,8 @@ std::pair<SMTExprVec, bool> SMTFactory::translate(const SMTExprVec& Exprs, const
 	return std::make_pair(RetExprVec, RetBool);
 }
 
-bool SMTFactory::visit(SMTExpr& Expr2Visit, std::map<std::string, SMTExpr>& Mapping, SMTExprVec& ToPrune, std::map<SMTExpr, bool, SMTExprComparator>& Visited,
-		SMTExprPruner* Pruner) {
+bool SMTFactory::visit(SMTExpr& Expr2Visit, std::map<std::string, SMTExpr>& Mapping, SMTExprVec& ToPrune,
+		std::map<SMTExpr, bool, SMTExprComparator>& Visited, SMTExprPruner* Pruner) {
 	assert(Expr2Visit.isApp() && "Must be an app-only constraints.");
 
 	if (Visited.count(Expr2Visit)) {
@@ -119,7 +108,7 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::map<std::string, SMTExpr>& Mapp
 			} else {
 				// If the node do not need to prune, we record it
 				std::string symbol = Expr2Visit.getSymbol();
-				if(symbol != "true" && symbol != "false") { // two special symbols
+				if (symbol != "true" && symbol != "false") { // two special symbols
 					Mapping.insert(std::pair<std::string, SMTExpr>(symbol, Expr2Visit));
 				}
 			}
