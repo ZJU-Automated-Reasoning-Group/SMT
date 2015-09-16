@@ -172,11 +172,9 @@ SMTExpr SMTExpr::dilligSimplify() {
 	z3::solver Solver4Sim(Ctx);
 	Solver4Sim.add(Ctx.bool_val(true));
 
-	// SMTExpr::operator! guarantees *this* is in NNF
-
-//	std::cout << "\nstart...." << this->size() << "\n";
+	//	std::cout << "\nstart...." << this->size() << "\n";
 	SMTExpr AftSim = dilligSimplify(*this, Solver4Sim, Ctx);
-//	std::cout << "end..." << AftSim.size() << "\n";
+	//	std::cout << "end..." << AftSim.size() << "\n";
 
 	return AftSim;
 }
