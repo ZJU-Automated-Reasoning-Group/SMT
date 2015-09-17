@@ -944,6 +944,9 @@ public:
 	}
 
 	void push_back(SMTExpr e) {
+		if(e.equals(e.z3_expr.ctx().bool_val(true))){
+			return;
+		}
 		z3_expr_vec.push_back(e.z3_expr);
 	}
 

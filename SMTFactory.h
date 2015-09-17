@@ -6,13 +6,13 @@
 #define UTILS_SMT_SMTFACTORY_H
 
 #include <z3++.h>
-#include <string>
 #include <stdio.h>
+#include <string>
+#include <mutex>
 
 #include "SMTExpr.h"
 #include "SMTModel.h"
 #include "SMTSolver.h"
-
 
 class SMTExprPruner {
 public:
@@ -28,16 +28,18 @@ public:
  * SMTModel, SMTSolver created by the factory become invalid.
  * Thus, please deconstruct them before deconstructing
  * the factory.
+ *
+ * Constraints built by the same SMTFactory instance cannot be
+ * accessed concurrently. SMTFactory provides a FactoryLock
+ * for concurrency issues.
  */
 class SMTFactory {
 private:
 	z3::context ctx;
 
+	std::mutex FactoryLock;
+
 	unsigned TempSMTVaraibleIndex;
-
-	std::map<SMTExpr, std::map<std::string, SMTExpr>, SMTExprComparator> CachedSymbolConstMap;
-
-	std::map<SMTExpr, SMTExpr, SMTExprComparator> CachedPrunedExprMap;
 
 public:
 	SMTFactory() :
@@ -73,7 +75,7 @@ public:
 
 	SMTExpr createTemporaryBitVecConst(uint64_t sz) {
 		std::string symbol("temp_");
-                symbol.append(std::to_string(TempSMTVaraibleIndex++));
+		symbol.append(std::to_string(TempSMTVaraibleIndex++));
 		return ctx.bv_const(symbol.c_str(), sz);
 	}
 
@@ -115,14 +117,12 @@ public:
 		return ctx.bool_val(b);
 	}
 
-	void releaseCache() {
-		CachedSymbolConstMap.clear();
-		CachedPrunedExprMap.clear();
-	}
-
 	/// This function translate an SMTExprVec (the 1st parameter) created
-	/// by other SMTFactory to the context of this SMTFactory. The variables
-	/// in the constraints will be renamed using a suffix (the 2nd parameter).
+	/// by other SMTFactory to the context of this SMTFactory.
+	SMTExprVec translate(const SMTExprVec &);
+
+	/// The variables in the constraints will be renamed using a suffix
+	/// (the 2nd parameter).
 	/// Since the symbols of the variables are renamed, we record the
 	/// <old symbol, new expr> map in the 3rd parameter.
 	///
@@ -136,7 +136,11 @@ public:
 	///
 	/// This function returns a std::pair, in which the first is the translated
 	/// constraint, and the second indicates if some variables are pruned.
-	std::pair<SMTExprVec, bool> translate(const SMTExprVec&, const std::string&, std::map<std::string, SMTExpr>&, SMTExprPruner* = nullptr);
+	std::pair<SMTExprVec, bool> rename(const SMTExprVec&, const std::string&, std::map<std::string, SMTExpr>&, SMTExprPruner* = nullptr);
+
+	std::mutex& getFactoryLock() {
+		return FactoryLock;
+	}
 
 private:
 	/// Utility for public function translate

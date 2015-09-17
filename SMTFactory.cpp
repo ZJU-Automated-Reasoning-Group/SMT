@@ -15,7 +15,17 @@
 
 static llvm::cl::opt<unsigned> SolverTimeOut("solver-time-out", llvm::cl::init(-1), llvm::cl::desc("Set the timeout (ms) of the smt solver."));
 
-std::pair<SMTExprVec, bool> SMTFactory::translate(const SMTExprVec& Exprs, const std::string& RenamingSuffix, std::map<std::string, SMTExpr>& Mapping,
+SMTExprVec SMTFactory::translate(const SMTExprVec & Exprs) {
+	SMTExprVec RetExprVec = this->createEmptySMTExprVec();
+	for (unsigned ExprIdx = 0; ExprIdx < Exprs.size(); ExprIdx++) {
+			SMTExpr OrigExpr = Exprs[ExprIdx];
+			SMTExpr Ret(to_expr(ctx, Z3_translate(OrigExpr.z3_expr.ctx(), OrigExpr.z3_expr, ctx)));
+			RetExprVec.push_back(Ret);
+	}
+	return RetExprVec;
+}
+
+std::pair<SMTExprVec, bool> SMTFactory::rename(const SMTExprVec& Exprs, const std::string& RenamingSuffix, std::map<std::string, SMTExpr>& Mapping,
 		SMTExprPruner* Pruner) {
 
 	DEBUG(llvm::dbgs() << "Start translating and pruning ...\n");
@@ -24,8 +34,7 @@ std::pair<SMTExprVec, bool> SMTFactory::translate(const SMTExprVec& Exprs, const
 	bool RetBool = false; // the constraint is pruned?
 
 	for (unsigned ExprIdx = 0; ExprIdx < Exprs.size(); ExprIdx++) {
-		SMTExpr OrigExpr = Exprs[ExprIdx];
-		SMTExpr Ret(to_expr(ctx, Z3_translate(OrigExpr.z3_expr.ctx(), OrigExpr.z3_expr, ctx)));
+		SMTExpr Ret = Exprs[ExprIdx];
 
 		SMTExprVec ToPrune = this->createEmptySMTExprVec();
 		std::map<std::string, SMTExpr> LocalMapping;
