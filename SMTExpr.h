@@ -308,18 +308,15 @@ public:
 	}
 
 	bool isLogicAnd() const {
-		z3::expr z = z3_expr.ctx().bool_val(true);
-		return z3::eq(z3_expr.decl(), (z && z).decl());
+		return z3_expr.decl().decl_kind() == Z3_OP_AND;
 	}
 
 	bool isLogicOr() const {
-		z3::expr z = z3_expr.ctx().bool_val(true);
-		return z3::eq(z3_expr.decl(), (z || z).decl());
+		return z3_expr.decl().decl_kind() == Z3_OP_OR;
 	}
 
 	bool isLogicNot() const {
-		z3::expr z = z3_expr.ctx().bool_val(true);
-		return z3::eq(z3_expr.decl(), (!z).decl());
+		return z3_expr.decl().decl_kind() == Z3_OP_NOT;
 	}
 
 	bool equals(const SMTExpr& e) const {
