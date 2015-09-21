@@ -179,19 +179,21 @@ SMTExpr SMTExpr::dilligSimplify() {
 	return AftSim;
 }
 
-std::map<SMTExpr, unsigned, SMTExprComparator> SizeCache;
-
-unsigned SMTExpr::size() {
+unsigned SMTExpr::size(std::map<SMTExpr, unsigned, SMTExprComparator>& SizeCache) {
 	if (!this->isLogicAnd() && !this->isLogicOr()) {
-		return 1;
+		if (isLogicNot()) {
+			return this->getArg(0).size(SizeCache);
+		} else {
+			return 1;
+		}
 	} else {
 		if (SizeCache.count(*this)) {
-			return SizeCache.at(*this);
+			return 0;
 		}
 
 		unsigned Sz = 0;
 		for (unsigned I = 0, E = this->numArgs(); I < E; I++) {
-			Sz += this->getArg(I).size();
+			Sz += this->getArg(I).size(SizeCache);
 		}
 		SizeCache.insert(std::make_pair(*this, Sz));
 		return Sz;
@@ -269,5 +271,14 @@ SMTExpr SMTExprVec::toOrExpr() const {
 
 	SMTExpr Ret(to_expr(z3_expr_vec.ctx(), Z3_mk_or(z3_expr_vec.ctx(), ActualSz, Args)));
 	delete[] Args;
+	return Ret;
+}
+
+unsigned SMTExprVec::constraintSize() const {
+	unsigned Ret = 0;
+	std::map<SMTExpr, unsigned, SMTExprComparator> Cache;
+	for (unsigned I = 0; I < this->size(); I++) {
+		Ret += (*this)[I].size(Cache);
+	}
 	return Ret;
 }

@@ -892,7 +892,7 @@ public:
 
 	SMTExpr dilligSimplify();
 
-	unsigned size();
+	unsigned size(std::map<SMTExpr, unsigned, SMTExprComparator>&);
 
 	friend class SMTFactory;
 	friend class SMTSolver;
@@ -939,6 +939,8 @@ public:
 	unsigned size() const {
 		return z3_expr_vec.size();
 	}
+
+	unsigned constraintSize() const;
 
 	void push_back(SMTExpr e) {
 		if(e.equals(e.z3_expr.ctx().bool_val(true))){
