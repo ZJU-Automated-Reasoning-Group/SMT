@@ -227,6 +227,7 @@ SMTExpr SMTExprVec::toAndExpr() const {
 		if (z3::eq(e, t)) {
 			continue;
 		} else if (z3::eq(e, f)) {
+			delete[] Args;
 			return f;
 		}
 		Args[ActualSz++] = z3_expr_vec[I];
@@ -258,6 +259,7 @@ SMTExpr SMTExprVec::toOrExpr() const {
 		if (z3::eq(e, f)) {
 			continue;
 		} else if (z3::eq(e, t)) {
+			delete[] Args;
 			return t;
 		}
 		Args[ActualSz++] = z3_expr_vec[I];
