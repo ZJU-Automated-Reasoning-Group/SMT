@@ -13,7 +13,7 @@
 
 #define DEBUG_TYPE "smt-fctry"
 
-static llvm::cl::opt<unsigned> SolverTimeOut("solver-time-out", llvm::cl::init(-1), llvm::cl::desc("Set the timeout (ms) of the smt solver."));
+static llvm::cl::opt<int> SolverTimeOut("solver-time-out", llvm::cl::init(-1), llvm::cl::desc("Set the timeout (ms) of the smt solver."));
 
 SMTExprVec SMTFactory::translate(const SMTExprVec & Exprs) {
 	SMTExprVec RetExprVec = this->createEmptySMTExprVec();
