@@ -18,9 +18,9 @@ static llvm::cl::opt<int> SolverTimeOut("solver-time-out", llvm::cl::init(-1), l
 SMTExprVec SMTFactory::translate(const SMTExprVec & Exprs) {
 	SMTExprVec RetExprVec = this->createEmptySMTExprVec();
 	for (unsigned ExprIdx = 0; ExprIdx < Exprs.size(); ExprIdx++) {
-			SMTExpr OrigExpr = Exprs[ExprIdx];
-			SMTExpr Ret(to_expr(ctx, Z3_translate(OrigExpr.z3_expr.ctx(), OrigExpr.z3_expr, ctx)));
-			RetExprVec.push_back(Ret);
+		SMTExpr OrigExpr = Exprs[ExprIdx];
+		SMTExpr Ret(to_expr(ctx, Z3_translate(OrigExpr.z3_expr.ctx(), OrigExpr.z3_expr, ctx)));
+		RetExprVec.push_back(Ret);
 	}
 	return RetExprVec;
 }
@@ -153,7 +153,7 @@ SMTSolver SMTFactory::createSMTSolver() {
 		// causes crashes in concurrent executions.
 		z3::params p(ctx);
 		// the unit is ms
-		p.set("timeout", SolverTimeOut.getValue());
+		p.set("timeout", (unsigned) SolverTimeOut.getValue());
 		ret.set(p);
 	}
 	return SMTSolver(ret);
