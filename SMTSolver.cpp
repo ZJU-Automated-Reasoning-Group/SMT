@@ -59,7 +59,6 @@ SMTResult SMTSolver::check(SMTExprVec* Assumptions) {
 
 			// 2. simplify
 			if (UsingSimplify.getValue() == "local") {
-				// NOTE: do not call add(Whole.localSimplify())
 				solver4sim.add(Whole.localSimplify().z3_expr);
 			} else if (UsingSimplify.getValue() == "dillig") {
 				SMTExpr SimplifiedForm = Whole.dilligSimplify();
@@ -90,19 +89,19 @@ SMTResult SMTSolver::check(SMTExprVec* Assumptions) {
 			double timecost = (double) (clock() - Start) * 1000 / CLOCKS_PER_SEC;
 			if (timecost > DumpingConstraintsTimeout.getValue() && DumpingConstraintsDst.getNumOccurrences()) {
 				// output the constraints to a temp file in the dst
-				std::string dst = DumpingConstraintsDst.getValue();
-				dst.append("/case");
-				dst.append(std::to_string(clock()));
-				dst.append(".smt2");
+				std::string DstFileName = DumpingConstraintsDst.getValue();
+				DstFileName.append("/case");
+				DstFileName.append(std::to_string(clock()));
+				DstFileName.append(".smt2");
 
 				std::ofstream DstFile;
-				DstFile.open(dst);
+				DstFile.open(DstFileName);
 
 				if (DstFile.is_open()) {
 					DstFile << *this << "\n";
 					DstFile.close();
 				} else {
-					std::cerr << "File cannot be opened: " << DstFile << "\n";
+					std::cerr << "File cannot be opened: " << DstFileName << "\n";
 				}
 			}
 			DEBUG(std::cerr << "Solving done: (" << timecost << ", " << res << ")\n");
