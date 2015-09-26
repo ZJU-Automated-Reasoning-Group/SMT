@@ -43,7 +43,7 @@ SMTSolver& SMTSolver::operator=(const SMTSolver& Solver) {
 }
 
 SMTResult SMTSolver::check(SMTExprVec* Assumptions) {
-	z3::check_result res;
+	z3::check_result Result;
 	try {
 		clock_t Start;
 		DEBUG(unsigned Sz = assertions().constraintSize(); std::cerr << "\nStart solving! Constraint Size: " << Sz << "\n"; Start = clock());
@@ -78,16 +78,16 @@ SMTResult SMTSolver::check(SMTExprVec* Assumptions) {
 
 			DEBUG(std::cerr << "Simplifying Done: (" << (double)(clock() - Start) * 1000 / CLOCKS_PER_SEC << ")\n");
 
-			res = solver4sim.check();
+			Result = solver4sim.check();
 		} else if (Assumptions == nullptr || Assumptions->size() == 0) {
-			res = z3_solver.check();
+			Result = z3_solver.check();
 		} else {
-			res = z3_solver.check(Assumptions->z3_expr_vec);
+			Result = z3_solver.check(Assumptions->z3_expr_vec);
 		}
 
 		if (DumpingConstraintsTimeout.getNumOccurrences()) {
-			double timecost = (double) (clock() - Start) * 1000 / CLOCKS_PER_SEC;
-			if (timecost > DumpingConstraintsTimeout.getValue() && DumpingConstraintsDst.getNumOccurrences()) {
+			double TimeCost = (double) (clock() - Start) * 1000 / CLOCKS_PER_SEC;
+			if (TimeCost > DumpingConstraintsTimeout.getValue() && DumpingConstraintsDst.getNumOccurrences()) {
 				// output the constraints to a temp file in the dst
 				std::string DstFileName = DumpingConstraintsDst.getValue();
 				DstFileName.append("/case");
@@ -104,9 +104,9 @@ SMTResult SMTSolver::check(SMTExprVec* Assumptions) {
 					std::cerr << "File cannot be opened: " << DstFileName << "\n";
 				}
 			}
-			DEBUG(std::cerr << "Solving done: (" << timecost << ", " << res << ")\n");
+			DEBUG(std::cerr << "Solving done: (" << TimeCost << ", " << Result << ")\n");
 		} else {
-			DEBUG(std::cerr << "Solving done: (" << (double)(clock() - Start) * 1000 / CLOCKS_PER_SEC << ", " << res << ")\n");
+			DEBUG(std::cerr << "Solving done: (" << (double)(clock() - Start) * 1000 / CLOCKS_PER_SEC << ", " << Result << ")\n");
 		}
 	} catch (z3::exception & e) {
 		std::cerr << __FILE__ << " : " << __LINE__ << " : " << e << "\n";
@@ -117,7 +117,7 @@ SMTResult SMTSolver::check(SMTExprVec* Assumptions) {
 	// Use a return value to suppress gcc warning
 	SMTResult ret_val = SMTResult::UNKNOWN;
 
-	switch (res) {
+	switch (Result) {
 	case z3::check_result::sat:
 		ret_val = SMTResult::SAT;
 		break;
