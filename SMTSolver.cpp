@@ -101,7 +101,7 @@ SMTResult SMTSolver::check(SMTExprVec* Assumptions) {
 					DstFile << *this << "\n";
 					DstFile.close();
 				} else {
-					std::cerr << "File cannot be opened: " << DstFile << "\n";
+					std::cerr << "File cannot be opened: " << DstFileName << "\n";
 				}
 			}
 			DEBUG(std::cerr << "Solving done: (" << TimeCost << ", " << Result << ")\n");
