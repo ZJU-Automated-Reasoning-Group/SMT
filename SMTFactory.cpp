@@ -145,8 +145,9 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::map<std::string, SMTExpr>& Mapp
 }
 
 SMTSolver SMTFactory::createSMTSolver() {
-	z3::tactic t = z3::tactic(ctx, "simplify") & z3::tactic(ctx, "smt");
-	z3::solver ret = t.mk_solver();
+	// z3::tactic t = z3::tactic(ctx, "simplify") & z3::tactic(ctx, "smt");
+	// z3::solver ret = t.mk_solver();
+	z3::solver ret(ctx);
 
 	if (SolverTimeOut.getValue() > 0) {
 		// FIXME still do not know why this
