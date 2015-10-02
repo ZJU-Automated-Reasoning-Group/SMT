@@ -38,7 +38,7 @@ std::pair<SMTExprVec, bool> SMTFactory::rename(const SMTExprVec& Exprs, const st
 
 		SMTExprVec ToPrune = this->createEmptySMTExprVec();
 		std::map<std::string, SMTExpr> LocalMapping;
-		std::map<SMTExpr, bool, SMTExprComparator> Visited; // an ast node in a constraint should be pruned?
+		std::set<SMTExpr, SMTExprComparator> Visited; // an ast node in a constraint should be pruned?
 		if (visit(Ret, LocalMapping, ToPrune, Visited, Pruner)) {
 			RetBool = true;
 			continue;
@@ -52,7 +52,7 @@ std::pair<SMTExprVec, bool> SMTFactory::rename(const SMTExprVec& Exprs, const st
 			}
 		}
 
-		if (z3::eq(Ret.z3_expr, this->createBoolVal(true).z3_expr)) {
+		if (Ret.isTrue()) {
 			continue;
 		}
 
@@ -90,11 +90,11 @@ std::pair<SMTExprVec, bool> SMTFactory::rename(const SMTExprVec& Exprs, const st
 }
 
 bool SMTFactory::visit(SMTExpr& Expr2Visit, std::map<std::string, SMTExpr>& Mapping, SMTExprVec& ToPrune,
-		std::map<SMTExpr, bool, SMTExprComparator>& Visited, SMTExprPruner* Pruner) {
+		std::set<SMTExpr, SMTExprComparator>& Visited, SMTExprPruner* Pruner) {
 	assert(Expr2Visit.isApp() && "Must be an app-only constraints.");
 
 	if (Visited.count(Expr2Visit)) {
-		return Visited[Expr2Visit];
+		return true;
 	} else {
 		unsigned NumArgs = Expr2Visit.numArgs();
 		std::vector<bool> Arg2Prune(NumArgs);
@@ -112,19 +112,20 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::map<std::string, SMTExpr>& Mapp
 
 		if (Expr2Visit.isConst() && !Expr2Visit.isNumeral()) {
 			if (Pruner && Pruner->shouldPrune(Expr2Visit)) {
-				Visited[Expr2Visit] = true;
+				Visited.insert(Expr2Visit);
 				return true;
 			} else {
 				// If the node do not need to prune, we record it
-				std::string symbol = Expr2Visit.getSymbol();
-				if (symbol != "true" && symbol != "false") { // two special symbols
-					Mapping.insert(std::pair<std::string, SMTExpr>(symbol, Expr2Visit));
+				if (!Expr2Visit.isTrue() && !Expr2Visit.isFalse()) {
+					std::string Symbol = Expr2Visit.getSymbol();
+					assert(Symbol != "true" && Symbol != "false");
+					Mapping.insert(std::pair<std::string, SMTExpr>(Symbol, Expr2Visit));
 				}
 			}
 		} else if (Expr2Visit.isLogicAnd()) {
 			// if all should cut, just return true
 			if (All2Prune) {
-				Visited[Expr2Visit] = true;
+				Visited.insert(Expr2Visit);
 				return true;
 			} else {
 				// recording the expr to prune
@@ -135,11 +136,10 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::map<std::string, SMTExpr>& Mapp
 			}
 		} else {
 			if (One2Prune) {
-				Visited[Expr2Visit] = true;
+				Visited.insert(Expr2Visit);
 				return true;
 			}
 		}
-		Visited[Expr2Visit] = false;
 		return false;
 	}
 }

@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <string>
 #include <mutex>
+#include <set>
 
 #include "SMTExpr.h"
 #include "SMTModel.h"
@@ -145,7 +146,7 @@ public:
 private:
 	/// Utility for public function translate
 	/// It visits all exprs in a ``big" expr.
-	bool visit(SMTExpr&, std::map<std::string, SMTExpr>&, SMTExprVec&, std::map<SMTExpr, bool, SMTExprComparator>&, SMTExprPruner*);
+	bool visit(SMTExpr&, std::map<std::string, SMTExpr>&, SMTExprVec&, std::set<SMTExpr, SMTExprComparator>&, SMTExprPruner*);
 };
 
 #endif

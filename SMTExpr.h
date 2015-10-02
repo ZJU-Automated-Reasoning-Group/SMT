@@ -35,11 +35,11 @@ public:
 	friend SMTExpr operator!(SMTExpr const & a);
 
 	friend SMTExpr operator||(SMTExpr const & a, SMTExpr const & b) {
-		if (a.equals(a.z3_expr.ctx().bool_val(true)) || b.equals(a.z3_expr.ctx().bool_val(true))) {
+		if (a.isTrue() || b.isTrue()) {
 			return a.z3_expr.ctx().bool_val(true);
-		} else if (a.equals(a.z3_expr.ctx().bool_val(false))) {
+		} else if (a.isFalse()) {
 			return b;
-		} else if (b.equals(a.z3_expr.ctx().bool_val(false))) {
+		} else if (b.isFalse()) {
 			return a;
 		}
 
@@ -55,11 +55,11 @@ public:
 	}
 
 	friend SMTExpr operator&&(SMTExpr const & a, SMTExpr const & b) {
-		if (a.equals(a.z3_expr.ctx().bool_val(false)) || b.equals(a.z3_expr.ctx().bool_val(false))) {
+		if (a.isFalse() || b.isFalse()) {
 			return a.z3_expr.ctx().bool_val(false);
-		} else if (a.equals(a.z3_expr.ctx().bool_val(true))) {
+		} else if (a.isTrue()) {
 			return b;
-		} else if (b.equals(a.z3_expr.ctx().bool_val(true))) {
+		} else if (b.isTrue()) {
 			return a;
 		}
 
@@ -317,6 +317,14 @@ public:
 
 	bool isLogicNot() const {
 		return z3_expr.decl().decl_kind() == Z3_OP_NOT;
+	}
+
+	bool isTrue() const {
+		return z3_expr.decl().decl_kind() == Z3_OP_TRUE;
+	}
+
+	bool isFalse() const {
+		return z3_expr.decl().decl_kind() == Z3_OP_FALSE;
 	}
 
 	bool equals(const SMTExpr& e) const {
@@ -943,7 +951,7 @@ public:
 	unsigned constraintSize() const;
 
 	void push_back(SMTExpr e) {
-		if(e.equals(e.z3_expr.ctx().bool_val(true))){
+		if(e.isTrue()){
 			return;
 		}
 		z3_expr_vec.push_back(e.z3_expr);
