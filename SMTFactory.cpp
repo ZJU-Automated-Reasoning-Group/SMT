@@ -36,25 +36,71 @@ std::pair<SMTExprVec, bool> SMTFactory::rename(const SMTExprVec& Exprs, const st
 	for (unsigned ExprIdx = 0; ExprIdx < Exprs.size(); ExprIdx++) {
 		SMTExpr Ret = Exprs[ExprIdx];
 
-		SMTExprVec ToPrune = this->createEmptySMTExprVec();
 		std::unordered_map<std::string, SMTExpr> LocalMapping;
-		std::set<SMTExpr, SMTExprComparator> Visited; // an ast node in a constraint should be pruned?
-		if (visit(Ret, LocalMapping, ToPrune, Visited, Pruner)) {
-			RetBool = true;
-			continue;
+
+		auto It = ExprRenamingCache.find(Ret);
+		if (It != ExprRenamingCache.end()) {
+			auto & Cache = ExprRenamingCache.at(Ret);
+			if (Cache.WillBePruned) {
+				RetBool = true;
+				Ret = Cache.AfterBeingPruned;
+
+				if (Ret.isTrue()) {
+					continue;
+				} else {
+					LocalMapping = Cache.SymbolMapping;
+				}
+			} else {
+				LocalMapping = Cache.SymbolMapping;
+			}
 		} else {
-			// prune
-			if (ToPrune.size()) {
+			SMTExprVec ToPrune = this->createEmptySMTExprVec();
+			std::map<SMTExpr, bool, SMTExprComparator> Visited;
+
+			bool AllPruned = visit(Ret, LocalMapping, ToPrune, Visited, Pruner);
+			if (AllPruned) {
+				RetBool = true;
+				RenamingUtility RU { true, createBoolVal(true), createEmptySMTExprVec(), LocalMapping };
+				ExprRenamingCache.insert(std::make_pair(Ret, RU));
+				continue;
+			} else if (ToPrune.size()) {
+				// TODO cache
 				SMTExprVec TrueVec = this->createBoolSMTExprVec(true, ToPrune.size());
 				assert(ToPrune.size() == TrueVec.size());
 				Ret = Ret.substitute(ToPrune, TrueVec);
 				RetBool = true;
+
+				RenamingUtility RU { true, Ret, ToPrune, LocalMapping };
+				ExprRenamingCache.insert(std::make_pair(Ret, RU));
+			} else {
+				RenamingUtility RU { false, createBoolVal(true), createEmptySMTExprVec(), LocalMapping };
+				ExprRenamingCache.insert(std::make_pair(Ret, RU));
 			}
 		}
 
-		if (Ret.isTrue()) {
-			continue;
-		}
+		///////////////////////////////////////////////////////////
+//		SMTExpr Ret = Exprs[ExprIdx];
+//
+//		SMTExprVec ToPrune = this->createEmptySMTExprVec();
+//		std::unordered_map<std::string, SMTExpr> LocalMapping;
+//		std::map<SMTExpr, bool, SMTExprComparator> Visited; // an ast node in a constraint should be pruned?
+//		if (visit(Ret, LocalMapping, ToPrune, Visited, Pruner)) {
+//			RetBool = true;
+//			continue;
+//		} else {
+//			// prune
+//			if (ToPrune.size()) {
+//				SMTExprVec TrueVec = this->createBoolSMTExprVec(true, ToPrune.size());
+//				assert(ToPrune.size() == TrueVec.size());
+//				Ret = Ret.substitute(ToPrune, TrueVec);
+//				RetBool = true;
+//			}
+//		}
+//
+//		if (Ret.isTrue()) {
+//			continue;
+//		}
+		///////////////////////////////////////////////////////////
 
 		// renaming
 		assert(RenamingSuffix.find(' ') == std::string::npos);
@@ -90,12 +136,31 @@ std::pair<SMTExprVec, bool> SMTFactory::rename(const SMTExprVec& Exprs, const st
 }
 
 bool SMTFactory::visit(SMTExpr& Expr2Visit, std::unordered_map<std::string, SMTExpr>& Mapping, SMTExprVec& ToPrune,
-		std::set<SMTExpr, SMTExprComparator>& Visited, SMTExprPruner* Pruner) {
+		std::map<SMTExpr, bool, SMTExprComparator>& Visited, SMTExprPruner* Pruner) {
 	assert(Expr2Visit.isApp() && "Must be an app-only constraints.");
 
 	if (Visited.count(Expr2Visit)) {
-		return true;
+		return Visited[Expr2Visit];
 	} else {
+		auto It = ExprRenamingCache.find(Expr2Visit);
+		if (It != ExprRenamingCache.end()) {
+			auto & Cache = ExprRenamingCache.at(Expr2Visit);
+			if (Cache.WillBePruned) {
+				Mapping.insert(Cache.SymbolMapping.begin(), Cache.SymbolMapping.end());
+				if (Cache.AfterBeingPruned.isTrue()) {
+					Visited[Expr2Visit] = true;
+					return true;
+				} else {
+					ToPrune.mergeWithAnd(Cache.ToPrune);
+					Visited[Expr2Visit] = false;
+					return false;
+				}
+			} else {
+				Visited[Expr2Visit] = false;
+				return false;
+			}
+		}
+
 		unsigned NumArgs = Expr2Visit.numArgs();
 		std::vector<bool> Arg2Prune(NumArgs);
 		bool All2Prune = true;
@@ -112,7 +177,7 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::unordered_map<std::string, SMTE
 
 		if (Expr2Visit.isConst() && !Expr2Visit.isNumeral()) {
 			if (Pruner && Pruner->shouldPrune(Expr2Visit)) {
-				Visited.insert(Expr2Visit);
+				Visited[Expr2Visit] = true;
 				return true;
 			} else {
 				// If the node do not need to prune, we record it
@@ -125,7 +190,7 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::unordered_map<std::string, SMTE
 		} else if (Expr2Visit.isLogicAnd()) {
 			// if all should cut, just return true
 			if (All2Prune) {
-				Visited.insert(Expr2Visit);
+				Visited[Expr2Visit] = true;
 				return true;
 			} else {
 				// recording the expr to prune
@@ -136,10 +201,11 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::unordered_map<std::string, SMTE
 			}
 		} else {
 			if (One2Prune) {
-				Visited.insert(Expr2Visit);
+				Visited[Expr2Visit] = true;
 				return true;
 			}
 		}
+		Visited[Expr2Visit] = false;
 		return false;
 	}
 }

@@ -146,9 +146,18 @@ public:
 	}
 
 private:
+	typedef struct RenamingUtility {
+		bool WillBePruned;
+		SMTExpr AfterBeingPruned;
+		SMTExprVec ToPrune;
+		std::unordered_map<std::string, SMTExpr> SymbolMapping;
+	} RenamingUtility;
+
+	std::map<SMTExpr, RenamingUtility, SMTExprComparator> ExprRenamingCache;
+
 	/// Utility for public function translate
 	/// It visits all exprs in a ``big" expr.
-	bool visit(SMTExpr&, std::unordered_map<std::string, SMTExpr>&, SMTExprVec&, std::set<SMTExpr, SMTExprComparator>&, SMTExprPruner*);
+	bool visit(SMTExpr&, std::unordered_map<std::string, SMTExpr>&, SMTExprVec&, std::map<SMTExpr, bool, SMTExprComparator>&, SMTExprPruner*);
 };
 
 #endif
