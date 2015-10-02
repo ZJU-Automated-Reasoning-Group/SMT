@@ -10,6 +10,8 @@
 #include <string>
 #include <mutex>
 #include <set>
+#include <unordered_map>
+#include <map>
 
 #include "SMTExpr.h"
 #include "SMTModel.h"
@@ -137,7 +139,7 @@ public:
 	///
 	/// This function returns a std::pair, in which the first is the translated
 	/// constraint, and the second indicates if some variables are pruned.
-	std::pair<SMTExprVec, bool> rename(const SMTExprVec&, const std::string&, std::map<std::string, SMTExpr>&, SMTExprPruner* = nullptr);
+	std::pair<SMTExprVec, bool> rename(const SMTExprVec&, const std::string&, std::unordered_map<std::string, SMTExpr>&, SMTExprPruner* = nullptr);
 
 	std::mutex& getFactoryLock() {
 		return FactoryLock;
@@ -146,7 +148,7 @@ public:
 private:
 	/// Utility for public function translate
 	/// It visits all exprs in a ``big" expr.
-	bool visit(SMTExpr&, std::map<std::string, SMTExpr>&, SMTExprVec&, std::set<SMTExpr, SMTExprComparator>&, SMTExprPruner*);
+	bool visit(SMTExpr&, std::unordered_map<std::string, SMTExpr>&, SMTExprVec&, std::set<SMTExpr, SMTExprComparator>&, SMTExprPruner*);
 };
 
 #endif

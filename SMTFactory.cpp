@@ -25,8 +25,8 @@ SMTExprVec SMTFactory::translate(const SMTExprVec & Exprs) {
 	return RetExprVec;
 }
 
-std::pair<SMTExprVec, bool> SMTFactory::rename(const SMTExprVec& Exprs, const std::string& RenamingSuffix, std::map<std::string, SMTExpr>& Mapping,
-		SMTExprPruner* Pruner) {
+std::pair<SMTExprVec, bool> SMTFactory::rename(const SMTExprVec& Exprs, const std::string& RenamingSuffix,
+		std::unordered_map<std::string, SMTExpr>& Mapping, SMTExprPruner* Pruner) {
 
 	DEBUG(llvm::dbgs() << "Start translating and pruning ...\n");
 
@@ -37,7 +37,7 @@ std::pair<SMTExprVec, bool> SMTFactory::rename(const SMTExprVec& Exprs, const st
 		SMTExpr Ret = Exprs[ExprIdx];
 
 		SMTExprVec ToPrune = this->createEmptySMTExprVec();
-		std::map<std::string, SMTExpr> LocalMapping;
+		std::unordered_map<std::string, SMTExpr> LocalMapping;
 		std::set<SMTExpr, SMTExprComparator> Visited; // an ast node in a constraint should be pruned?
 		if (visit(Ret, LocalMapping, ToPrune, Visited, Pruner)) {
 			RetBool = true;
@@ -89,7 +89,7 @@ std::pair<SMTExprVec, bool> SMTFactory::rename(const SMTExprVec& Exprs, const st
 	return std::make_pair(RetExprVec, RetBool);
 }
 
-bool SMTFactory::visit(SMTExpr& Expr2Visit, std::map<std::string, SMTExpr>& Mapping, SMTExprVec& ToPrune,
+bool SMTFactory::visit(SMTExpr& Expr2Visit, std::unordered_map<std::string, SMTExpr>& Mapping, SMTExprVec& ToPrune,
 		std::set<SMTExpr, SMTExprComparator>& Visited, SMTExprPruner* Pruner) {
 	assert(Expr2Visit.isApp() && "Must be an app-only constraints.");
 
