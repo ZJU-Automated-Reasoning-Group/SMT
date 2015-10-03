@@ -64,7 +64,6 @@ std::pair<SMTExprVec, bool> SMTFactory::rename(const SMTExprVec& Exprs, const st
 				ExprRenamingCache.insert(std::make_pair(Ret, RU));
 				continue;
 			} else if (ToPrune.size()) {
-				// TODO cache
 				SMTExprVec TrueVec = this->createBoolSMTExprVec(true, ToPrune.size());
 				assert(ToPrune.size() == TrueVec.size());
 				Ret = Ret.substitute(ToPrune, TrueVec);
@@ -77,30 +76,6 @@ std::pair<SMTExprVec, bool> SMTFactory::rename(const SMTExprVec& Exprs, const st
 				ExprRenamingCache.insert(std::make_pair(Ret, RU));
 			}
 		}
-
-		///////////////////////////////////////////////////////////
-//		SMTExpr Ret = Exprs[ExprIdx];
-//
-//		SMTExprVec ToPrune = this->createEmptySMTExprVec();
-//		std::unordered_map<std::string, SMTExpr> LocalMapping;
-//		std::map<SMTExpr, bool, SMTExprComparator> Visited; // an ast node in a constraint should be pruned?
-//		if (visit(Ret, LocalMapping, ToPrune, Visited, Pruner)) {
-//			RetBool = true;
-//			continue;
-//		} else {
-//			// prune
-//			if (ToPrune.size()) {
-//				SMTExprVec TrueVec = this->createBoolSMTExprVec(true, ToPrune.size());
-//				assert(ToPrune.size() == TrueVec.size());
-//				Ret = Ret.substitute(ToPrune, TrueVec);
-//				RetBool = true;
-//			}
-//		}
-//
-//		if (Ret.isTrue()) {
-//			continue;
-//		}
-		///////////////////////////////////////////////////////////
 
 		// renaming
 		assert(RenamingSuffix.find(' ') == std::string::npos);
