@@ -59,18 +59,20 @@ std::pair<SMTExprVec, bool> SMTFactory::rename(const SMTExprVec& Exprs, const st
 
 			bool AllPruned = visit(Ret, LocalMapping, ToPrune, Visited, Pruner);
 			if (AllPruned) {
-				RetBool = true;
 				RenamingUtility RU { true, createBoolVal(true), createEmptySMTExprVec(), LocalMapping };
 				ExprRenamingCache.insert(std::make_pair(Ret, RU));
+
+				RetBool = true;
 				continue;
 			} else if (ToPrune.size()) {
 				SMTExprVec TrueVec = this->createBoolSMTExprVec(true, ToPrune.size());
 				assert(ToPrune.size() == TrueVec.size());
-				Ret = Ret.substitute(ToPrune, TrueVec);
-				RetBool = true;
-
-				RenamingUtility RU { true, Ret, ToPrune, LocalMapping };
+				SMTExpr AfterSubstitution = Ret.substitute(ToPrune, TrueVec);
+				RenamingUtility RU { true, AfterSubstitution, ToPrune, LocalMapping };
 				ExprRenamingCache.insert(std::make_pair(Ret, RU));
+
+				RetBool = true;
+				Ret = AfterSubstitution;
 			} else {
 				RenamingUtility RU { false, createBoolVal(true), createEmptySMTExprVec(), LocalMapping };
 				ExprRenamingCache.insert(std::make_pair(Ret, RU));
@@ -120,8 +122,9 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::unordered_map<std::string, SMTE
 		auto It = ExprRenamingCache.find(Expr2Visit);
 		if (It != ExprRenamingCache.end()) {
 			auto & Cache = ExprRenamingCache.at(Expr2Visit);
+			Mapping.insert(Cache.SymbolMapping.begin(), Cache.SymbolMapping.end());
+
 			if (Cache.WillBePruned) {
-				Mapping.insert(Cache.SymbolMapping.begin(), Cache.SymbolMapping.end());
 				if (Cache.AfterBeingPruned.isTrue()) {
 					Visited[Expr2Visit] = true;
 					return true;
@@ -137,15 +140,16 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::unordered_map<std::string, SMTE
 		}
 
 		unsigned NumArgs = Expr2Visit.numArgs();
-		std::vector<bool> Arg2Prune(NumArgs);
+		std::vector<bool> Arg2Prune;
 		bool All2Prune = true;
 		bool One2Prune = false;
 		for (unsigned I = 0; I < NumArgs; I++) {
 			SMTExpr Arg = Expr2Visit.getArg(I);
-			Arg2Prune.push_back(visit(Arg, Mapping, ToPrune, Visited, Pruner));
-			if (!Arg2Prune[I] && All2Prune) {
+			bool WillPrune = visit(Arg, Mapping, ToPrune, Visited, Pruner);
+			Arg2Prune.push_back(WillPrune);
+			if (!WillPrune && All2Prune) {
 				All2Prune = false;
-			} else if (Arg2Prune[I] && !One2Prune) {
+			} else if (WillPrune && !One2Prune) {
 				One2Prune = true;
 			}
 		}
@@ -163,15 +167,15 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::unordered_map<std::string, SMTE
 				}
 			}
 		} else if (Expr2Visit.isLogicAnd()) {
-			// if all should cut, just return true
 			if (All2Prune) {
 				Visited[Expr2Visit] = true;
 				return true;
 			} else {
 				// recording the expr to prune
 				for (unsigned I = 0; I < NumArgs; I++) {
-					if (Arg2Prune[I])
+					if (Arg2Prune[I]) {
 						ToPrune.push_back(Expr2Visit.getArg(I));
+					}
 				}
 			}
 		} else {
@@ -180,6 +184,7 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::unordered_map<std::string, SMTE
 				return true;
 			}
 		}
+
 		Visited[Expr2Visit] = false;
 		return false;
 	}

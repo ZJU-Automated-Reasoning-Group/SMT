@@ -917,10 +917,10 @@ private:
 // e.g. SMTExprComparator comparator; map<SMTExpr, value, comparator> ...;
 class SMTExprComparator {
 public:
-	bool operator()(const SMTExpr& x, const SMTExpr& y) const {
-		Z3_ast x_ast = (Z3_ast) x.z3_expr;
-		Z3_ast y_ast = (Z3_ast) y.z3_expr;
-		return x_ast < y_ast || (!(y_ast < x_ast) && x_ast < y_ast);
+	bool operator()(const SMTExpr& X, const SMTExpr& Y) const {
+		unsigned XId = Z3_get_ast_id(X.z3_expr.ctx(), X.z3_expr);
+		unsigned YId = Z3_get_ast_id(Y.z3_expr.ctx(), Y.z3_expr);
+		return XId < YId;
 	}
 };
 
