@@ -25,19 +25,19 @@ static llvm::cl::opt<int> DumpingConstraintsTimeout("dump-cnts-timeout",
 		llvm::cl::desc("If solving time is too large (ms), the constraints will be output to the destination that -dump-cnts-dst set."));
 
 SMTSolver::SMTSolver(z3::solver s) :
-		z3_solver(s) {
+		Solver(s) {
 }
 
 SMTSolver::~SMTSolver() {
 }
 
 SMTSolver::SMTSolver(const SMTSolver& Solver) :
-		z3_solver(Solver.z3_solver) {
+		Solver(Solver.Solver) {
 }
 
 SMTSolver& SMTSolver::operator=(const SMTSolver& Solver) {
 	if (this != &Solver) {
-		this->z3_solver = Solver.z3_solver;
+		this->Solver = Solver.Solver;
 	}
 	return *this;
 }
@@ -52,14 +52,14 @@ SMTResult SMTSolver::check(SMTExprVec* Assumptions) {
 		}
 
 		if (UsingSimplify.getNumOccurrences()) {
-			z3::solver solver4sim(z3_solver.ctx());
+			z3::solver solver4sim(Solver.ctx());
 
 			// 1. merge as one
 			SMTExpr Whole = this->assertions().toAndExpr();
 
 			// 2. simplify
 			if (UsingSimplify.getValue() == "local") {
-				solver4sim.add(Whole.localSimplify().z3_expr);
+				solver4sim.add(Whole.localSimplify().Expr);
 			} else if (UsingSimplify.getValue() == "dillig") {
 				SMTExpr SimplifiedForm = Whole.dilligSimplify();
 				// if (SimplifiedForm.equals(z3_solver.ctx().bool_val(false))) {
@@ -71,18 +71,18 @@ SMTResult SMTSolver::check(SMTExprVec* Assumptions) {
 				//		}
 				//		return SMTResult::SAT;
 				// }
-				solver4sim.add(SimplifiedForm.z3_expr);
+				solver4sim.add(SimplifiedForm.Expr);
 			} else {
-				solver4sim.add(Whole.z3_expr);
+				solver4sim.add(Whole.Expr);
 			}
 
 			DEBUG(std::cerr << "Simplifying Done: (" << (double)(clock() - Start) * 1000 / CLOCKS_PER_SEC << ")\n");
 
 			Result = solver4sim.check();
 		} else if (Assumptions == nullptr || Assumptions->size() == 0) {
-			Result = z3_solver.check();
+			Result = Solver.check();
 		} else {
-			Result = z3_solver.check(Assumptions->z3_expr_vec);
+			Result = Solver.check(Assumptions->ExprVec);
 		}
 
 		if (DumpingConstraintsTimeout.getNumOccurrences()) {
@@ -134,7 +134,7 @@ SMTResult SMTSolver::check(SMTExprVec* Assumptions) {
 
 void SMTSolver::push() {
 	try {
-		z3_solver.push();
+		Solver.push();
 	} catch (z3::exception & e) {
 		std::cerr << __FILE__ << " : " << __LINE__ << " : " << e << "\n";
 		exit(1);
@@ -143,7 +143,7 @@ void SMTSolver::push() {
 
 void SMTSolver::pop(unsigned N) {
 	try {
-		z3_solver.pop(N);
+		Solver.pop(N);
 	} catch (z3::exception & e) {
 		std::cerr << __FILE__ << " : " << __LINE__ << " : " << e << "\n";
 		exit(1);
@@ -151,14 +151,14 @@ void SMTSolver::pop(unsigned N) {
 }
 
 void SMTSolver::add(SMTExpr e) {
-	if (e.equals(z3_solver.ctx().bool_val(true))) {
+	if (e.equals(Solver.ctx().bool_val(true))) {
 		return;
 	}
 
 	try {
 		// FIXME In some cases (ar._bfd_elf_parse_eh_frame.bc),
 		// simplify() will seriously affect the performance.
-		z3_solver.add(e.z3_expr/*.simplify()*/);
+		Solver.add(e.Expr/*.simplify()*/);
 	} catch (z3::exception & e) {
 		std::cerr << __FILE__ << " : " << __LINE__ << " : " << e << "\n";
 		exit(1);
@@ -166,14 +166,14 @@ void SMTSolver::add(SMTExpr e) {
 }
 
 SMTExprVec SMTSolver::assertions() {
-	z3::expr_vector vec = z3_solver.assertions();
+	z3::expr_vector vec = Solver.assertions();
 	return SMTExprVec(vec);
 }
 
 void SMTSolver::reset() {
-	z3_solver.reset();
+	Solver.reset();
 }
 
 bool SMTSolver::operator<(const SMTSolver& Solver) const {
-	return ((Z3_solver) this->z3_solver) < ((Z3_solver) Solver.z3_solver);
+	return ((Z3_solver) this->Solver) < ((Z3_solver) Solver.Solver);
 }

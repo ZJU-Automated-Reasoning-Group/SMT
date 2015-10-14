@@ -38,7 +38,7 @@ public:
  */
 class SMTFactory {
 private:
-	z3::context ctx;
+	z3::context Ctx;
 
 	std::mutex FactoryLock;
 
@@ -55,69 +55,69 @@ public:
 	SMTSolver createSMTSolver();
 
 	SMTExpr createEmptySMTExpr() {
-		return (SMTExpr) z3::expr(ctx);
+		return (SMTExpr) z3::expr(Ctx);
 	}
 
 	SMTExprVec createEmptySMTExprVec() {
-		return (SMTExprVec) z3::expr_vector(ctx);
+		return (SMTExprVec) z3::expr_vector(Ctx);
 	}
 
 	SMTExprVec createBoolSMTExprVec(bool, size_t);
 
 	SMTExpr createRealConst(std::string name) {
-		return ctx.real_const(name.c_str());
+		return Ctx.real_const(name.c_str());
 	}
 
 	SMTExpr createRealVal(std::string name) {
-		return ctx.real_val(name.c_str());
+		return Ctx.real_val(name.c_str());
 	}
 
 	SMTExpr createBitVecConst(std::string name, uint64_t sz) {
-		return ctx.bv_const(name.c_str(), sz);
+		return Ctx.bv_const(name.c_str(), sz);
 	}
 
 	SMTExpr createTemporaryBitVecConst(uint64_t sz) {
 		std::string symbol("temp_");
 		symbol.append(std::to_string(TempSMTVaraibleIndex++));
-		return ctx.bv_const(symbol.c_str(), sz);
+		return Ctx.bv_const(symbol.c_str(), sz);
 	}
 
 	SMTExpr createBitVecVal(std::string name, uint64_t sz) {
-		return ctx.bv_val(name.c_str(), sz);
+		return Ctx.bv_val(name.c_str(), sz);
 	}
 
 	SMTExpr createBitVecVal(uint64_t val, uint64_t sz) {
-		return ctx.bv_val((__uint64 ) val, sz);
+		return Ctx.bv_val((__uint64 ) val, sz);
 	}
 
 	SMTExpr createIntVal(int i) {
-		return ctx.int_val(i);
+		return Ctx.int_val(i);
 	}
 
 	SMTExpr createSelect(SMTExpr& vec, SMTExpr index) {
-		return z3::expr(ctx, Z3_mk_select(ctx, vec.z3_expr, index.z3_expr));
+		return z3::expr(Ctx, Z3_mk_select(Ctx, vec.Expr, index.Expr));
 	}
 
 	SMTExpr createStore(SMTExpr& vec, SMTExpr index, SMTExpr& val2insert) {
-		return z3::expr(ctx, Z3_mk_store(ctx, vec.z3_expr, index.z3_expr, val2insert.z3_expr));
+		return z3::expr(Ctx, Z3_mk_store(Ctx, vec.Expr, index.Expr, val2insert.Expr));
 	}
 
 	SMTExpr createIntRealArrayConstFromStringSymbol(std::string& name) {
-		Z3_sort array_sort = ctx.array_sort(ctx.int_sort(), ctx.real_sort());
-		return z3::expr(ctx, Z3_mk_const(ctx, Z3_mk_string_symbol(ctx, name.c_str()), array_sort));
+		Z3_sort array_sort = Ctx.array_sort(Ctx.int_sort(), Ctx.real_sort());
+		return z3::expr(Ctx, Z3_mk_const(Ctx, Z3_mk_string_symbol(Ctx, name.c_str()), array_sort));
 	}
 
 	SMTExpr createIntBvArrayConstFromStringSymbol(std::string& name, uint64_t sz) {
-		Z3_sort array_sort = ctx.array_sort(ctx.int_sort(), ctx.bv_sort(sz));
-		return z3::expr(ctx, Z3_mk_const(ctx, Z3_mk_string_symbol(ctx, name.c_str()), array_sort));
+		Z3_sort array_sort = Ctx.array_sort(Ctx.int_sort(), Ctx.bv_sort(sz));
+		return z3::expr(Ctx, Z3_mk_const(Ctx, Z3_mk_string_symbol(Ctx, name.c_str()), array_sort));
 	}
 
 	SMTExpr createIntDomainConstantArray(SMTExpr& ElmtExpr) {
-		return z3::expr(ctx, Z3_mk_const_array(ctx, ctx.int_sort(), ElmtExpr.z3_expr));
+		return z3::expr(Ctx, Z3_mk_const_array(Ctx, Ctx.int_sort(), ElmtExpr.Expr));
 	}
 
 	SMTExpr createBoolVal(bool b) {
-		return ctx.bool_val(b);
+		return Ctx.bool_val(b);
 	}
 
 	/// This function translate an SMTExprVec (the 1st parameter) created
@@ -144,6 +144,8 @@ public:
 	std::mutex& getFactoryLock() {
 		return FactoryLock;
 	}
+
+	SMTExprVec parseSMTLib2File(std::string FileName);
 
 private:
 	typedef struct RenamingUtility {

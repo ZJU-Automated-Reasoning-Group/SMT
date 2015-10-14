@@ -13,21 +13,21 @@ class SMTExprComparator;
 
 class SMTExpr {
 private:
-	z3::expr z3_expr;
+	z3::expr Expr;
 
 	SMTExpr(z3::expr e) :
-			z3_expr(e) {
+			Expr(e) {
 	}
 
 public:
 
 	SMTExpr(SMTExpr const & e) :
-			z3_expr(e.z3_expr) {
+			Expr(e.Expr) {
 	}
 
 	SMTExpr& operator=(const SMTExpr& e) {
 		if (this != &e) {
-			this->z3_expr = e.z3_expr;
+			this->Expr = e.Expr;
 		}
 		return *this;
 	}
@@ -36,18 +36,18 @@ public:
 
 	friend SMTExpr operator||(SMTExpr const & a, SMTExpr const & b) {
 		if (a.isTrue() || b.isTrue()) {
-			return a.z3_expr.ctx().bool_val(true);
+			return a.Expr.ctx().bool_val(true);
 		} else if (a.isFalse()) {
 			return b;
 		} else if (b.isFalse()) {
 			return a;
 		}
 
-		return a.z3_expr || b.z3_expr;
+		return a.Expr || b.Expr;
 	}
 
 	friend SMTExpr operator||(SMTExpr const & a, bool b) {
-		return a || SMTExpr(a.z3_expr.ctx().bool_val(b));
+		return a || SMTExpr(a.Expr.ctx().bool_val(b));
 	}
 
 	friend SMTExpr operator||(bool a, SMTExpr const & b) {
@@ -56,18 +56,18 @@ public:
 
 	friend SMTExpr operator&&(SMTExpr const & a, SMTExpr const & b) {
 		if (a.isFalse() || b.isFalse()) {
-			return a.z3_expr.ctx().bool_val(false);
+			return a.Expr.ctx().bool_val(false);
 		} else if (a.isTrue()) {
 			return b;
 		} else if (b.isTrue()) {
 			return a;
 		}
 
-		return a.z3_expr && b.z3_expr;
+		return a.Expr && b.Expr;
 	}
 
 	friend SMTExpr operator&&(SMTExpr const & a, bool b) {
-		return a && SMTExpr(a.z3_expr.ctx().bool_val(b));
+		return a && SMTExpr(a.Expr.ctx().bool_val(b));
 	}
 
 	friend SMTExpr operator&&(bool a, SMTExpr const & b) {
@@ -76,677 +76,677 @@ public:
 
 	friend SMTExpr operator==(SMTExpr const & a, SMTExpr const & b) {
 		assert(a.isSameSort(b));
-		return a.z3_expr == b.z3_expr;
+		return a.Expr == b.Expr;
 	}
 
 	friend SMTExpr operator==(SMTExpr const & a, int b) {
-		return a.z3_expr == b;
+		return a.Expr == b;
 	}
 
 	friend SMTExpr operator==(int a, SMTExpr const & b) {
-		return a == b.z3_expr;
+		return a == b.Expr;
 	}
 
 	friend SMTExpr operator!=(SMTExpr const & a, SMTExpr const & b) {
-		return a.z3_expr != b.z3_expr;
+		return a.Expr != b.Expr;
 	}
 
 	friend SMTExpr operator!=(SMTExpr const & a, int b) {
-		return a.z3_expr != b;
+		return a.Expr != b;
 	}
 
 	friend SMTExpr operator!=(int a, SMTExpr const & b) {
-		return a != b.z3_expr;
+		return a != b.Expr;
 	}
 
 	friend SMTExpr operator+(SMTExpr const & a, SMTExpr const & b) {
-		return a.z3_expr + b.z3_expr;
+		return a.Expr + b.Expr;
 	}
 
 	friend SMTExpr operator+(SMTExpr const & a, int b) {
-		return a.z3_expr + b;
+		return a.Expr + b;
 	}
 
 	friend SMTExpr operator+(int a, SMTExpr const & b) {
-		return a + b.z3_expr;
+		return a + b.Expr;
 	}
 
 	friend SMTExpr operator*(SMTExpr const & a, SMTExpr const & b) {
-		return a.z3_expr * b.z3_expr;
+		return a.Expr * b.Expr;
 	}
 
 	friend SMTExpr operator*(SMTExpr const & a, int b) {
-		return a.z3_expr * b;
+		return a.Expr * b;
 	}
 
 	friend SMTExpr operator*(int a, SMTExpr const & b) {
-		return a * b.z3_expr;
+		return a * b.Expr;
 	}
 
 	friend SMTExpr operator/(SMTExpr const & a, SMTExpr const & b) {
-		return a.z3_expr / b.z3_expr;
+		return a.Expr / b.Expr;
 	}
 
 	friend SMTExpr operator/(SMTExpr const & a, int b) {
-		return a.z3_expr / b;
+		return a.Expr / b;
 	}
 
 	friend SMTExpr operator/(int a, SMTExpr const & b) {
-		return a / b.z3_expr;
+		return a / b.Expr;
 	}
 
 	friend SMTExpr operator-(SMTExpr const & a, SMTExpr const & b) {
-		return a.z3_expr - b.z3_expr;
+		return a.Expr - b.Expr;
 	}
 
 	friend SMTExpr operator-(SMTExpr const & a, int b) {
-		return a.z3_expr - b;
+		return a.Expr - b;
 	}
 
 	friend SMTExpr operator-(int a, SMTExpr const & b) {
-		return a - b.z3_expr;
+		return a - b.Expr;
 	}
 
 	friend SMTExpr operator-(SMTExpr const & a) {
-		return -a.z3_expr;
+		return -a.Expr;
 	}
 
 	friend SMTExpr operator<=(SMTExpr const & a, SMTExpr const & b) {
-		return a.z3_expr <= b.z3_expr;
+		return a.Expr <= b.Expr;
 	}
 
 	friend SMTExpr operator<=(SMTExpr const & a, int b) {
-		return a.z3_expr <= b;
+		return a.Expr <= b;
 	}
 
 	friend SMTExpr operator<=(int a, SMTExpr const & b) {
-		return a <= b.z3_expr;
+		return a <= b.Expr;
 	}
 
 	friend SMTExpr operator<(SMTExpr const & a, SMTExpr const & b) {
-		return a.z3_expr < b.z3_expr;
+		return a.Expr < b.Expr;
 	}
 
 	friend SMTExpr operator<(SMTExpr const & a, int b) {
-		return a.z3_expr < b;
+		return a.Expr < b;
 	}
 
 	friend SMTExpr operator<(int a, SMTExpr const & b) {
-		return a < b.z3_expr;
+		return a < b.Expr;
 	}
 
 	friend SMTExpr operator>=(SMTExpr const & a, SMTExpr const & b) {
-		return a.z3_expr >= b.z3_expr;
+		return a.Expr >= b.Expr;
 	}
 
 	friend SMTExpr operator>=(SMTExpr const & a, int b) {
-		return a.z3_expr >= b;
+		return a.Expr >= b;
 	}
 
 	friend SMTExpr operator>=(int a, SMTExpr const & b) {
-		return a >= b.z3_expr;
+		return a >= b.Expr;
 	}
 
 	friend SMTExpr operator>(SMTExpr const & a, SMTExpr const & b) {
-		return a.z3_expr > b.z3_expr;
+		return a.Expr > b.Expr;
 	}
 
 	friend SMTExpr operator>(SMTExpr const & a, int b) {
-		return a.z3_expr > b;
+		return a.Expr > b;
 	}
 
 	friend SMTExpr operator>(int a, SMTExpr const & b) {
-		return a > b.z3_expr;
+		return a > b.Expr;
 	}
 
 	friend SMTExpr operator&(SMTExpr const & a, SMTExpr const & b) {
-		return a.z3_expr & b.z3_expr;
+		return a.Expr & b.Expr;
 	}
 
 	friend SMTExpr operator&(SMTExpr const & a, int b) {
-		return a.z3_expr & b;
+		return a.Expr & b;
 	}
 
 	friend SMTExpr operator&(int a, SMTExpr const & b) {
-		return a & b.z3_expr;
+		return a & b.Expr;
 	}
 
 	friend SMTExpr operator^(SMTExpr const & a, SMTExpr const & b) {
-		return a.z3_expr ^ b.z3_expr;
+		return a.Expr ^ b.Expr;
 	}
 
 	friend SMTExpr operator^(SMTExpr const & a, int b) {
-		return a.z3_expr ^ b;
+		return a.Expr ^ b;
 	}
 
 	friend SMTExpr operator^(int a, SMTExpr const & b) {
-		return a ^ b.z3_expr;
+		return a ^ b.Expr;
 	}
 
 	friend SMTExpr operator|(SMTExpr const & a, SMTExpr const & b) {
-		return a.z3_expr | b.z3_expr;
+		return a.Expr | b.Expr;
 	}
 
 	friend SMTExpr operator|(SMTExpr const & a, int b) {
-		return a.z3_expr | b;
+		return a.Expr | b;
 	}
 
 	friend SMTExpr operator|(int a, SMTExpr const & b) {
-		return a | b.z3_expr;
+		return a | b.Expr;
 	}
 
 	friend SMTExpr operator~(SMTExpr const & a) {
-		return ~a.z3_expr;
+		return ~a.Expr;
 	}
 
 	friend std::ostream & operator<<(std::ostream & out, SMTExpr const & n) {
-		out << n.z3_expr;
+		out << n.Expr;
 		return out;
 	}
 
 	bool isSameSort(SMTExpr const & b) const {
-		return z3::eq(z3_expr.get_sort(), b.z3_expr.get_sort());
+		return z3::eq(Expr.get_sort(), b.Expr.get_sort());
 	}
 
 	bool isArray() {
-		return z3_expr.is_array();
+		return Expr.is_array();
 	}
 
 	bool isBitVector() {
-		return z3_expr.is_bv();
+		return Expr.is_bv();
 	}
 
 	bool isReal() {
-		return z3_expr.is_real();
+		return Expr.is_real();
 	}
 
 	bool isBool() {
-		return z3_expr.is_bool();
+		return Expr.is_bool();
 	}
 
 	bool isBvArray() {
-		if (z3_expr.is_array()) {
-			return z3_expr.get_sort().array_range().is_bv();
+		if (Expr.is_array()) {
+			return Expr.get_sort().array_range().is_bv();
 		}
 		return false;
 	}
 
 	bool isConst() const {
-		return z3_expr.is_const();
+		return Expr.is_const();
 	}
 
 	bool isApp() const {
-		return z3_expr.is_app();
+		return Expr.is_app();
 	}
 
 	bool isNumeral() const {
-		return z3_expr.is_numeral();
+		return Expr.is_numeral();
 	}
 
 	bool isQuantifier() const {
-		return z3_expr.is_quantifier();
+		return Expr.is_quantifier();
 	}
 
 	SMTExpr getQuantifierBody() const {
-		return z3_expr.body();
+		return Expr.body();
 	}
 
 	bool isVar() const {
-		return z3_expr.is_var();
+		return Expr.is_var();
 	}
 
 	unsigned numArgs() const {
-		return z3_expr.num_args();
+		return Expr.num_args();
 	}
 
 	SMTExpr getArg(unsigned i) const {
-		return z3_expr.arg(i);
+		return Expr.arg(i);
 	}
 
 	unsigned getBitVecSize() {
-		return z3_expr.get_sort().bv_size();
+		return Expr.get_sort().bv_size();
 	}
 
 	bool isLogicAnd() const {
-		return z3_expr.decl().decl_kind() == Z3_OP_AND;
+		return Expr.decl().decl_kind() == Z3_OP_AND;
 	}
 
 	bool isLogicOr() const {
-		return z3_expr.decl().decl_kind() == Z3_OP_OR;
+		return Expr.decl().decl_kind() == Z3_OP_OR;
 	}
 
 	bool isLogicNot() const {
-		return z3_expr.decl().decl_kind() == Z3_OP_NOT;
+		return Expr.decl().decl_kind() == Z3_OP_NOT;
 	}
 
 	bool isTrue() const {
-		return z3_expr.decl().decl_kind() == Z3_OP_TRUE;
+		return Expr.decl().decl_kind() == Z3_OP_TRUE;
 	}
 
 	bool isFalse() const {
-		return z3_expr.decl().decl_kind() == Z3_OP_FALSE;
+		return Expr.decl().decl_kind() == Z3_OP_FALSE;
 	}
 
 	bool equals(const SMTExpr& e) const {
-		return z3::eq(z3_expr, e.z3_expr);
+		return z3::eq(Expr, e.Expr);
 	}
 
 	std::string getSymbol() const {
-		return Z3_ast_to_string(z3_expr.ctx(), z3_expr);
+		return Z3_ast_to_string(Expr.ctx(), Expr);
 	}
 
 	SMTExpr substitute(SMTExprVec& From, SMTExprVec& To);
 
 	SMTExpr bv12bool() {
-		if (z3_expr.is_array()) {
-			assert(z3_expr.get_sort().array_range().is_bv());
-			unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+		if (Expr.is_array()) {
+			assert(Expr.get_sort().array_range().is_bv());
+			unsigned bvSz = Expr.get_sort().array_range().bv_size();
 			assert(bvSz == 1);
-			auto func = (z3_expr.ctx().bv_val("0", 1) == z3_expr.ctx().bv_val("0", 1)).decl();
+			auto func = (Expr.ctx().bv_val("0", 1) == Expr.ctx().bv_val("0", 1)).decl();
 
-			z3::expr const_bv1 = const_array(z3_expr.get_sort().array_domain(), z3_expr.ctx().bv_val("1", 1));
-			Z3_ast mapargs[2] = { z3_expr, const_bv1 };
+			z3::expr const_bv1 = const_array(Expr.get_sort().array_domain(), Expr.ctx().bv_val("1", 1));
+			Z3_ast mapargs[2] = { Expr, const_bv1 };
 
-			return z3::expr(z3_expr.ctx(), Z3_mk_map(z3_expr.ctx(), func, 2, mapargs));
+			return z3::expr(Expr.ctx(), Z3_mk_map(Expr.ctx(), func, 2, mapargs));
 		} else {
-			assert(z3_expr.is_bv() && z3_expr.get_sort().bv_size() == 1);
-			return z3_expr == z3_expr.ctx().bv_val(1, 1);
+			assert(Expr.is_bv() && Expr.get_sort().bv_size() == 1);
+			return Expr == Expr.ctx().bv_val(1, 1);
 		}
 	}
 
 	SMTExpr bool2bv1() {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array()) {
-			assert(z3_expr.get_sort().array_range().is_bool());
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array()) {
+			assert(Expr.get_sort().array_range().is_bool());
 			auto func = ite(ctx.bool_val(false), ctx.bv_val(1, 1), ctx.bv_val(0, 1)).decl();
 
-			z3::expr const_bv0 = const_array(z3_expr.get_sort().array_domain(), ctx.bv_val(0, 1));
-			z3::expr const_bv1 = const_array(z3_expr.get_sort().array_domain(), ctx.bv_val(1, 1));
+			z3::expr const_bv0 = const_array(Expr.get_sort().array_domain(), ctx.bv_val(0, 1));
+			z3::expr const_bv1 = const_array(Expr.get_sort().array_domain(), ctx.bv_val(1, 1));
 
-			Z3_ast mapargs[3] = { z3_expr, const_bv0, const_bv1 };
+			Z3_ast mapargs[3] = { Expr, const_bv0, const_bv1 };
 
 			z3::expr bvret(ctx, Z3_mk_map(ctx, func, 3, mapargs));
 			return bvret;
 		} else {
-			assert(z3_expr.is_bool());
-			return ite(z3_expr, ctx.bv_val(1, 1), ctx.bv_val(0, 1));
+			assert(Expr.is_bool());
+			return ite(Expr, ctx.bv_val(1, 1), ctx.bv_val(0, 1));
 		}
 	}
 
 	SMTExpr real2int() {
-		z3::context & ctx = z3_expr.ctx();
-		if (z3_expr.is_array()) {
-			assert(z3_expr.get_sort().array_range().is_real());
+		z3::context & ctx = Expr.ctx();
+		if (Expr.is_array()) {
+			assert(Expr.get_sort().array_range().is_real());
 			auto func = z3::expr(ctx, Z3_mk_real2int(ctx, ctx.real_val("0.0"))).decl();
 
-			Z3_ast mapargs[1] = { z3_expr };
+			Z3_ast mapargs[1] = { Expr };
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 1, mapargs));
 		} else {
-			assert(z3_expr.is_real());
-			return z3::expr(ctx, Z3_mk_real2int(ctx, z3_expr));
+			assert(Expr.is_real());
+			return z3::expr(ctx, Z3_mk_real2int(ctx, Expr));
 		}
 	}
 
 	SMTExpr int2real() {
-		z3::context & ctx = z3_expr.ctx();
-		if (z3_expr.is_array()) {
-			assert(z3_expr.get_sort().array_range().is_int());
+		z3::context & ctx = Expr.ctx();
+		if (Expr.is_array()) {
+			assert(Expr.get_sort().array_range().is_int());
 
-			auto func = to_real(z3_expr).decl();
-			Z3_ast mapargs[1] = { z3_expr };
+			auto func = to_real(Expr).decl();
+			Z3_ast mapargs[1] = { Expr };
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 1, mapargs));
 		} else {
-			assert(z3_expr.is_int());
-			return to_real(z3_expr);
+			assert(Expr.is_int());
+			return to_real(Expr);
 		}
 	}
 
 	SMTExpr int2bv(unsigned sz) {
-		z3::context & ctx = z3_expr.ctx();
-		if (z3_expr.is_array()) {
-			assert(z3_expr.get_sort().array_range().is_int());
+		z3::context & ctx = Expr.ctx();
+		if (Expr.is_array()) {
+			assert(Expr.get_sort().array_range().is_int());
 			auto func = z3::expr(ctx, Z3_mk_int2bv(ctx, sz, ctx.int_val("0"))).decl();
 
-			Z3_ast mapargs[1] = { z3_expr };
+			Z3_ast mapargs[1] = { Expr };
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 1, mapargs));
 		} else {
-			assert(z3_expr.is_int());
-			return z3::expr(ctx, Z3_mk_int2bv(ctx, sz, z3_expr));
+			assert(Expr.is_int());
+			return z3::expr(ctx, Z3_mk_int2bv(ctx, sz, Expr));
 		}
 	}
 
 	SMTExpr bv2int(bool isSigned) {
-		z3::context & ctx = z3_expr.ctx();
-		if (z3_expr.is_array()) {
-			assert(z3_expr.get_sort().array_range().is_bv());
-			unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+		z3::context & ctx = Expr.ctx();
+		if (Expr.is_array()) {
+			assert(Expr.get_sort().array_range().is_bv());
+			unsigned bvSz = Expr.get_sort().array_range().bv_size();
 			auto func = z3::expr(ctx, Z3_mk_bv2int(ctx, ctx.bv_val("0", bvSz), isSigned)).decl();
 
-			Z3_ast mapargs[1] = { z3_expr };
+			Z3_ast mapargs[1] = { Expr };
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 1, mapargs));
 		} else {
-			assert(z3_expr.is_bv());
-			return z3::expr(ctx, Z3_mk_bv2int(ctx, z3_expr, isSigned));
+			assert(Expr.is_bv());
+			return z3::expr(ctx, Z3_mk_bv2int(ctx, Expr, isSigned));
 		}
 	}
 
 	SMTExpr basic_zext(unsigned sz) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array()) {
-			assert(z3_expr.get_sort().array_range().is_bv());
-			unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array()) {
+			assert(Expr.get_sort().array_range().is_bv());
+			unsigned bvSz = Expr.get_sort().array_range().bv_size();
 			auto func = z3::expr(ctx, Z3_mk_zero_ext(ctx, sz, ctx.bv_val("10", bvSz))).decl();
-			Z3_ast mapargs[1] = { z3_expr };
+			Z3_ast mapargs[1] = { Expr };
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 1, mapargs));
 		} else {
-			assert(z3_expr.is_bv());
-			return z3::expr(ctx, Z3_mk_zero_ext(ctx, sz, z3_expr));
+			assert(Expr.is_bv());
+			return z3::expr(ctx, Z3_mk_zero_ext(ctx, sz, Expr));
 		}
 	}
 
 	SMTExpr basic_add(SMTExpr &b) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array() && b.z3_expr.is_array()) {
-			Z3_ast const mapargs[2] = { z3_expr, b.z3_expr };
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array() && b.Expr.is_array()) {
+			Z3_ast const mapargs[2] = { Expr, b.Expr };
 			z3::func_decl func(ctx);
-			if (z3_expr.get_sort().array_range().is_bv()) {
-				unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+			if (Expr.get_sort().array_range().is_bv()) {
+				unsigned bvSz = Expr.get_sort().array_range().bv_size();
 				func = (ctx.bv_val("0", bvSz) + ctx.bv_val("0", bvSz)).decl();
 			} else {
 				func = (ctx.real_val("0.0") + ctx.real_val("0.0")).decl();
 			}
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs));
 		} else {
-			return (z3_expr + b.z3_expr);
+			return (Expr + b.Expr);
 		}
 	}
 
 	SMTExpr basic_sub(SMTExpr &b) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array() && b.z3_expr.is_array()) {
-			Z3_ast const mapargs[2] = { z3_expr, b.z3_expr };
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array() && b.Expr.is_array()) {
+			Z3_ast const mapargs[2] = { Expr, b.Expr };
 			z3::func_decl func(ctx);
-			if (z3_expr.get_sort().array_range().is_bv()) {
-				unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+			if (Expr.get_sort().array_range().is_bv()) {
+				unsigned bvSz = Expr.get_sort().array_range().bv_size();
 				func = (ctx.bv_val("0", bvSz) - ctx.bv_val("0", bvSz)).decl();
 			} else {
 				func = (ctx.real_val("0.0") - ctx.real_val("0.0")).decl();
 			}
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs));
 		} else {
-			return (z3_expr - b.z3_expr);
+			return (Expr - b.Expr);
 		}
 	}
 
 	SMTExpr basic_mul(SMTExpr &b) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array() && b.z3_expr.is_array()) {
-			Z3_ast const mapargs[2] = { z3_expr, b.z3_expr };
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array() && b.Expr.is_array()) {
+			Z3_ast const mapargs[2] = { Expr, b.Expr };
 			z3::func_decl func(ctx);
-			if (z3_expr.get_sort().array_range().is_bv()) {
-				unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+			if (Expr.get_sort().array_range().is_bv()) {
+				unsigned bvSz = Expr.get_sort().array_range().bv_size();
 				func = (ctx.bv_val("0", bvSz) * ctx.bv_val("0", bvSz)).decl();
 			} else {
 				func = (ctx.real_val("0.0") * ctx.real_val("0.0")).decl();
 			}
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs));
 		} else {
-			return (z3_expr * b.z3_expr);
+			return (Expr * b.Expr);
 		}
 	}
 
 	SMTExpr basic_udiv(SMTExpr &b) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array() && b.z3_expr.is_array()) {
-			Z3_ast const mapargs[2] = { z3_expr, b.z3_expr };
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array() && b.Expr.is_array()) {
+			Z3_ast const mapargs[2] = { Expr, b.Expr };
 			z3::func_decl func(ctx);
-			if (z3_expr.get_sort().array_range().is_bv()) {
-				unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+			if (Expr.get_sort().array_range().is_bv()) {
+				unsigned bvSz = Expr.get_sort().array_range().bv_size();
 				func = z3::expr(ctx, Z3_mk_bvudiv(ctx, ctx.bv_val("0", bvSz), ctx.bv_val("0", bvSz))).decl();
 			} else {
 				assert(false);
 			}
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs));
 		} else {
-			return z3::expr(ctx, Z3_mk_bvudiv(ctx, z3_expr, b.z3_expr));
+			return z3::expr(ctx, Z3_mk_bvudiv(ctx, Expr, b.Expr));
 		}
 	}
 
 	SMTExpr basic_sdiv(SMTExpr &b) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array() && b.z3_expr.is_array()) {
-			Z3_ast const mapargs[2] = { z3_expr, b.z3_expr };
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array() && b.Expr.is_array()) {
+			Z3_ast const mapargs[2] = { Expr, b.Expr };
 			z3::func_decl func(ctx);
-			if (z3_expr.get_sort().array_range().is_bv()) {
-				unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+			if (Expr.get_sort().array_range().is_bv()) {
+				unsigned bvSz = Expr.get_sort().array_range().bv_size();
 				func = (ctx.bv_val("0", bvSz) / ctx.bv_val("0", bvSz)).decl();
 			} else {
 				func = (ctx.real_val("0.0") / ctx.real_val("0.0")).decl();
 			}
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs));
 		} else {
-			return (z3_expr / b.z3_expr);
+			return (Expr / b.Expr);
 		}
 	}
 
 	SMTExpr basic_urem(SMTExpr &b) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array() && b.z3_expr.is_array()) {
-			Z3_ast const mapargs[2] = { z3_expr, b.z3_expr };
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array() && b.Expr.is_array()) {
+			Z3_ast const mapargs[2] = { Expr, b.Expr };
 			z3::func_decl func(ctx);
-			if (z3_expr.get_sort().array_range().is_bv()) {
-				unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+			if (Expr.get_sort().array_range().is_bv()) {
+				unsigned bvSz = Expr.get_sort().array_range().bv_size();
 				func = z3::expr(ctx, Z3_mk_bvurem(ctx, ctx.bv_val("0", bvSz), ctx.bv_val("0", bvSz))).decl();
 			} else {
 				assert(false);
 			}
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs));
 		} else {
-			return z3::expr(ctx, Z3_mk_bvurem(ctx, z3_expr, b.z3_expr));
+			return z3::expr(ctx, Z3_mk_bvurem(ctx, Expr, b.Expr));
 		}
 	}
 
 	SMTExpr basic_srem(SMTExpr &b) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array() && b.z3_expr.is_array()) {
-			Z3_ast const mapargs[2] = { z3_expr, b.z3_expr };
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array() && b.Expr.is_array()) {
+			Z3_ast const mapargs[2] = { Expr, b.Expr };
 			z3::func_decl func(ctx);
-			if (z3_expr.get_sort().array_range().is_bv()) {
-				unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+			if (Expr.get_sort().array_range().is_bv()) {
+				unsigned bvSz = Expr.get_sort().array_range().bv_size();
 				func = z3::expr(ctx, Z3_mk_bvsrem(ctx, ctx.bv_val("0", bvSz), ctx.bv_val("0", bvSz))).decl();
 			} else {
 				assert(false);
 			}
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs));
-		} else if (z3_expr.is_real() && b.z3_expr.is_real()) {
+		} else if (Expr.is_real() && b.Expr.is_real()) {
 			// z3 only accept rem between integers
-			z3::expr ch1ToInt = z3::expr(ctx, Z3_mk_real2int(ctx, z3_expr));
-			z3::expr ch2ToInt = z3::expr(ctx, Z3_mk_real2int(ctx, b.z3_expr));
+			z3::expr ch1ToInt = z3::expr(ctx, Z3_mk_real2int(ctx, Expr));
+			z3::expr ch2ToInt = z3::expr(ctx, Z3_mk_real2int(ctx, b.Expr));
 			z3::expr remResult = z3::expr(ctx, Z3_mk_rem(ctx, ch1ToInt, ch2ToInt));
 			z3::expr remResult2Real = z3::expr(ctx, Z3_mk_int2real(ctx, remResult));
 			return remResult2Real;
 		} else {
-			return z3::expr(ctx, Z3_mk_bvsrem(ctx, z3_expr, b.z3_expr));
+			return z3::expr(ctx, Z3_mk_bvsrem(ctx, Expr, b.Expr));
 		}
 	}
 
 	SMTExpr basic_shl(SMTExpr &b) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array() && b.z3_expr.is_array()) {
-			Z3_ast const mapargs[2] = { z3_expr, b.z3_expr };
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array() && b.Expr.is_array()) {
+			Z3_ast const mapargs[2] = { Expr, b.Expr };
 			z3::func_decl func(ctx);
-			if (z3_expr.get_sort().array_range().is_bv()) {
-				unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+			if (Expr.get_sort().array_range().is_bv()) {
+				unsigned bvSz = Expr.get_sort().array_range().bv_size();
 				func = z3::expr(ctx, Z3_mk_bvshl(ctx, ctx.bv_val("0", bvSz), ctx.bv_val("0", bvSz))).decl();
 			} else {
 				assert(false);
 			}
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs));
 		} else {
-			return z3::expr(ctx, Z3_mk_bvshl(ctx, z3_expr, b.z3_expr));
+			return z3::expr(ctx, Z3_mk_bvshl(ctx, Expr, b.Expr));
 		}
 	}
 
 	SMTExpr basic_ashr(SMTExpr &b) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array() && b.z3_expr.is_array()) {
-			Z3_ast const mapargs[2] = { z3_expr, b.z3_expr };
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array() && b.Expr.is_array()) {
+			Z3_ast const mapargs[2] = { Expr, b.Expr };
 			z3::func_decl func(ctx);
-			if (z3_expr.get_sort().array_range().is_bv()) {
-				unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+			if (Expr.get_sort().array_range().is_bv()) {
+				unsigned bvSz = Expr.get_sort().array_range().bv_size();
 				func = z3::expr(ctx, Z3_mk_bvashr(ctx, ctx.bv_val("0", bvSz), ctx.bv_val("0", bvSz))).decl();
 			} else {
 				assert(false);
 			}
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs));
 		} else {
-			return z3::expr(ctx, Z3_mk_bvashr(ctx, z3_expr, b.z3_expr));
+			return z3::expr(ctx, Z3_mk_bvashr(ctx, Expr, b.Expr));
 		}
 	}
 
 	SMTExpr basic_lshr(SMTExpr &b) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array() && b.z3_expr.is_array()) {
-			Z3_ast const mapargs[2] = { z3_expr, b.z3_expr };
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array() && b.Expr.is_array()) {
+			Z3_ast const mapargs[2] = { Expr, b.Expr };
 			z3::func_decl func(ctx);
-			if (z3_expr.get_sort().array_range().is_bv()) {
-				unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+			if (Expr.get_sort().array_range().is_bv()) {
+				unsigned bvSz = Expr.get_sort().array_range().bv_size();
 				func = z3::expr(ctx, Z3_mk_bvlshr(ctx, ctx.bv_val("0", bvSz), ctx.bv_val("0", bvSz))).decl();
 			} else {
 				assert(false);
 			}
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs));
 		} else {
-			return z3::expr(ctx, Z3_mk_bvlshr(ctx, z3_expr, b.z3_expr));
+			return z3::expr(ctx, Z3_mk_bvlshr(ctx, Expr, b.Expr));
 		}
 	}
 
 	SMTExpr basic_and(SMTExpr &b) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array() && b.z3_expr.is_array()) {
-			Z3_ast const mapargs[2] = { z3_expr, b.z3_expr };
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array() && b.Expr.is_array()) {
+			Z3_ast const mapargs[2] = { Expr, b.Expr };
 			z3::func_decl func(ctx);
-			if (z3_expr.get_sort().array_range().is_bv()) {
-				unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+			if (Expr.get_sort().array_range().is_bv()) {
+				unsigned bvSz = Expr.get_sort().array_range().bv_size();
 				func = (ctx.bv_val("0", bvSz) & ctx.bv_val("0", bvSz)).decl();
 			} else {
 				func = (ctx.real_val("0.0") & ctx.real_val("0.0")).decl();
 			}
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs));
 		} else {
-			return (z3_expr & b.z3_expr);
+			return (Expr & b.Expr);
 		}
 	}
 
 	SMTExpr basic_or(SMTExpr &b) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array() && b.z3_expr.is_array()) {
-			Z3_ast const mapargs[2] = { z3_expr, b.z3_expr };
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array() && b.Expr.is_array()) {
+			Z3_ast const mapargs[2] = { Expr, b.Expr };
 			z3::func_decl func(ctx);
-			if (z3_expr.get_sort().array_range().is_bv()) {
-				unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+			if (Expr.get_sort().array_range().is_bv()) {
+				unsigned bvSz = Expr.get_sort().array_range().bv_size();
 				func = (ctx.bv_val("0", bvSz) | ctx.bv_val("0", bvSz)).decl();
 			} else {
 				func = (ctx.real_val("0.0") | ctx.real_val("0.0")).decl();
 			}
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs));
 		} else {
-			return (z3_expr | b.z3_expr);
+			return (Expr | b.Expr);
 		}
 	}
 
 	SMTExpr basic_xor(SMTExpr &b) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array() && b.z3_expr.is_array()) {
-			Z3_ast const mapargs[2] = { z3_expr, b.z3_expr };
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array() && b.Expr.is_array()) {
+			Z3_ast const mapargs[2] = { Expr, b.Expr };
 			z3::func_decl func(ctx);
-			if (z3_expr.get_sort().array_range().is_bv()) {
-				unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+			if (Expr.get_sort().array_range().is_bv()) {
+				unsigned bvSz = Expr.get_sort().array_range().bv_size();
 				func = (ctx.bv_val("0", bvSz) ^ ctx.bv_val("0", bvSz)).decl();
 			} else {
 				func = (ctx.real_val("0.0") ^ ctx.real_val("0.0")).decl();
 			}
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs));
 		} else {
-			return (z3_expr ^ b.z3_expr);
+			return (Expr ^ b.Expr);
 		}
 	}
 
 	SMTExpr basic_eq(SMTExpr &b) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array() && b.z3_expr.is_array()) {
-			Z3_ast const mapargs[2] = { z3_expr, b.z3_expr };
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array() && b.Expr.is_array()) {
+			Z3_ast const mapargs[2] = { Expr, b.Expr };
 			z3::func_decl func(ctx);
-			if (z3_expr.get_sort().array_range().is_bv()) {
-				unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+			if (Expr.get_sort().array_range().is_bv()) {
+				unsigned bvSz = Expr.get_sort().array_range().bv_size();
 				func = (ctx.bv_val("0", bvSz) == ctx.bv_val("0", bvSz)).decl();
 			} else {
 				func = (ctx.real_val("0.0") == ctx.real_val("0.0")).decl();
 			}
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs));
 		} else {
-			return (z3_expr == b.z3_expr);
+			return (Expr == b.Expr);
 		}
 	}
 
 	SMTExpr basic_ne(SMTExpr &b) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array() && b.z3_expr.is_array()) {
-			Z3_ast const mapargs[2] = { z3_expr, b.z3_expr };
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array() && b.Expr.is_array()) {
+			Z3_ast const mapargs[2] = { Expr, b.Expr };
 			z3::func_decl func(ctx);
-			if (z3_expr.get_sort().array_range().is_bv()) {
-				unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+			if (Expr.get_sort().array_range().is_bv()) {
+				unsigned bvSz = Expr.get_sort().array_range().bv_size();
 				func = (ctx.bv_val("0", bvSz) != ctx.bv_val("0", bvSz)).decl();
 			} else {
 				func = (ctx.real_val("0.0") != ctx.real_val("0.0")).decl();
 			}
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs));
 		} else {
-			return (z3_expr != b.z3_expr);
+			return (Expr != b.Expr);
 		}
 	}
 
 	SMTExpr basic_ugt(SMTExpr &b) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array() && b.z3_expr.is_array()) {
-			Z3_ast const mapargs[2] = { z3_expr, b.z3_expr };
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array() && b.Expr.is_array()) {
+			Z3_ast const mapargs[2] = { Expr, b.Expr };
 			z3::func_decl func(ctx);
-			if (z3_expr.get_sort().array_range().is_bv()) {
-				unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+			if (Expr.get_sort().array_range().is_bv()) {
+				unsigned bvSz = Expr.get_sort().array_range().bv_size();
 				func = z3::expr(ctx, Z3_mk_bvugt(ctx, ctx.bv_val("0", bvSz), ctx.bv_val("0", bvSz))).decl();
 			} else {
 				assert(false);
 			}
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs));
 		} else {
-			return z3::expr(ctx, Z3_mk_bvugt(ctx, z3_expr, b.z3_expr));
+			return z3::expr(ctx, Z3_mk_bvugt(ctx, Expr, b.Expr));
 		}
 	}
 
 	SMTExpr basic_uge(SMTExpr &b) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array() && b.z3_expr.is_array()) {
-			Z3_ast const mapargs[2] = { z3_expr, b.z3_expr };
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array() && b.Expr.is_array()) {
+			Z3_ast const mapargs[2] = { Expr, b.Expr };
 			z3::func_decl func(ctx);
-			if (z3_expr.get_sort().array_range().is_bv()) {
-				unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+			if (Expr.get_sort().array_range().is_bv()) {
+				unsigned bvSz = Expr.get_sort().array_range().bv_size();
 				func = z3::expr(ctx, Z3_mk_bvuge(ctx, ctx.bv_val("0", bvSz), ctx.bv_val("0", bvSz))).decl();
 			} else {
 				assert(false);
 			}
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs));
 		} else {
-			return z3::expr(ctx, Z3_mk_bvuge(ctx, z3_expr, b.z3_expr));
+			return z3::expr(ctx, Z3_mk_bvuge(ctx, Expr, b.Expr));
 		}
 	}
 
 	SMTExpr basic_sgt(SMTExpr &b) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array() && b.z3_expr.is_array()) {
-			Z3_ast const mapargs[2] = { z3_expr, b.z3_expr };
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array() && b.Expr.is_array()) {
+			Z3_ast const mapargs[2] = { Expr, b.Expr };
 			z3::func_decl func(ctx);
-			if (z3_expr.get_sort().array_range().is_bv()) {
-				unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+			if (Expr.get_sort().array_range().is_bv()) {
+				unsigned bvSz = Expr.get_sort().array_range().bv_size();
 				func = (ctx.bv_val("0", bvSz) > ctx.bv_val("0", bvSz)).decl();
 			} else {
 				func = (ctx.real_val("0.0") > ctx.real_val("0.0")).decl();
@@ -754,145 +754,145 @@ public:
 
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs));
 		} else {
-			return (z3_expr > b.z3_expr);
+			return (Expr > b.Expr);
 		}
 	}
 
 	SMTExpr basic_sge(SMTExpr &b) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array() && b.z3_expr.is_array()) {
-			Z3_ast const mapargs[2] = { z3_expr, b.z3_expr };
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array() && b.Expr.is_array()) {
+			Z3_ast const mapargs[2] = { Expr, b.Expr };
 			z3::func_decl func(ctx);
-			if (z3_expr.get_sort().array_range().is_bv()) {
-				unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+			if (Expr.get_sort().array_range().is_bv()) {
+				unsigned bvSz = Expr.get_sort().array_range().bv_size();
 				func = (ctx.bv_val("0", bvSz) >= ctx.bv_val("0", bvSz)).decl();
 			} else {
 				func = (ctx.real_val("0.0") >= ctx.real_val("0.0")).decl();
 			}
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs));
 		} else {
-			return (z3_expr >= b.z3_expr);
+			return (Expr >= b.Expr);
 		}
 	}
 
 	SMTExpr basic_ult(SMTExpr &b) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array() && b.z3_expr.is_array()) {
-			Z3_ast const mapargs[2] = { z3_expr, b.z3_expr };
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array() && b.Expr.is_array()) {
+			Z3_ast const mapargs[2] = { Expr, b.Expr };
 			z3::func_decl func(ctx);
-			if (z3_expr.get_sort().array_range().is_bv()) {
-				unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+			if (Expr.get_sort().array_range().is_bv()) {
+				unsigned bvSz = Expr.get_sort().array_range().bv_size();
 				func = z3::expr(ctx, Z3_mk_bvult(ctx, ctx.bv_val("0", bvSz), ctx.bv_val("0", bvSz))).decl();
 			} else {
 				assert(false);
 			}
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs));
 		} else {
-			return z3::expr(ctx, Z3_mk_bvult(ctx, z3_expr, b.z3_expr));
+			return z3::expr(ctx, Z3_mk_bvult(ctx, Expr, b.Expr));
 		}
 	}
 
 	SMTExpr basic_ule(SMTExpr &b) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array() && b.z3_expr.is_array()) {
-			Z3_ast const mapargs[2] = { z3_expr, b.z3_expr };
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array() && b.Expr.is_array()) {
+			Z3_ast const mapargs[2] = { Expr, b.Expr };
 			z3::func_decl func(ctx);
-			if (z3_expr.get_sort().array_range().is_bv()) {
-				unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+			if (Expr.get_sort().array_range().is_bv()) {
+				unsigned bvSz = Expr.get_sort().array_range().bv_size();
 				func = z3::expr(ctx, Z3_mk_bvule(ctx, ctx.bv_val("0", bvSz), ctx.bv_val("0", bvSz))).decl();
 			} else {
 				assert(false);
 			}
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs));
 		} else {
-			return z3::expr(ctx, Z3_mk_bvule(ctx, z3_expr, b.z3_expr));
+			return z3::expr(ctx, Z3_mk_bvule(ctx, Expr, b.Expr));
 		}
 	}
 
 	SMTExpr basic_slt(SMTExpr &b) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array() && b.z3_expr.is_array()) {
-			Z3_ast const mapargs[2] = { z3_expr, b.z3_expr };
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array() && b.Expr.is_array()) {
+			Z3_ast const mapargs[2] = { Expr, b.Expr };
 			z3::func_decl func(ctx);
-			if (z3_expr.get_sort().array_range().is_bv()) {
-				unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+			if (Expr.get_sort().array_range().is_bv()) {
+				unsigned bvSz = Expr.get_sort().array_range().bv_size();
 				func = (ctx.bv_val("0", bvSz) < ctx.bv_val("0", bvSz)).decl();
 			} else {
 				func = (ctx.real_val("0.0") < ctx.real_val("0.0")).decl();
 			}
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs));
 		} else {
-			return (z3_expr < b.z3_expr);
+			return (Expr < b.Expr);
 		}
 	}
 
 	SMTExpr basic_sle(SMTExpr &b) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array() && b.z3_expr.is_array()) {
-			Z3_ast const mapargs[2] = { z3_expr, b.z3_expr };
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array() && b.Expr.is_array()) {
+			Z3_ast const mapargs[2] = { Expr, b.Expr };
 			z3::func_decl func(ctx);
-			if (z3_expr.get_sort().array_range().is_bv()) {
-				unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+			if (Expr.get_sort().array_range().is_bv()) {
+				unsigned bvSz = Expr.get_sort().array_range().bv_size();
 				func = (ctx.bv_val("0", bvSz) <= ctx.bv_val("0", bvSz)).decl();
 			} else {
 				func = (ctx.real_val("0.0") <= ctx.real_val("0.0")).decl();
 			}
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs));
 		} else {
-			return (z3_expr <= b.z3_expr);
+			return (Expr <= b.Expr);
 		}
 	}
 
 	SMTExpr basic_extract(unsigned high, unsigned low) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array()) {
-			assert(z3_expr.get_sort().array_range().is_bv());
-			unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array()) {
+			assert(Expr.get_sort().array_range().is_bv());
+			unsigned bvSz = Expr.get_sort().array_range().bv_size();
 			auto func = z3::expr(ctx, Z3_mk_extract(ctx, high, low, ctx.bv_val("10", bvSz))).decl();
-			Z3_ast mapargs[1] = { z3_expr };
+			Z3_ast mapargs[1] = { Expr };
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 1, mapargs));
 		} else {
-			assert(z3_expr.is_bv());
-			return z3::expr(ctx, Z3_mk_extract(ctx, high, low, z3_expr));
+			assert(Expr.is_bv());
+			return z3::expr(ctx, Z3_mk_extract(ctx, high, low, Expr));
 		}
 	}
 
 	SMTExpr basic_sext(unsigned sz) {
-		z3::context& ctx = z3_expr.ctx();
-		if (z3_expr.is_array()) {
-			assert(z3_expr.get_sort().array_range().is_bv());
-			unsigned bvSz = z3_expr.get_sort().array_range().bv_size();
+		z3::context& ctx = Expr.ctx();
+		if (Expr.is_array()) {
+			assert(Expr.get_sort().array_range().is_bv());
+			unsigned bvSz = Expr.get_sort().array_range().bv_size();
 			auto func = z3::expr(ctx, Z3_mk_sign_ext(ctx, sz, ctx.bv_val("10", bvSz))).decl();
-			Z3_ast mapargs[1] = { z3_expr };
+			Z3_ast mapargs[1] = { Expr };
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 1, mapargs));
 		} else {
-			assert(z3_expr.is_bv());
-			return z3::expr(ctx, Z3_mk_sign_ext(ctx, sz, z3_expr));
+			assert(Expr.is_bv());
+			return z3::expr(ctx, Z3_mk_sign_ext(ctx, sz, Expr));
 		}
 	}
 
 	SMTExpr basic_ite(SMTExpr& TBValue, SMTExpr& FBValue) {
-		z3::context& ctx = z3_expr.ctx();
-		z3::expr& condition = z3_expr;
+		z3::context& ctx = Expr.ctx();
+		z3::expr& condition = Expr;
 		if (condition.is_array()) {
-			assert(TBValue.z3_expr.is_array() && FBValue.z3_expr.is_array());
+			assert(TBValue.Expr.is_array() && FBValue.Expr.is_array());
 
-			Z3_ast mapargs[3] = { condition, TBValue.z3_expr, FBValue.z3_expr };
+			Z3_ast mapargs[3] = { condition, TBValue.Expr, FBValue.Expr };
 			z3::func_decl func(ctx);
-			if (TBValue.z3_expr.get_sort().array_range().is_bv()) {
-				assert(FBValue.z3_expr.get_sort().array_range().is_bv());
-				unsigned bvSz = TBValue.z3_expr.get_sort().array_range().bv_size();
+			if (TBValue.Expr.get_sort().array_range().is_bv()) {
+				assert(FBValue.Expr.get_sort().array_range().is_bv());
+				unsigned bvSz = TBValue.Expr.get_sort().array_range().bv_size();
 				func = ite(ctx.bool_val(true), ctx.bv_val(1, bvSz), ctx.bv_val(0, bvSz)).decl();
 			} else {
-				assert(TBValue.z3_expr.get_sort().array_range().is_real());
-				assert(FBValue.z3_expr.get_sort().array_range().is_real());
+				assert(TBValue.Expr.get_sort().array_range().is_real());
+				assert(FBValue.Expr.get_sort().array_range().is_real());
 				func = ite(ctx.bool_val(true), ctx.real_val("0.0"), ctx.real_val("0.0")).decl();
 			}
 
 			z3::expr mapped(ctx, Z3_mk_map(ctx, func, 3, mapargs));
 			return z3::expr(ctx, Z3_mk_map(ctx, func, 3, mapargs));
 		} else {
-			return ite(condition, TBValue.z3_expr, FBValue.z3_expr);
+			return ite(condition, TBValue.Expr, FBValue.Expr);
 		}
 	}
 
@@ -918,61 +918,61 @@ private:
 class SMTExprComparator {
 public:
 	bool operator()(const SMTExpr& X, const SMTExpr& Y) const {
-		unsigned XId = Z3_get_ast_id(X.z3_expr.ctx(), X.z3_expr);
-		unsigned YId = Z3_get_ast_id(Y.z3_expr.ctx(), Y.z3_expr);
+		unsigned XId = Z3_get_ast_id(X.Expr.ctx(), X.Expr);
+		unsigned YId = Z3_get_ast_id(Y.Expr.ctx(), Y.Expr);
 		return XId < YId;
 	}
 };
 
 class SMTExprVec {
 private:
-	z3::expr_vector z3_expr_vec;
+	z3::expr_vector ExprVec;
 
-	SMTExprVec(z3::expr_vector vec) :
-			z3_expr_vec(vec) {
+	SMTExprVec(z3::expr_vector Vec) :
+			ExprVec(Vec) {
 	}
 
 public:
 	SMTExprVec(SMTExprVec const &Vec) :
-			z3_expr_vec(Vec.z3_expr_vec) {
+			ExprVec(Vec.ExprVec) {
 	}
 
 	SMTExprVec& operator=(const SMTExprVec& Vec) {
 		if (this != &Vec) {
-			this->z3_expr_vec = Vec.z3_expr_vec;
+			this->ExprVec = Vec.ExprVec;
 		}
 		return *this;
 	}
 
 	unsigned size() const {
-		return z3_expr_vec.size();
+		return ExprVec.size();
 	}
 
 	unsigned constraintSize() const;
 
 	void push_back(SMTExpr e) {
-		if(e.isTrue()){
+		if (e.isTrue()) {
 			return;
 		}
-		z3_expr_vec.push_back(e.z3_expr);
+		ExprVec.push_back(e.Expr);
 	}
 
 	SMTExpr operator[](int i) const {
-		return z3_expr_vec[i];
+		return ExprVec[i];
 	}
 
 	void clear() {
-		z3_expr_vec = z3::expr_vector(z3_expr_vec.ctx());
+		ExprVec = z3::expr_vector(ExprVec.ctx());
 	}
 
 	bool empty() const {
-		return z3_expr_vec.empty();
+		return ExprVec.empty();
 	}
 
 	SMTExprVec copy() {
-		z3::expr_vector Ret = z3::expr_vector(z3_expr_vec.ctx());
-		for (unsigned Idx = 0; Idx < z3_expr_vec.size(); Idx++) {
-			Ret.push_back(z3_expr_vec[Idx]);
+		z3::expr_vector Ret = z3::expr_vector(ExprVec.ctx());
+		for (unsigned Idx = 0; Idx < ExprVec.size(); Idx++) {
+			Ret.push_back(ExprVec[Idx]);
 		}
 		return Ret;
 	}
@@ -980,7 +980,7 @@ public:
 	/// *this = *this && v2
 	void mergeWithAnd(const SMTExprVec& v2) {
 		for (size_t i = 0; i < v2.size(); i++) {
-			z3_expr_vec.push_back(v2.z3_expr_vec[i]);
+			ExprVec.push_back(v2.ExprVec[i]);
 		}
 	}
 
@@ -990,16 +990,16 @@ public:
 			return;
 
 		if (empty()) {
-			z3_expr_vec = v2.z3_expr_vec;
+			ExprVec = v2.ExprVec;
 			return;
 		}
 
 		SMTExpr e1 = this->toAndExpr();
 		SMTExpr e2 = v2.toAndExpr();
 
-		z3::expr_vector ret(z3_expr_vec.ctx());
-		ret.push_back(e1.z3_expr || e2.z3_expr);
-		z3_expr_vec = ret;
+		z3::expr_vector ret(ExprVec.ctx());
+		ret.push_back(e1.Expr || e2.Expr);
+		ExprVec = ret;
 	}
 
 	/// From the vector create one expr to represent the AND result.
@@ -1013,7 +1013,7 @@ public:
 	friend class SMTExpr;
 
 	friend std::ostream & operator<<(std::ostream & out, SMTExprVec vec) {
-		out << vec.z3_expr_vec;
+		out << vec.ExprVec;
 		return out;
 	}
 };

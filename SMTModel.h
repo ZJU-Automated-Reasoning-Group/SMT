@@ -9,16 +9,16 @@
 
 class SMTModel {
 private:
-	z3::model z3_model;
+	z3::model Model;
 
 	SMTModel(z3::model m) :
-			z3_model(m) {
+			Model(m) {
 	}
 
 public:
 
 	SMTModel(SMTModel const & m) :
-			z3_model(m.z3_model) {
+			Model(m.Model) {
 	}
 
 	~SMTModel() {
@@ -26,20 +26,20 @@ public:
 
 	SMTModel& operator=(const SMTModel& M) {
 		if (this != &M) {
-			this->z3_model = M.z3_model;
+			this->Model = M.Model;
 		}
 		return *this;
 	}
 
 	unsigned size() {
-		return z3_model.size();
+		return Model.size();
 	}
 
 	std::pair<std::string, std::string> getModelDbgInfo(int Index) {
-		auto Item = z3_model[Index];
+		auto Item = Model[Index];
 
 		if (Item.name().kind() == Z3_STRING_SYMBOL) {
-			z3::expr E = z3_model.get_const_interp(Item);
+			z3::expr E = Model.get_const_interp(Item);
 			std::ostringstream OstrExpr;
 			OstrExpr << E;
 

@@ -19,7 +19,7 @@ SMTExprVec SMTFactory::translate(const SMTExprVec & Exprs) {
 	SMTExprVec RetExprVec = this->createEmptySMTExprVec();
 	for (unsigned ExprIdx = 0; ExprIdx < Exprs.size(); ExprIdx++) {
 		SMTExpr OrigExpr = Exprs[ExprIdx];
-		SMTExpr Ret(to_expr(ctx, Z3_translate(OrigExpr.z3_expr.ctx(), OrigExpr.z3_expr, ctx)));
+		SMTExpr Ret(to_expr(Ctx, Z3_translate(OrigExpr.Expr.ctx(), OrigExpr.Expr, Ctx)));
 		RetExprVec.push_back(Ret);
 	}
 	return RetExprVec;
@@ -91,7 +91,7 @@ std::pair<SMTExprVec, bool> SMTFactory::rename(const SMTExprVec& Exprs, const st
 				SMTExpr OldExpr = It.second;
 
 				std::string NewSymbol = OldSymbol + RenamingSuffix;
-				SMTExpr NewExpr(z3::expr(ctx, Z3_mk_const(ctx, Z3_mk_string_symbol(ctx, NewSymbol.c_str()), OldExpr.z3_expr.get_sort())));
+				SMTExpr NewExpr(z3::expr(Ctx, Z3_mk_const(Ctx, Z3_mk_string_symbol(Ctx, NewSymbol.c_str()), OldExpr.Expr.get_sort())));
 				Mapping.insert(std::pair<std::string, SMTExpr>(OldSymbol, NewExpr));
 
 				From.push_back(OldExpr);
@@ -193,12 +193,12 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::unordered_map<std::string, SMTE
 SMTSolver SMTFactory::createSMTSolver() {
 	// z3::tactic t = z3::tactic(ctx, "simplify") & z3::tactic(ctx, "smt");
 	// z3::solver ret = t.mk_solver();
-	z3::solver ret(ctx);
+	z3::solver ret(Ctx);
 
 	if (SolverTimeOut.getValue() > 0) {
 		// FIXME still do not know why this
 		// causes crashes in concurrent executions.
-		z3::params p(ctx);
+		z3::params p(Ctx);
 		// the unit is ms
 		p.set("timeout", (unsigned) SolverTimeOut.getValue());
 		ret.set(p);
@@ -212,4 +212,14 @@ SMTExprVec SMTFactory::createBoolSMTExprVec(bool Content, size_t Size) {
 		Ret.push_back(createBoolVal(Content));
 	}
 	return Ret;
+}
+
+SMTExprVec SMTFactory::parseSMTLib2File(std::string FileName) {
+	Z3_ast Ast = Z3_parse_smtlib2_file(Ctx, FileName.c_str(), 0, 0, 0, 0, 0, 0);
+	z3::expr Whole(Ctx, Ast);
+	SMTExprVec Assertions = createEmptySMTExprVec();
+	for (unsigned int I = 0; I < Whole.num_args(); I++) {
+		Assertions.push_back(SMTExpr(Whole.arg(I)));
+	}
+	return Assertions;
 }

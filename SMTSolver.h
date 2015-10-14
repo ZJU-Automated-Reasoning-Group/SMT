@@ -16,7 +16,7 @@ enum SMTResult {
 
 class SMTSolver {
 private:
-	z3::solver z3_solver;
+	z3::solver Solver;
 
 	SMTSolver(z3::solver s);
 
@@ -39,7 +39,7 @@ public:
 
 	SMTModel getSMTModel() {
 		try {
-			return SMTModel(z3_solver.get_model());
+			return SMTModel(Solver.get_model());
 		} catch (z3::exception & e) {
 			std::cerr << __FILE__ << " : " << __LINE__ << " : " << e << "\n";
 			exit(1);
@@ -51,11 +51,11 @@ public:
 	void reset();
 
 	void printUnsatCore(std::ostream& O) {
-		O << z3_solver.unsat_core() << "\n";
+		O << Solver.unsat_core() << "\n";
 	}
 
 	void printUnknownReason(std::ostream& O) {
-		O << z3_solver.reason_unknown() << "\n";
+		O << Solver.reason_unknown() << "\n";
 	}
 
 	virtual void push();
@@ -65,7 +65,7 @@ public:
 	bool operator<(const SMTSolver& Solver) const;
 
 	friend std::ostream & operator<<(std::ostream & O, SMTSolver& Solver) {
-		O << Solver.z3_solver.to_smt2() << "\n";
+		O << Solver.Solver.to_smt2() << "\n";
 		return O;
 	}
 

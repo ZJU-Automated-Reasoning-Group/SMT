@@ -11,25 +11,25 @@
 #include "SMTExpr.h"
 
 SMTExpr SMTExpr::substitute(SMTExprVec& From, SMTExprVec& To) {
-	return SMTExpr(z3_expr.substitute(From.z3_expr_vec, To.z3_expr_vec));
+	return SMTExpr(Expr.substitute(From.ExprVec, To.ExprVec));
 }
 
 SMTExpr SMTExpr::localSimplify() {
-	return z3_expr.simplify();
+	return Expr.simplify();
 }
 
 SMTExpr SMTExpr::dilligSimplify(SMTExpr N, z3::solver& Solver4Sim, z3::context& Ctx) {
 	if (!N.isLogicAnd() && !N.isLogicOr()) {
 		// A leaf
 		Solver4Sim.push();
-		Solver4Sim.add(N.z3_expr);
+		Solver4Sim.add(N.Expr);
 		if (Solver4Sim.check() == z3::check_result::unsat) {
 			Solver4Sim.pop();
 			return SMTExpr(Ctx.bool_val(false));
 		}
 		Solver4Sim.pop();
 		Solver4Sim.push();
-		Solver4Sim.add(!N.z3_expr);
+		Solver4Sim.add(!N.Expr);
 		if (Solver4Sim.check() == z3::check_result::unsat) {
 			Solver4Sim.pop();
 			return SMTExpr(Ctx.bool_val(true));
@@ -80,9 +80,9 @@ SMTExpr SMTExpr::dilligSimplify(SMTExpr N, z3::solver& Solver4Sim, z3::context& 
 					}
 
 					if (N.isLogicOr()) {
-						Args[J] = !(*Candidate).z3_expr;
+						Args[J] = !(*Candidate).Expr;
 					} else {
-						Args[J] = (*Candidate).z3_expr;
+						Args[J] = (*Candidate).Expr;
 					}
 				}
 				SMTExpr Alpha(to_expr(Ctx, Z3_mk_and(Ctx, C.size() - 1, Args)));
@@ -91,11 +91,11 @@ SMTExpr SMTExpr::dilligSimplify(SMTExpr N, z3::solver& Solver4Sim, z3::context& 
 				SMTExpr& Ci = C[I];
 
 				Solver4Sim.push();
-				Solver4Sim.add(Alpha.z3_expr);
+				Solver4Sim.add(Alpha.Expr);
 				SMTExpr NewCi = dilligSimplify(Ci, Solver4Sim, Ctx);
 				Solver4Sim.pop();
 
-				if (!z3::eq(Ci.z3_expr, NewCi.z3_expr)) {
+				if (!z3::eq(Ci.Expr, NewCi.Expr)) {
 					if (FixedPoint)
 						FixedPoint = false;
 					C[I] = NewCi;
@@ -119,7 +119,7 @@ SMTExpr SMTExpr::dilligSimplify(SMTExpr N, z3::solver& Solver4Sim, z3::context& 
 				if (C[i].equals(Ctx.bool_val(true))) {
 					continue;
 				}
-				Args[j++] = C[i].z3_expr;
+				Args[j++] = C[i].Expr;
 			}
 
 			if (j == 1) {
@@ -145,7 +145,7 @@ SMTExpr SMTExpr::dilligSimplify(SMTExpr N, z3::solver& Solver4Sim, z3::context& 
 				if (C[i].equals(Ctx.bool_val(false))) {
 					continue;
 				}
-				Args[j++] = C[i].z3_expr;
+				Args[j++] = C[i].Expr;
 			}
 
 			if (j == 1) {
@@ -168,7 +168,7 @@ SMTExpr SMTExpr::dilligSimplify(SMTExpr N, z3::solver& Solver4Sim, z3::context& 
 }
 
 SMTExpr SMTExpr::dilligSimplify() {
-	z3::context& Ctx = z3_expr.ctx();
+	z3::context& Ctx = Expr.ctx();
 	z3::solver Solver4Sim(Ctx);
 	Solver4Sim.add(Ctx.bool_val(true));
 
@@ -204,74 +204,74 @@ SMTExpr operator!(SMTExpr const & a) {
 	if (a.isLogicNot()) {
 		assert(a.numArgs() == 1);
 		return a.getArg(0);
-	} else if (a.equals(a.z3_expr.ctx().bool_val(true))) {
-		return a.z3_expr.ctx().bool_val(false);
-	} else if (a.equals(a.z3_expr.ctx().bool_val(false))) {
-		return a.z3_expr.ctx().bool_val(true);
+	} else if (a.equals(a.Expr.ctx().bool_val(true))) {
+		return a.Expr.ctx().bool_val(false);
+	} else if (a.equals(a.Expr.ctx().bool_val(false))) {
+		return a.Expr.ctx().bool_val(true);
 	} else {
-		return !a.z3_expr;
+		return !a.Expr;
 	}
 }
 
 SMTExpr SMTExprVec::toAndExpr() const {
-	if (z3_expr_vec.empty()) {
-		return z3_expr_vec.ctx().bool_val(true);
+	if (ExprVec.empty()) {
+		return ExprVec.ctx().bool_val(true);
 	}
 
-	z3::expr t = z3_expr_vec.ctx().bool_val(true), f = z3_expr_vec.ctx().bool_val(false);
+	z3::expr t = ExprVec.ctx().bool_val(true), f = ExprVec.ctx().bool_val(false);
 
-	Z3_ast* Args = new Z3_ast[z3_expr_vec.size()];
+	Z3_ast* Args = new Z3_ast[ExprVec.size()];
 	unsigned ActualSz = 0, Index = 0;
-	for (unsigned I = 0, E = z3_expr_vec.size(); I < E; I++) {
-		z3::expr e = z3_expr_vec[I];
+	for (unsigned I = 0, E = ExprVec.size(); I < E; I++) {
+		z3::expr e = ExprVec[I];
 		if (z3::eq(e, t)) {
 			continue;
 		} else if (z3::eq(e, f)) {
 			delete[] Args;
 			return f;
 		}
-		Args[ActualSz++] = z3_expr_vec[I];
+		Args[ActualSz++] = ExprVec[I];
 		Index = I;
 	}
 
 	if (ActualSz == 1) {
 		delete[] Args;
-		return z3_expr_vec[Index];
+		return ExprVec[Index];
 	}
 
-	SMTExpr Ret(to_expr(z3_expr_vec.ctx(), Z3_mk_and(z3_expr_vec.ctx(), ActualSz, Args)));
+	SMTExpr Ret(to_expr(ExprVec.ctx(), Z3_mk_and(ExprVec.ctx(), ActualSz, Args)));
 	delete[] Args;
 
 	return Ret;
 }
 
 SMTExpr SMTExprVec::toOrExpr() const {
-	if (z3_expr_vec.empty()) {
-		return z3_expr_vec.ctx().bool_val(true);
+	if (ExprVec.empty()) {
+		return ExprVec.ctx().bool_val(true);
 	}
 
-	z3::expr t = z3_expr_vec.ctx().bool_val(true), f = z3_expr_vec.ctx().bool_val(false);
+	z3::expr t = ExprVec.ctx().bool_val(true), f = ExprVec.ctx().bool_val(false);
 
-	Z3_ast* Args = new Z3_ast[z3_expr_vec.size()];
+	Z3_ast* Args = new Z3_ast[ExprVec.size()];
 	unsigned ActualSz = 0, Index = 0;
-	for (unsigned I = 0, E = z3_expr_vec.size(); I < E; I++) {
-		z3::expr e = z3_expr_vec[I];
+	for (unsigned I = 0, E = ExprVec.size(); I < E; I++) {
+		z3::expr e = ExprVec[I];
 		if (z3::eq(e, f)) {
 			continue;
 		} else if (z3::eq(e, t)) {
 			delete[] Args;
 			return t;
 		}
-		Args[ActualSz++] = z3_expr_vec[I];
+		Args[ActualSz++] = ExprVec[I];
 		Index = I;
 	}
 
 	if (ActualSz == 1) {
 		delete[] Args;
-		return z3_expr_vec[Index];
+		return ExprVec[Index];
 	}
 
-	SMTExpr Ret(to_expr(z3_expr_vec.ctx(), Z3_mk_or(z3_expr_vec.ctx(), ActualSz, Args)));
+	SMTExpr Ret(to_expr(ExprVec.ctx(), Z3_mk_or(ExprVec.ctx(), ActualSz, Args)));
 	delete[] Args;
 	return Ret;
 }
