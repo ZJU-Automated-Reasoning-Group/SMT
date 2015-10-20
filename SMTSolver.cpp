@@ -24,6 +24,9 @@ static llvm::cl::opt<std::string> DumpingConstraintsDst("dump-cnts-dst", llvm::c
 static llvm::cl::opt<int> DumpingConstraintsTimeout("dump-cnts-timeout",
 		llvm::cl::desc("If solving time is too large (ms), the constraints will be output to the destination that -dump-cnts-dst set."));
 
+// only for debugging (single-thread)
+bool SMTSolvingTimeOut = false;
+
 SMTSolver::SMTSolver(z3::solver s) :
 		Solver(s) {
 }
@@ -103,6 +106,10 @@ SMTResult SMTSolver::check(SMTExprVec* Assumptions) {
 				} else {
 					std::cerr << "File cannot be opened: " << DstFileName << "\n";
 				}
+
+				SMTSolvingTimeOut = true;
+			} else {
+				SMTSolvingTimeOut = false;
 			}
 			DEBUG(std::cerr << "Solving done: (" << TimeCost << ", " << Result << ")\n");
 		} else {
