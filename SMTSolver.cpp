@@ -49,7 +49,8 @@ SMTResult SMTSolver::check(SMTExprVec* Assumptions) {
 	z3::check_result Result;
 	try {
 		clock_t Start;
-		DEBUG(unsigned Sz = assertions().constraintSize(); std::cerr << "\nStart solving! Constraint Size: " << Sz << "\n"; Start = clock());
+		DEBUG(
+				std::cerr << "\nStart solving! Constraint Size: " << assertions().constraintSize() << "/" << assertions().size() << "\n"; Start = clock());
 		if (DumpingConstraintsTimeout.getNumOccurrences()) {
 			Start = clock();
 		}
