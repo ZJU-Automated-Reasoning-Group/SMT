@@ -971,8 +971,9 @@ public:
 
 	SMTExprVec copy() {
 		z3::expr_vector Ret = z3::expr_vector(ExprVec.ctx());
+		Ret.resize(ExprVec.size());
 		for (unsigned Idx = 0; Idx < ExprVec.size(); Idx++) {
-			Ret.push_back(ExprVec[Idx]);
+			Z3_ast_vector_set(ExprVec.ctx(), Ret, Idx, ExprVec[Idx]);
 		}
 		return Ret;
 	}
@@ -981,6 +982,16 @@ public:
 	void mergeWithAnd(const SMTExprVec& v2) {
 		for (size_t i = 0; i < v2.size(); i++) {
 			ExprVec.push_back(v2.ExprVec[i]);
+		}
+	}
+
+	static SMTExprVec merge(SMTExprVec v1, SMTExprVec v2) {
+		if(v1.size() < v2.size()) {
+			v2.mergeWithAnd(v1);
+			return v2;
+		} else {
+			v1.mergeWithAnd(v2);
+			return v1;
 		}
 	}
 

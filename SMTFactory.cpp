@@ -16,13 +16,8 @@
 static llvm::cl::opt<int> SolverTimeOut("solver-time-out", llvm::cl::init(-1), llvm::cl::desc("Set the timeout (ms) of the smt solver."));
 
 SMTExprVec SMTFactory::translate(const SMTExprVec & Exprs) {
-	SMTExprVec RetExprVec = this->createEmptySMTExprVec();
-	for (unsigned ExprIdx = 0; ExprIdx < Exprs.size(); ExprIdx++) {
-		SMTExpr OrigExpr = Exprs[ExprIdx];
-		SMTExpr Ret(to_expr(Ctx, Z3_translate(OrigExpr.Expr.ctx(), OrigExpr.Expr, Ctx)));
-		RetExprVec.push_back(Ret);
-	}
-	return RetExprVec;
+	SMTExprVec Ret(z3::expr_vector(Ctx, Z3_ast_vector_translate(Exprs.ExprVec.ctx(), Exprs.ExprVec, Ctx)));
+	return Ret;
 }
 
 std::pair<SMTExprVec, bool> SMTFactory::rename(const SMTExprVec& Exprs, const std::string& RenamingSuffix,
