@@ -5,7 +5,6 @@
 #include <vector>
 #include <set>
 
-#include <llvm/Support/CommandLine.h>
 #include <llvm/Support/Debug.h>
 
 #include "SMTExpr.h"
@@ -283,4 +282,19 @@ unsigned SMTExprVec::constraintSize() const {
 		Ret += (*this)[I].size(Cache);
 	}
 	return Ret;
+}
+
+llvm::raw_ostream&
+operator<<(llvm::raw_ostream& out, SMTExpr n) {
+	z3::expr& expr = n.Expr;
+	out << Z3_ast_to_string(expr.ctx(), expr);
+	return out;
+}
+
+llvm::raw_ostream&
+operator<<(llvm::raw_ostream& out, SMTExprVec vec)
+{
+	z3::expr_vector& ExprVec = vec.ExprVec;
+	out << Z3_ast_vector_to_string(ExprVec.ctx(), ExprVec);
+	return out;
 }

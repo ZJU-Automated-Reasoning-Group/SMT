@@ -7,6 +7,7 @@
 
 #include <z3++.h>
 #include <map>
+#include <llvm/Support/raw_ostream.h>
 
 class SMTExprVec;
 class SMTExprComparator;
@@ -238,6 +239,9 @@ public:
 	friend SMTExpr operator~(SMTExpr const & a) {
 		return ~a.Expr;
 	}
+
+	friend llvm::raw_ostream&
+	operator<<(llvm::raw_ostream& out, SMTExpr n);
 
 	friend std::ostream & operator<<(std::ostream & out, SMTExpr const & n) {
 		out << n.Expr;
@@ -1022,6 +1026,9 @@ public:
 	friend class SMTFactory;
 	friend class SMTSolver;
 	friend class SMTExpr;
+
+	friend llvm::raw_ostream &
+	operator<<(llvm::raw_ostream& out, SMTExprVec vec);
 
 	friend std::ostream & operator<<(std::ostream & out, SMTExprVec vec) {
 		out << vec.ExprVec;
