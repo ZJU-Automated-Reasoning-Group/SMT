@@ -6,6 +6,7 @@
 #define UTILS_SMT_SMTSOLVER_H
 
 #include <z3++.h>
+#include <llvm/Support/raw_ostream.h>
 
 #include "SMTExpr.h"
 #include "SMTModel.h"
@@ -65,6 +66,11 @@ public:
 	bool operator<(const SMTSolver& Solver) const;
 
 	friend std::ostream & operator<<(std::ostream & O, SMTSolver& Solver) {
+		O << Solver.Solver.to_smt2() << "\n";
+		return O;
+	}
+
+	friend llvm::raw_ostream & operator<<(llvm::raw_ostream & O, SMTSolver& Solver) {
 		O << Solver.Solver.to_smt2() << "\n";
 		return O;
 	}

@@ -240,8 +240,7 @@ public:
 		return ~a.Expr;
 	}
 
-	friend llvm::raw_ostream&
-	operator<<(llvm::raw_ostream& out, SMTExpr n);
+	friend llvm::raw_ostream& operator<<(llvm::raw_ostream& out, SMTExpr n);
 
 	friend std::ostream & operator<<(std::ostream & out, SMTExpr const & n) {
 		out << n.Expr;
@@ -1027,8 +1026,7 @@ public:
 	friend class SMTSolver;
 	friend class SMTExpr;
 
-	friend llvm::raw_ostream &
-	operator<<(llvm::raw_ostream& out, SMTExprVec vec);
+	friend llvm::raw_ostream & operator<<(llvm::raw_ostream& out, SMTExprVec vec);
 
 	friend std::ostream & operator<<(std::ostream & out, SMTExprVec vec) {
 		out << vec.ExprVec;

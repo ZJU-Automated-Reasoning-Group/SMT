@@ -284,16 +284,13 @@ unsigned SMTExprVec::constraintSize() const {
 	return Ret;
 }
 
-llvm::raw_ostream&
-operator<<(llvm::raw_ostream& out, SMTExpr n) {
+llvm::raw_ostream& operator<<(llvm::raw_ostream& out, SMTExpr n) {
 	z3::expr& expr = n.Expr;
 	out << Z3_ast_to_string(expr.ctx(), expr);
 	return out;
 }
 
-llvm::raw_ostream&
-operator<<(llvm::raw_ostream& out, SMTExprVec vec)
-{
+llvm::raw_ostream& operator<<(llvm::raw_ostream& out, SMTExprVec vec) {
 	z3::expr_vector& ExprVec = vec.ExprVec;
 	out << Z3_ast_vector_to_string(ExprVec.ctx(), ExprVec);
 	return out;
