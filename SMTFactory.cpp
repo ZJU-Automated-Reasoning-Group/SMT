@@ -13,8 +13,6 @@
 
 #define DEBUG_TYPE "smt-fctry"
 
-static llvm::cl::opt<int> SolverTimeOut("solver-time-out", llvm::cl::init(-1), llvm::cl::desc("Set the timeout (ms) of the smt solver."));
-
 SMTExprVec SMTFactory::translate(const SMTExprVec & Exprs) {
 	SMTExprVec Ret(z3::expr_vector(Ctx, Z3_ast_vector_translate(Exprs.ExprVec.ctx(), Exprs.ExprVec, Ctx)));
 	return Ret;
@@ -186,18 +184,9 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::unordered_map<std::string, SMTE
 }
 
 SMTSolver SMTFactory::createSMTSolver() {
-	// z3::tactic t = z3::tactic(ctx, "simplify") & z3::tactic(ctx, "smt");
-	// z3::solver ret = t.mk_solver();
-	z3::solver ret(Ctx);
-
-	if (SolverTimeOut.getValue() > 0) {
-		// FIXME still do not know why this
-		// causes crashes in concurrent executions.
-		z3::params p(Ctx);
-		// the unit is ms
-		p.set("timeout", (unsigned) SolverTimeOut.getValue());
-		ret.set(p);
-	}
+	z3::tactic t = z3::tactic(Ctx, "simplify") & z3::tactic(Ctx, "propagate-values") & z3::tactic(Ctx, "solve-eqs") & z3::tactic(Ctx, "bit-blast")
+			& z3::tactic(Ctx, "smt");
+	z3::solver ret = t.mk_solver();
 	return SMTSolver(ret);
 }
 
