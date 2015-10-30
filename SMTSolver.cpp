@@ -45,7 +45,7 @@ SMTSolver& SMTSolver::operator=(const SMTSolver& Solver) {
 	return *this;
 }
 
-SMTResult SMTSolver::check(SMTExprVec* Assumptions) {
+SMTResult SMTSolver::check() {
 	z3::check_result Result;
 	try {
 		clock_t Start;
@@ -83,10 +83,8 @@ SMTResult SMTSolver::check(SMTExprVec* Assumptions) {
 			DEBUG(std::cerr << "Simplifying Done: (" << (double)(clock() - Start) * 1000 / CLOCKS_PER_SEC << ")\n");
 
 			Result = solver4sim.check();
-		} else if (Assumptions == nullptr || Assumptions->size() == 0) {
-			Result = Solver.check();
 		} else {
-			Result = Solver.check(Assumptions->ExprVec);
+			Result = Solver.check();
 		}
 
 		if (DumpingConstraintsTimeout.getNumOccurrences()) {

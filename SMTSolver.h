@@ -36,7 +36,7 @@ public:
 		}
 	}
 
-	SMTResult check(SMTExprVec* Assumptions = nullptr);
+	virtual SMTResult check();
 
 	SMTModel getSMTModel() {
 		try {
@@ -49,7 +49,7 @@ public:
 
 	SMTExprVec assertions();
 
-	void reset();
+	virtual void reset();
 
 	void printUnsatCore(std::ostream& O) {
 		O << Solver.unsat_core() << "\n";
