@@ -14,7 +14,7 @@
 #define DEBUG_TYPE "smt-fctry"
 
 SMTExprVec SMTFactory::translate(const SMTExprVec & Exprs) {
-	SMTExprVec Ret(z3::expr_vector(Ctx, Z3_ast_vector_translate(Exprs.ExprVec.ctx(), Exprs.ExprVec, Ctx)));
+	SMTExprVec Ret(this, z3::expr_vector(Ctx, Z3_ast_vector_translate(Exprs.ExprVec.ctx(), Exprs.ExprVec, Ctx)));
 	return Ret;
 }
 
@@ -84,7 +84,7 @@ std::pair<SMTExprVec, bool> SMTFactory::rename(const SMTExprVec& Exprs, const st
 				SMTExpr OldExpr = It.second;
 
 				std::string NewSymbol = OldSymbol + RenamingSuffix;
-				SMTExpr NewExpr(z3::expr(Ctx, Z3_mk_const(Ctx, Z3_mk_string_symbol(Ctx, NewSymbol.c_str()), OldExpr.Expr.get_sort())));
+				SMTExpr NewExpr(this, z3::expr(Ctx, Z3_mk_const(Ctx, Z3_mk_string_symbol(Ctx, NewSymbol.c_str()), OldExpr.Expr.get_sort())));
 				Mapping.insert(std::pair<std::string, SMTExpr>(OldSymbol, NewExpr));
 
 				From.push_back(OldExpr);
@@ -185,7 +185,7 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::unordered_map<std::string, SMTE
 
 SMTSolver SMTFactory::createSMTSolver() {
 	z3::solver ret(Ctx);
-	return SMTSolver(ret);
+	return SMTSolver(this, ret);
 }
 
 SMTExprVec SMTFactory::createBoolSMTExprVec(bool Content, size_t Size) {
@@ -201,7 +201,71 @@ SMTExprVec SMTFactory::parseSMTLib2File(std::string FileName) {
 	z3::expr Whole(Ctx, Ast);
 	SMTExprVec Assertions = createEmptySMTExprVec();
 	for (unsigned int I = 0; I < Whole.num_args(); I++) {
-		Assertions.push_back(SMTExpr(Whole.arg(I)));
+		Assertions.push_back(SMTExpr(this, Whole.arg(I)));
 	}
 	return Assertions;
+}
+
+SMTExpr SMTFactory::createEmptySMTExpr() {
+	return SMTExpr(this, z3::expr(Ctx));
+}
+
+SMTExprVec SMTFactory::createEmptySMTExprVec() {
+	return SMTExprVec(this, z3::expr_vector(Ctx));
+}
+
+SMTExpr SMTFactory::createRealConst(std::string name) {
+	return SMTExpr(this, Ctx.real_const(name.c_str()));
+}
+
+SMTExpr SMTFactory::createRealVal(std::string name) {
+	return SMTExpr(this, Ctx.real_val(name.c_str()));
+}
+
+SMTExpr SMTFactory::createBitVecConst(std::string name, uint64_t sz) {
+	return SMTExpr(this, Ctx.bv_const(name.c_str(), sz));
+}
+
+SMTExpr SMTFactory::createTemporaryBitVecConst(uint64_t sz) {
+	std::string symbol("temp_");
+	symbol.append(std::to_string(TempSMTVaraibleIndex++));
+	return SMTExpr(this, Ctx.bv_const(symbol.c_str(), sz));
+}
+
+SMTExpr SMTFactory::createBitVecVal(std::string name, uint64_t sz) {
+	return SMTExpr(this, Ctx.bv_val(name.c_str(), sz));
+}
+
+SMTExpr SMTFactory::createBitVecVal(uint64_t val, uint64_t sz) {
+	return SMTExpr(this, Ctx.bv_val((__uint64 ) val, sz));
+}
+
+SMTExpr SMTFactory::createIntVal(int i) {
+	return SMTExpr(this, Ctx.int_val(i));
+}
+
+SMTExpr SMTFactory::createSelect(SMTExpr& vec, SMTExpr index) {
+	return SMTExpr(this, z3::expr(Ctx, Z3_mk_select(Ctx, vec.Expr, index.Expr)));
+}
+
+SMTExpr SMTFactory::createStore(SMTExpr& vec, SMTExpr index, SMTExpr& val2insert) {
+	return SMTExpr(this, z3::expr(Ctx, Z3_mk_store(Ctx, vec.Expr, index.Expr, val2insert.Expr)));
+}
+
+SMTExpr SMTFactory::createIntRealArrayConstFromStringSymbol(std::string& name) {
+	Z3_sort array_sort = Ctx.array_sort(Ctx.int_sort(), Ctx.real_sort());
+	return SMTExpr(this, z3::expr(Ctx, Z3_mk_const(Ctx, Z3_mk_string_symbol(Ctx, name.c_str()), array_sort)));
+}
+
+SMTExpr SMTFactory::createIntBvArrayConstFromStringSymbol(std::string& name, uint64_t sz) {
+	Z3_sort array_sort = Ctx.array_sort(Ctx.int_sort(), Ctx.bv_sort(sz));
+	return SMTExpr(this, z3::expr(Ctx, Z3_mk_const(Ctx, Z3_mk_string_symbol(Ctx, name.c_str()), array_sort)));
+}
+
+SMTExpr SMTFactory::createIntDomainConstantArray(SMTExpr& ElmtExpr) {
+	return SMTExpr(this, z3::expr(Ctx, Z3_mk_const_array(Ctx, Ctx.int_sort(), ElmtExpr.Expr)));
+}
+
+SMTExpr SMTFactory::createBoolVal(bool b) {
+	return SMTExpr(this, Ctx.bool_val(b));
 }

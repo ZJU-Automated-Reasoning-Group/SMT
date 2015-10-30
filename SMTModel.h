@@ -7,50 +7,26 @@
 
 #include <z3++.h>
 
+class SMTFactory;
+
 class SMTModel {
 private:
 	z3::model Model;
+	SMTFactory* Factory;
 
-	SMTModel(z3::model m) :
-			Model(m) {
-	}
+	SMTModel(SMTFactory* F, z3::model m);
 
 public:
 
-	SMTModel(SMTModel const & m) :
-			Model(m.Model) {
-	}
+	SMTModel(SMTModel const & m);
 
-	~SMTModel() {
-	}
+	~SMTModel();
 
-	SMTModel& operator=(const SMTModel& M) {
-		if (this != &M) {
-			this->Model = M.Model;
-		}
-		return *this;
-	}
+	SMTModel& operator=(const SMTModel& M);
 
-	unsigned size() {
-		return Model.size();
-	}
+	unsigned size();
 
-	std::pair<std::string, std::string> getModelDbgInfo(int Index) {
-		auto Item = Model[Index];
-
-		if (Item.name().kind() == Z3_STRING_SYMBOL) {
-			z3::expr E = Model.get_const_interp(Item);
-			std::ostringstream OstrExpr;
-			OstrExpr << E;
-
-			std::ostringstream OstrTy;
-			OstrTy << E.get_sort();
-
-			return std::pair<std::string, std::string>(OstrExpr.str(), OstrTy.str());
-		} else {
-			return std::pair<std::string, std::string>("", "");
-		}
-	}
+	std::pair<std::string, std::string> getModelDbgInfo(int Index);
 
 	friend class SMTSolver;
 };

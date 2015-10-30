@@ -14,7 +14,6 @@
 #include <map>
 
 #include "SMTExpr.h"
-#include "SMTModel.h"
 #include "SMTSolver.h"
 
 class SMTExprPruner {
@@ -54,71 +53,37 @@ public:
 
 	SMTSolver createSMTSolver();
 
-	SMTExpr createEmptySMTExpr() {
-		return (SMTExpr) z3::expr(Ctx);
-	}
+	SMTExpr createEmptySMTExpr();
 
-	SMTExprVec createEmptySMTExprVec() {
-		return (SMTExprVec) z3::expr_vector(Ctx);
-	}
+	SMTExprVec createEmptySMTExprVec();
 
 	SMTExprVec createBoolSMTExprVec(bool, size_t);
 
-	SMTExpr createRealConst(std::string name) {
-		return Ctx.real_const(name.c_str());
-	}
+	SMTExpr createRealConst(std::string name);
 
-	SMTExpr createRealVal(std::string name) {
-		return Ctx.real_val(name.c_str());
-	}
+	SMTExpr createRealVal(std::string name);
 
-	SMTExpr createBitVecConst(std::string name, uint64_t sz) {
-		return Ctx.bv_const(name.c_str(), sz);
-	}
+	SMTExpr createBitVecConst(std::string name, uint64_t sz);
 
-	SMTExpr createTemporaryBitVecConst(uint64_t sz) {
-		std::string symbol("temp_");
-		symbol.append(std::to_string(TempSMTVaraibleIndex++));
-		return Ctx.bv_const(symbol.c_str(), sz);
-	}
+	SMTExpr createTemporaryBitVecConst(uint64_t sz);
 
-	SMTExpr createBitVecVal(std::string name, uint64_t sz) {
-		return Ctx.bv_val(name.c_str(), sz);
-	}
+	SMTExpr createBitVecVal(std::string name, uint64_t sz);
 
-	SMTExpr createBitVecVal(uint64_t val, uint64_t sz) {
-		return Ctx.bv_val((__uint64 ) val, sz);
-	}
+	SMTExpr createBitVecVal(uint64_t val, uint64_t sz);
 
-	SMTExpr createIntVal(int i) {
-		return Ctx.int_val(i);
-	}
+	SMTExpr createIntVal(int i);
 
-	SMTExpr createSelect(SMTExpr& vec, SMTExpr index) {
-		return z3::expr(Ctx, Z3_mk_select(Ctx, vec.Expr, index.Expr));
-	}
+	SMTExpr createSelect(SMTExpr& vec, SMTExpr index);
 
-	SMTExpr createStore(SMTExpr& vec, SMTExpr index, SMTExpr& val2insert) {
-		return z3::expr(Ctx, Z3_mk_store(Ctx, vec.Expr, index.Expr, val2insert.Expr));
-	}
+	SMTExpr createStore(SMTExpr& vec, SMTExpr index, SMTExpr& val2insert);
 
-	SMTExpr createIntRealArrayConstFromStringSymbol(std::string& name) {
-		Z3_sort array_sort = Ctx.array_sort(Ctx.int_sort(), Ctx.real_sort());
-		return z3::expr(Ctx, Z3_mk_const(Ctx, Z3_mk_string_symbol(Ctx, name.c_str()), array_sort));
-	}
+	SMTExpr createIntRealArrayConstFromStringSymbol(std::string& name);
 
-	SMTExpr createIntBvArrayConstFromStringSymbol(std::string& name, uint64_t sz) {
-		Z3_sort array_sort = Ctx.array_sort(Ctx.int_sort(), Ctx.bv_sort(sz));
-		return z3::expr(Ctx, Z3_mk_const(Ctx, Z3_mk_string_symbol(Ctx, name.c_str()), array_sort));
-	}
+	SMTExpr createIntBvArrayConstFromStringSymbol(std::string& name, uint64_t sz);
 
-	SMTExpr createIntDomainConstantArray(SMTExpr& ElmtExpr) {
-		return z3::expr(Ctx, Z3_mk_const_array(Ctx, Ctx.int_sort(), ElmtExpr.Expr));
-	}
+	SMTExpr createIntDomainConstantArray(SMTExpr& ElmtExpr);
 
-	SMTExpr createBoolVal(bool b) {
-		return Ctx.bool_val(b);
-	}
+	SMTExpr createBoolVal(bool b);
 
 	/// This function translate an SMTExprVec (the 1st parameter) created
 	/// by other SMTFactory to the context of this SMTFactory.

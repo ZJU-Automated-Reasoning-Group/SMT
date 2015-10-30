@@ -6,6 +6,9 @@
 #include <llvm/Support/Debug.h>
 
 #include "SMTSolver.h"
+#include "SMTFactory.h"
+#include "SMTExpr.h"
+#include "SMTModel.h"
 
 #include <time.h>
 #include <map>
@@ -29,8 +32,8 @@ static llvm::cl::opt<int> SolverTimeOut("solver-time-out", llvm::cl::init(-1), l
 // only for debugging (single-thread)
 bool SMTSolvingTimeOut = false;
 
-SMTSolver::SMTSolver(z3::solver s) :
-		Solver(s) {
+SMTSolver::SMTSolver(SMTFactory* F, z3::solver& s) :
+		Solver(s), Factory(F) {
 	z3::params p(s.ctx());
 	if (SolverTimeOut.getValue() > 0) {
 		// the unit is ms
@@ -43,12 +46,13 @@ SMTSolver::~SMTSolver() {
 }
 
 SMTSolver::SMTSolver(const SMTSolver& Solver) :
-		Solver(Solver.Solver) {
+		Solver(Solver.Solver), Factory(Solver.Factory) {
 }
 
 SMTSolver& SMTSolver::operator=(const SMTSolver& Solver) {
 	if (this != &Solver) {
 		this->Solver = Solver.Solver;
+		this->Factory = Solver.Factory;
 	}
 	return *this;
 }
@@ -165,7 +169,7 @@ void SMTSolver::pop(unsigned N) {
 }
 
 void SMTSolver::add(SMTExpr e) {
-	if (e.equals(Solver.ctx().bool_val(true))) {
+	if (e.isTrue()) {
 		return;
 	}
 
@@ -179,9 +183,15 @@ void SMTSolver::add(SMTExpr e) {
 	}
 }
 
+void SMTSolver::addAll(SMTExprVec es) {
+	for (unsigned i = 0; i < es.size(); i++) {
+		add(es[i]);
+	}
+}
+
 SMTExprVec SMTSolver::assertions() {
-	z3::expr_vector vec = Solver.assertions();
-	return SMTExprVec(vec);
+	z3::expr_vector Vec = Solver.assertions();
+	return SMTExprVec(Factory, Vec);
 }
 
 void SMTSolver::reset() {
@@ -190,4 +200,13 @@ void SMTSolver::reset() {
 
 bool SMTSolver::operator<(const SMTSolver& Solver) const {
 	return ((Z3_solver) this->Solver) < ((Z3_solver) Solver.Solver);
+}
+
+SMTModel SMTSolver::getSMTModel() {
+	try {
+		return SMTModel(Factory, Solver.get_model());
+	} catch (z3::exception & e) {
+		std::cerr << __FILE__ << " : " << __LINE__ << " : " << e << "\n";
+		exit(1);
+	}
 }

@@ -8,18 +8,21 @@
 #include <z3++.h>
 #include <llvm/Support/raw_ostream.h>
 
-#include "SMTExpr.h"
-#include "SMTModel.h"
-
 enum SMTResult {
 	UNSAT, SAT, UNKNOWN
 };
 
+class SMTFactory;
+class SMTModel;
+class SMTExpr;
+class SMTExprVec;
+
 class SMTSolver {
 private:
 	z3::solver Solver;
+	SMTFactory* Factory;
 
-	SMTSolver(z3::solver s);
+	SMTSolver(SMTFactory* F, z3::solver& s);
 
 public:
 	virtual ~SMTSolver();
@@ -30,34 +33,15 @@ public:
 
 	void add(SMTExpr e);
 
-	void addAll(SMTExprVec es) {
-		for (unsigned i = 0; i < es.size(); i++) {
-			add(es[i]);
-		}
-	}
+	void addAll(SMTExprVec es);
 
 	virtual SMTResult check();
 
-	SMTModel getSMTModel() {
-		try {
-			return SMTModel(Solver.get_model());
-		} catch (z3::exception & e) {
-			std::cerr << __FILE__ << " : " << __LINE__ << " : " << e << "\n";
-			exit(1);
-		}
-	}
+	SMTModel getSMTModel();
 
 	SMTExprVec assertions();
 
 	virtual void reset();
-
-	void printUnsatCore(std::ostream& O) {
-		O << Solver.unsat_core() << "\n";
-	}
-
-	void printUnknownReason(std::ostream& O) {
-		O << Solver.reason_unknown() << "\n";
-	}
 
 	virtual void push();
 
