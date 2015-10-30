@@ -184,9 +184,7 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::unordered_map<std::string, SMTE
 }
 
 SMTSolver SMTFactory::createSMTSolver() {
-	z3::tactic t = z3::tactic(Ctx, "simplify") & z3::tactic(Ctx, "propagate-values") & z3::tactic(Ctx, "solve-eqs") & z3::tactic(Ctx, "bit-blast")
-			& z3::tactic(Ctx, "smt");
-	z3::solver ret = t.mk_solver();
+	z3::solver ret(Ctx);
 	return SMTSolver(ret);
 }
 
