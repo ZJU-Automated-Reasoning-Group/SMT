@@ -24,11 +24,19 @@ static llvm::cl::opt<std::string> DumpingConstraintsDst("dump-cnts-dst", llvm::c
 static llvm::cl::opt<int> DumpingConstraintsTimeout("dump-cnts-timeout",
 		llvm::cl::desc("If solving time is too large (ms), the constraints will be output to the destination that -dump-cnts-dst set."));
 
+static llvm::cl::opt<int> SolverTimeOut("solver-time-out", llvm::cl::init(-1), llvm::cl::desc("Set the timeout (ms) of the smt solver."));
+
 // only for debugging (single-thread)
 bool SMTSolvingTimeOut = false;
 
 SMTSolver::SMTSolver(z3::solver s) :
 		Solver(s) {
+	z3::params p(s.ctx());
+	if (SolverTimeOut.getValue() > 0) {
+		// the unit is ms
+		p.set("timeout", (unsigned) SolverTimeOut.getValue());
+	}
+	s.set(p);
 }
 
 SMTSolver::~SMTSolver() {
