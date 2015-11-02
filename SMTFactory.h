@@ -59,15 +59,15 @@ public:
 
 	SMTExprVec createBoolSMTExprVec(bool, size_t);
 
-	SMTExpr createRealConst(std::string name);
+	SMTExpr createRealConst(const std::string& name);
 
-	SMTExpr createRealVal(std::string name);
+	SMTExpr createRealVal(const std::string& name);
 
-	SMTExpr createBitVecConst(std::string name, uint64_t sz);
+	SMTExpr createBitVecConst(const std::string& name, uint64_t sz);
 
 	SMTExpr createTemporaryBitVecConst(uint64_t sz);
 
-	SMTExpr createBitVecVal(std::string name, uint64_t sz);
+	SMTExpr createBitVecVal(const std::string& name, uint64_t sz);
 
 	SMTExpr createBitVecVal(uint64_t val, uint64_t sz);
 
@@ -77,9 +77,9 @@ public:
 
 	SMTExpr createStore(SMTExpr& vec, SMTExpr index, SMTExpr& val2insert);
 
-	SMTExpr createIntRealArrayConstFromStringSymbol(std::string& name);
+	SMTExpr createIntRealArrayConstFromStringSymbol(const std::string& name);
 
-	SMTExpr createIntBvArrayConstFromStringSymbol(std::string& name, uint64_t sz);
+	SMTExpr createIntBvArrayConstFromStringSymbol(const std::string& name, uint64_t sz);
 
 	SMTExpr createIntDomainConstantArray(SMTExpr& ElmtExpr);
 
@@ -110,7 +110,7 @@ public:
 		return FactoryLock;
 	}
 
-	SMTExprVec parseSMTLib2File(std::string FileName);
+	SMTExprVec parseSMTLib2File(const std::string& FileName);
 
 private:
 	typedef struct RenamingUtility {

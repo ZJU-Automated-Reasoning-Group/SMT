@@ -196,7 +196,7 @@ SMTExprVec SMTFactory::createBoolSMTExprVec(bool Content, size_t Size) {
 	return Ret;
 }
 
-SMTExprVec SMTFactory::parseSMTLib2File(std::string FileName) {
+SMTExprVec SMTFactory::parseSMTLib2File(const std::string& FileName) {
 	Z3_ast Ast = Z3_parse_smtlib2_file(Ctx, FileName.c_str(), 0, 0, 0, 0, 0, 0);
 	z3::expr Whole(Ctx, Ast);
 	SMTExprVec Assertions = createEmptySMTExprVec();
@@ -214,15 +214,15 @@ SMTExprVec SMTFactory::createEmptySMTExprVec() {
 	return SMTExprVec(this, z3::expr_vector(Ctx));
 }
 
-SMTExpr SMTFactory::createRealConst(std::string name) {
+SMTExpr SMTFactory::createRealConst(const std::string& name) {
 	return SMTExpr(this, Ctx.real_const(name.c_str()));
 }
 
-SMTExpr SMTFactory::createRealVal(std::string name) {
+SMTExpr SMTFactory::createRealVal(const std::string& name) {
 	return SMTExpr(this, Ctx.real_val(name.c_str()));
 }
 
-SMTExpr SMTFactory::createBitVecConst(std::string name, uint64_t sz) {
+SMTExpr SMTFactory::createBitVecConst(const std::string& name, uint64_t sz) {
 	return SMTExpr(this, Ctx.bv_const(name.c_str(), sz));
 }
 
@@ -232,7 +232,7 @@ SMTExpr SMTFactory::createTemporaryBitVecConst(uint64_t sz) {
 	return SMTExpr(this, Ctx.bv_const(symbol.c_str(), sz));
 }
 
-SMTExpr SMTFactory::createBitVecVal(std::string name, uint64_t sz) {
+SMTExpr SMTFactory::createBitVecVal(const std::string& name, uint64_t sz) {
 	return SMTExpr(this, Ctx.bv_val(name.c_str(), sz));
 }
 
@@ -252,12 +252,12 @@ SMTExpr SMTFactory::createStore(SMTExpr& vec, SMTExpr index, SMTExpr& val2insert
 	return SMTExpr(this, z3::expr(Ctx, Z3_mk_store(Ctx, vec.Expr, index.Expr, val2insert.Expr)));
 }
 
-SMTExpr SMTFactory::createIntRealArrayConstFromStringSymbol(std::string& name) {
+SMTExpr SMTFactory::createIntRealArrayConstFromStringSymbol(const std::string& name) {
 	Z3_sort array_sort = Ctx.array_sort(Ctx.int_sort(), Ctx.real_sort());
 	return SMTExpr(this, z3::expr(Ctx, Z3_mk_const(Ctx, Z3_mk_string_symbol(Ctx, name.c_str()), array_sort)));
 }
 
-SMTExpr SMTFactory::createIntBvArrayConstFromStringSymbol(std::string& name, uint64_t sz) {
+SMTExpr SMTFactory::createIntBvArrayConstFromStringSymbol(const std::string& name, uint64_t sz) {
 	Z3_sort array_sort = Ctx.array_sort(Ctx.int_sort(), Ctx.bv_sort(sz));
 	return SMTExpr(this, z3::expr(Ctx, Z3_mk_const(Ctx, Z3_mk_string_symbol(Ctx, name.c_str()), array_sort)));
 }
