@@ -65,6 +65,8 @@ public:
 
 	SMTExpr createBitVecConst(const std::string& name, uint64_t sz);
 
+	SMTExpr createBoolConst(const std::string& name);
+
 	SMTExpr createTemporaryBitVecConst(uint64_t sz);
 
 	SMTExpr createBitVecVal(const std::string& name, uint64_t sz);
@@ -84,6 +86,7 @@ public:
 	SMTExpr createIntDomainConstantArray(SMTExpr& ElmtExpr);
 
 	SMTExpr createBoolVal(bool b);
+	SMTExpr createBoolVal(const std::string&);
 
 	/// This function translate an SMTExprVec (the 1st parameter) created
 	/// by other SMTFactory to the context of this SMTFactory.

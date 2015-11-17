@@ -236,6 +236,10 @@ SMTExpr SMTFactory::createBitVecVal(const std::string& name, uint64_t sz) {
 	return SMTExpr(this, Ctx.bv_val(name.c_str(), sz));
 }
 
+SMTExpr SMTFactory::createBoolConst(const std::string& name)
+{
+	return SMTExpr(this, Ctx.bool_const(name.c_str()));
+}
 SMTExpr SMTFactory::createBitVecVal(uint64_t val, uint64_t sz) {
 	return SMTExpr(this, Ctx.bv_val((__uint64 ) val, sz));
 }
@@ -251,6 +255,7 @@ SMTExpr SMTFactory::createSelect(SMTExpr& vec, SMTExpr index) {
 SMTExpr SMTFactory::createStore(SMTExpr& vec, SMTExpr index, SMTExpr& val2insert) {
 	return SMTExpr(this, z3::expr(Ctx, Z3_mk_store(Ctx, vec.Expr, index.Expr, val2insert.Expr)));
 }
+
 
 SMTExpr SMTFactory::createIntRealArrayConstFromStringSymbol(const std::string& name) {
 	Z3_sort array_sort = Ctx.array_sort(Ctx.int_sort(), Ctx.real_sort());
