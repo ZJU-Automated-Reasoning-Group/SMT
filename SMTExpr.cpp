@@ -27,7 +27,11 @@ SMTExpr& SMTExpr::operator=(const SMTExpr& e) {
 }
 
 SMTExpr SMTExpr::substitute(SMTExprVec& From, SMTExprVec& To) {
-	return SMTExpr(Factory, Expr.substitute(From.ExprVec, To.ExprVec));
+	assert(From.size() == To.size());
+	if (From.empty()) {
+		return *this;
+	}
+	return SMTExpr(Factory, Expr.substitute(*From.ExprVec, *To.ExprVec));
 }
 
 SMTExpr SMTExpr::localSimplify() {
@@ -1005,12 +1009,12 @@ SMTExpr operator~(SMTExpr const & a) {
 	return SMTExpr(a.Factory, ~a.Expr);
 }
 
-SMTExprVec::SMTExprVec(SMTFactory* F, z3::expr_vector Vec) :
-		ExprVec(Vec), Factory(F) {
+SMTExprVec::SMTExprVec(SMTFactory* F, std::shared_ptr<z3::expr_vector> Vec) :
+		Factory(F), ExprVec(Vec) {
 }
 
 SMTExprVec::SMTExprVec(SMTExprVec const &Vec) :
-		ExprVec(Vec.ExprVec), Factory(Vec.Factory) {
+		Factory(Vec.Factory), ExprVec(Vec.ExprVec) {
 }
 
 SMTExprVec& SMTExprVec::operator=(const SMTExprVec& Vec) {
@@ -1022,37 +1026,57 @@ SMTExprVec& SMTExprVec::operator=(const SMTExprVec& Vec) {
 }
 
 unsigned SMTExprVec::size() const {
-	return ExprVec.size();
+	if (ExprVec.get() == nullptr) {
+		return 0;
+	}
+	return ExprVec->size();
 }
 
 void SMTExprVec::push_back(SMTExpr e) {
 	if (e.isTrue()) {
 		return;
 	}
-	ExprVec.push_back(e.Expr);
+	if (ExprVec.get() == nullptr) {
+		ExprVec = std::shared_ptr<z3::expr_vector>(new z3::expr_vector(e.Expr.ctx()));
+	}
+	ExprVec->push_back(e.Expr);
 }
 
-SMTExpr SMTExprVec::operator[](int i) const {
-	return SMTExpr(Factory, ExprVec[i]);
+SMTExpr SMTExprVec::operator[](unsigned i) const {
+	assert(i < size());
+	return SMTExpr(Factory, (*ExprVec)[i]);
 }
 
 bool SMTExprVec::empty() const {
-	return ExprVec.empty();
+	return size() == 0;
 }
 
 SMTExprVec SMTExprVec::copy() {
-	z3::expr_vector Ret = z3::expr_vector(ExprVec.ctx());
-	Ret.resize(ExprVec.size());
-	for (unsigned Idx = 0; Idx < ExprVec.size(); Idx++) {
-		Z3_ast_vector_set(ExprVec.ctx(), Ret, Idx, ExprVec[Idx]);
+	if (size() == 0) {
+		std::shared_ptr<z3::expr_vector> Ret(nullptr);
+		return SMTExprVec(Factory, Ret);
+	}
+
+	std::shared_ptr<z3::expr_vector> Ret(new z3::expr_vector(ExprVec->ctx()));
+	Ret->resize(ExprVec->size());
+	for (unsigned Idx = 0; Idx < ExprVec->size(); Idx++) {
+		Z3_ast_vector_set(ExprVec->ctx(), *Ret, Idx, (*ExprVec)[Idx]);
 	}
 	return SMTExprVec(Factory, Ret);
 }
 
 /// *this = *this && v2
 void SMTExprVec::mergeWithAnd(const SMTExprVec& v2) {
+	if (v2.size() == 0) {
+		return;
+	}
+
+	if (ExprVec.get() == nullptr) {
+		ExprVec = std::shared_ptr<z3::expr_vector>(new z3::expr_vector(v2.ExprVec->ctx()));
+	}
+
 	for (size_t i = 0; i < v2.size(); i++) {
-		ExprVec.push_back(v2.ExprVec[i]);
+		ExprVec->push_back((*v2.ExprVec)[i]);
 	}
 }
 
@@ -1068,81 +1092,79 @@ SMTExprVec SMTExprVec::merge(SMTExprVec v1, SMTExprVec v2) {
 
 /// *this = *this || v2
 void SMTExprVec::mergeWithOr(const SMTExprVec& v2) {
-	if (v2.empty())
-		return;
-
-	if (empty()) {
-		ExprVec = v2.ExprVec;
+	SMTExprVec Ret = Factory->createEmptySMTExprVec();
+	if (v2.empty() || empty()) {
+		Ret.push_back(Factory->createBoolVal(true));
+		*this = Ret;
 		return;
 	}
 
 	SMTExpr e1 = this->toAndExpr();
 	SMTExpr e2 = v2.toAndExpr();
-
-	z3::expr_vector ret(ExprVec.ctx());
-	ret.push_back(e1.Expr || e2.Expr);
-	ExprVec = ret;
+	Ret.ExprVec->push_back(e1.Expr || e2.Expr);
+	*this = Ret;
+	return;
 }
 
 SMTExpr SMTExprVec::toAndExpr() const {
-	if (ExprVec.empty()) {
+	if (empty()) {
 		return Factory->createBoolVal(true);
 	}
 
-	z3::expr t = ExprVec.ctx().bool_val(true), f = ExprVec.ctx().bool_val(false);
+	z3::expr t = ExprVec->ctx().bool_val(true), f = ExprVec->ctx().bool_val(false);
 
-	Z3_ast* Args = new Z3_ast[ExprVec.size()];
+	Z3_ast* Args = new Z3_ast[ExprVec->size()];
 	unsigned ActualSz = 0, Index = 0;
-	for (unsigned I = 0, E = ExprVec.size(); I < E; I++) {
-		z3::expr e = ExprVec[I];
+	for (unsigned I = 0, E = ExprVec->size(); I < E; I++) {
+		z3::expr e = (*ExprVec)[I];
 		if (z3::eq(e, t)) {
 			continue;
 		} else if (z3::eq(e, f)) {
 			delete[] Args;
 			return Factory->createBoolVal(false);
 		}
-		Args[ActualSz++] = ExprVec[I];
+		Args[ActualSz++] = (*ExprVec)[I];
 		Index = I;
 	}
 
 	if (ActualSz == 1) {
 		delete[] Args;
-		return SMTExpr(Factory, ExprVec[Index]);
+		return SMTExpr(Factory, (*ExprVec)[Index]);
 	}
 
-	SMTExpr Ret(Factory, to_expr(ExprVec.ctx(), Z3_mk_and(ExprVec.ctx(), ActualSz, Args)));
+	SMTExpr Ret(Factory, to_expr(ExprVec->ctx(), Z3_mk_and(ExprVec->ctx(), ActualSz, Args)));
 	delete[] Args;
 
 	return Ret;
 }
 
 SMTExpr SMTExprVec::toOrExpr() const {
-	if (ExprVec.empty()) {
+	if (empty()) {
 		return Factory->createBoolVal(true);
 	}
 
-	z3::expr t = ExprVec.ctx().bool_val(true), f = ExprVec.ctx().bool_val(false);
+	z3::expr t = ExprVec->ctx().bool_val(true), f = ExprVec->ctx().bool_val(false);
 
-	Z3_ast* Args = new Z3_ast[ExprVec.size()];
+	Z3_ast* Args = new Z3_ast[ExprVec->size()];
 	unsigned ActualSz = 0, Index = 0;
-	for (unsigned I = 0, E = ExprVec.size(); I < E; I++) {
-		z3::expr e = ExprVec[I];
+	for (unsigned I = 0, E = ExprVec->size(); I < E; I++) {
+		z3::expr e = (*ExprVec)[I];
 		if (z3::eq(e, f)) {
 			continue;
 		} else if (z3::eq(e, t)) {
 			delete[] Args;
 			return SMTExpr(Factory, t);
 		}
-		Args[ActualSz++] = ExprVec[I];
+		Args[ActualSz++] = (*ExprVec)[I];
 		Index = I;
 	}
 
 	if (ActualSz == 1) {
 		delete[] Args;
-		return SMTExpr(Factory, ExprVec[Index]);
+		return SMTExpr(Factory, (*ExprVec)[Index]);
 	}
 
-	SMTExpr Ret(Factory, to_expr(ExprVec.ctx(), Z3_mk_or(ExprVec.ctx(), ActualSz, Args)));
+	SMTExpr Ret(Factory, to_expr(ExprVec->ctx(), Z3_mk_or(ExprVec->ctx(), ActualSz, Args)));
 	delete[] Args;
 	return Ret;
 }
@@ -1167,7 +1189,6 @@ llvm::raw_ostream& operator<<(llvm::raw_ostream& out, SMTExpr n) {
 }
 
 llvm::raw_ostream& operator<<(llvm::raw_ostream& out, SMTExprVec vec) {
-	z3::expr_vector& ExprVec = vec.ExprVec;
-	out << Z3_ast_vector_to_string(ExprVec.ctx(), ExprVec);
+	out << Z3_ast_vector_to_string(vec.ExprVec->ctx(), *vec.ExprVec);
 	return out;
 }

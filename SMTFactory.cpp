@@ -14,7 +14,12 @@
 #define DEBUG_TYPE "smt-fctry"
 
 SMTExprVec SMTFactory::translate(const SMTExprVec & Exprs) {
-	SMTExprVec Ret(this, z3::expr_vector(Ctx, Z3_ast_vector_translate(Exprs.ExprVec.ctx(), Exprs.ExprVec, Ctx)));
+	if (Exprs.empty()) {
+		return this->createEmptySMTExprVec();
+	}
+
+	std::shared_ptr<z3::expr_vector> Vec(new z3::expr_vector(z3::expr_vector(Ctx, Z3_ast_vector_translate(Exprs.ExprVec->ctx(), *Exprs.ExprVec, Ctx))));
+	SMTExprVec Ret(this, Vec);
 	return Ret;
 }
 
@@ -211,7 +216,8 @@ SMTExpr SMTFactory::createEmptySMTExpr() {
 }
 
 SMTExprVec SMTFactory::createEmptySMTExprVec() {
-	return SMTExprVec(this, z3::expr_vector(Ctx));
+	std::shared_ptr<z3::expr_vector> Vec(nullptr);
+	return SMTExprVec(this, Vec);
 }
 
 SMTExpr SMTFactory::createRealConst(const std::string& name) {

@@ -7,6 +7,8 @@
 
 #include <z3++.h>
 #include <map>
+#include <iostream>
+#include <memory>
 #include <llvm/Support/raw_ostream.h>
 
 class SMTFactory;
@@ -316,10 +318,10 @@ public:
 
 class SMTExprVec {
 private:
-	z3::expr_vector ExprVec;
 	SMTFactory* Factory;
+	std::shared_ptr<z3::expr_vector> ExprVec;
 
-	SMTExprVec(SMTFactory* F, z3::expr_vector Vec);
+	SMTExprVec(SMTFactory* F, std::shared_ptr<z3::expr_vector> Vec);
 
 public:
 	SMTExprVec(SMTExprVec const &Vec);
@@ -332,7 +334,7 @@ public:
 
 	void push_back(SMTExpr e);
 
-	SMTExpr operator[](int i) const;
+	SMTExpr operator[](unsigned i) const;
 
 	bool empty() const;
 
@@ -361,7 +363,7 @@ public:
 	friend llvm::raw_ostream & operator<<(llvm::raw_ostream& out, SMTExprVec vec);
 
 	friend std::ostream & operator<<(std::ostream & out, SMTExprVec vec) {
-		out << vec.ExprVec;
+		out << *vec.ExprVec;
 		return out;
 	}
 };
