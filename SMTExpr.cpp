@@ -1053,8 +1053,9 @@ bool SMTExprVec::empty() const {
 
 SMTExprVec SMTExprVec::copy() {
 	if (size() == 0) {
-		std::shared_ptr<z3::expr_vector> Ret(nullptr);
-		return SMTExprVec(Factory, Ret);
+		// std::shared_ptr<z3::expr_vector> Ret(nullptr);
+		assert(!ExprVec.get());
+		return *this;
 	}
 
 	std::shared_ptr<z3::expr_vector> Ret(new z3::expr_vector(ExprVec->ctx()));
@@ -1189,6 +1190,9 @@ llvm::raw_ostream& operator<<(llvm::raw_ostream& out, SMTExpr n) {
 }
 
 llvm::raw_ostream& operator<<(llvm::raw_ostream& out, SMTExprVec vec) {
+	if (vec.ExprVec.get() == nullptr) {
+		out << "(empty vector)";
+	}
 	out << Z3_ast_vector_to_string(vec.ExprVec->ctx(), *vec.ExprVec);
 	return out;
 }

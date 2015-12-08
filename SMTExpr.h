@@ -316,6 +316,11 @@ public:
 	}
 };
 
+/**
+ * NOTE: when SMTExprVec.empty(), the copy constructor
+ * and = operator have the copy semantics. Otherwise,
+ * they have move semantics.
+ */
 class SMTExprVec {
 private:
 	SMTFactory* Factory;
