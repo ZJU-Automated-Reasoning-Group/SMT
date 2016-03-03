@@ -220,6 +220,8 @@ public:
 
 	SMTExpr substitute(SMTExprVec& From, SMTExprVec& To);
 
+	/*==-- basic operations --==*/
+
 	SMTExpr bv12bool();
 
 	SMTExpr bool2bv1();
@@ -228,64 +230,90 @@ public:
 
 	SMTExpr int2real();
 
-	SMTExpr int2bv(unsigned sz);
+	SMTExpr int2bv(unsigned Sz);
 
-	SMTExpr bv2int(bool isSigned);
+	SMTExpr bv2int(bool IsSigned);
 
-	SMTExpr basic_zext(unsigned sz);
+#define DECLARE_BASIC_OPERATION(X) \
+	SMTExpr basic_##X(SMTExpr &Expr);
 
-	SMTExpr basic_add(SMTExpr &b);
+	DECLARE_BASIC_OPERATION(add)
+	DECLARE_BASIC_OPERATION(sub)
+	DECLARE_BASIC_OPERATION(mul)
+	DECLARE_BASIC_OPERATION(udiv)
+	DECLARE_BASIC_OPERATION(sdiv)
+	DECLARE_BASIC_OPERATION(urem)
+	DECLARE_BASIC_OPERATION(srem)
+	DECLARE_BASIC_OPERATION(shl)
+	DECLARE_BASIC_OPERATION(ashr)
+	DECLARE_BASIC_OPERATION(lshr)
+	DECLARE_BASIC_OPERATION(and)
+	DECLARE_BASIC_OPERATION(or)
+	DECLARE_BASIC_OPERATION(xor)
+	DECLARE_BASIC_OPERATION(concat)
 
-	SMTExpr basic_sub(SMTExpr &b);
+	DECLARE_BASIC_OPERATION(eq)
+	DECLARE_BASIC_OPERATION(ne)
+	DECLARE_BASIC_OPERATION(ugt)
+	DECLARE_BASIC_OPERATION(uge)
+	DECLARE_BASIC_OPERATION(sgt)
+	DECLARE_BASIC_OPERATION(sge)
+	DECLARE_BASIC_OPERATION(ult)
+	DECLARE_BASIC_OPERATION(ule)
+	DECLARE_BASIC_OPERATION(slt)
+	DECLARE_BASIC_OPERATION(sle)
 
-	SMTExpr basic_mul(SMTExpr &b);
+	SMTExpr basic_extract(unsigned High, unsigned Low);
 
-	SMTExpr basic_udiv(SMTExpr &b);
+	SMTExpr basic_zext(unsigned Sz);
 
-	SMTExpr basic_sdiv(SMTExpr &b);
-
-	SMTExpr basic_urem(SMTExpr &b);
-
-	SMTExpr basic_srem(SMTExpr &b);
-
-	SMTExpr basic_shl(SMTExpr &b);
-
-	SMTExpr basic_ashr(SMTExpr &b);
-
-	SMTExpr basic_lshr(SMTExpr &b);
-
-	SMTExpr basic_and(SMTExpr &b);
-
-	SMTExpr basic_or(SMTExpr &b);
-
-	SMTExpr basic_xor(SMTExpr &b);
-
-	SMTExpr basic_eq(SMTExpr &b);
-
-	SMTExpr basic_ne(SMTExpr &b);
-
-	SMTExpr basic_ugt(SMTExpr &b);
-
-	SMTExpr basic_uge(SMTExpr &b);
-
-	SMTExpr basic_sgt(SMTExpr &b);
-
-	SMTExpr basic_sge(SMTExpr &b);
-
-	SMTExpr basic_ult(SMTExpr &b);
-
-	SMTExpr basic_ule(SMTExpr &b);
-
-	SMTExpr basic_slt(SMTExpr &b);
-
-	SMTExpr basic_sle(SMTExpr &b);
-
-	SMTExpr basic_extract(unsigned high, unsigned low);
-
-	SMTExpr basic_sext(unsigned sz);
+	SMTExpr basic_sext(unsigned Sz);
 
 	SMTExpr basic_ite(SMTExpr& TBValue, SMTExpr& FBValue);
 
+	/*==-- array operations --==*/
+	SMTExpr array_elmt(unsigned ElmtNum, unsigned Index);
+
+#define DECLARE_ARRAY_OPERATION(X) \
+	SMTExpr array_##X(SMTExpr &BvAsArray, unsigned ElmtNum);
+
+	DECLARE_ARRAY_OPERATION(sgt)
+	DECLARE_ARRAY_OPERATION(sge)
+	DECLARE_ARRAY_OPERATION(ugt)
+	DECLARE_ARRAY_OPERATION(uge)
+	DECLARE_ARRAY_OPERATION(slt)
+	DECLARE_ARRAY_OPERATION(sle)
+	DECLARE_ARRAY_OPERATION(ule)
+	DECLARE_ARRAY_OPERATION(ult)
+	DECLARE_ARRAY_OPERATION(eq)
+	DECLARE_ARRAY_OPERATION(ne)
+
+	DECLARE_ARRAY_OPERATION(add)
+	DECLARE_ARRAY_OPERATION(sub)
+	DECLARE_ARRAY_OPERATION(mul)
+	DECLARE_ARRAY_OPERATION(udiv)
+	DECLARE_ARRAY_OPERATION(sdiv)
+	DECLARE_ARRAY_OPERATION(urem)
+	DECLARE_ARRAY_OPERATION(srem)
+	DECLARE_ARRAY_OPERATION(shl)
+	DECLARE_ARRAY_OPERATION(ashr)
+	DECLARE_ARRAY_OPERATION(lshr)
+	DECLARE_ARRAY_OPERATION(and)
+	DECLARE_ARRAY_OPERATION(or)
+	DECLARE_ARRAY_OPERATION(xor)
+
+	SMTExpr array_ite(SMTExpr& TBValue, SMTExpr& FBValue, unsigned ElmtNum);
+
+	// Sz: size to extend
+	SMTExpr array_sext(unsigned Sz, unsigned ElmtNum);
+
+	// Sz: size to extend
+	SMTExpr array_zext(unsigned Sz, unsigned ElmtNum);
+
+	// Sz: size to trunc
+	SMTExpr array_trunc(unsigned Sz, unsigned ElmtNum);
+
+	/*==-- simplifications --==*/
 	SMTExpr localSimplify();
 
 	SMTExpr dilligSimplify();
