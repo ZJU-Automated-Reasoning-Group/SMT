@@ -584,8 +584,8 @@ SMTExpr SMTExpr::array_##X(unsigned Sz, unsigned ElmtNum) { \
 	} \
 }
 
-ARRAY_EXT_OPERATION(zext);
-ARRAY_EXT_OPERATION(sext);
+ARRAY_EXT_OPERATION(zext)
+ARRAY_EXT_OPERATION(sext)
 
 SMTExpr SMTExpr::array_trunc(unsigned Sz, unsigned ElmtNum) {
 	assert(ElmtNum > 0);
@@ -857,7 +857,7 @@ void SMTExprVec::push_back(SMTExpr e) {
 		return;
 	}
 	if (ExprVec.get() == nullptr) {
-		ExprVec = std::shared_ptr<z3::expr_vector>(new z3::expr_vector(e.Expr.ctx()));
+		ExprVec = std::make_shared<z3::expr_vector>(e.Expr.ctx());
 	}
 	ExprVec->push_back(e.Expr);
 }
@@ -878,7 +878,7 @@ SMTExprVec SMTExprVec::copy() {
 		return *this;
 	}
 
-	std::shared_ptr<z3::expr_vector> Ret(new z3::expr_vector(ExprVec->ctx()));
+	std::shared_ptr<z3::expr_vector> Ret = std::make_shared<z3::expr_vector>(ExprVec->ctx());
 	Ret->resize(ExprVec->size());
 	for (unsigned Idx = 0; Idx < ExprVec->size(); Idx++) {
 		Z3_ast_vector_set(ExprVec->ctx(), *Ret, Idx, (*ExprVec)[Idx]);
@@ -893,7 +893,7 @@ void SMTExprVec::mergeWithAnd(const SMTExprVec& v2) {
 	}
 
 	if (ExprVec.get() == nullptr) {
-		ExprVec = std::shared_ptr<z3::expr_vector>(new z3::expr_vector(v2.ExprVec->ctx()));
+		ExprVec = std::make_shared<z3::expr_vector>(v2.ExprVec->ctx());
 	}
 
 	for (size_t i = 0; i < v2.size(); i++) {
