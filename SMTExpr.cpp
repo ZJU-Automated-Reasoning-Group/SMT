@@ -999,7 +999,7 @@ unsigned SMTExprVec::constraintSize() const {
 	return Ret;
 }
 
-SMTFactory& SMTExprVec::getSMTFactory() {
+SMTFactory& SMTExprVec::getSMTFactory() const {
 	return *Factory;
 }
 

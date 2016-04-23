@@ -18,6 +18,8 @@ SMTExprVec SMTFactory::translate(const SMTExprVec & Exprs) {
 		return this->createEmptySMTExprVec();
 	}
 
+	std::lock_guard<std::mutex> L(Exprs.getSMTFactory().getFactoryLock());
+
 	std::shared_ptr<z3::expr_vector> Vec(new z3::expr_vector(z3::expr_vector(Ctx, Z3_ast_vector_translate(Exprs.ExprVec->ctx(), *Exprs.ExprVec, Ctx))));
 	SMTExprVec Ret(this, Vec);
 	return Ret;

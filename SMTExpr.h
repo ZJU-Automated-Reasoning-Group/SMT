@@ -387,7 +387,7 @@ public:
 
 	SMTExpr toOrExpr() const;
 
-	SMTFactory& getSMTFactory();
+	SMTFactory& getSMTFactory() const;
 
 	friend class SMTFactory;
 	friend class SMTSolver;
