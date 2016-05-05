@@ -1012,6 +1012,7 @@ llvm::raw_ostream& operator<<(llvm::raw_ostream& out, SMTExpr n) {
 llvm::raw_ostream& operator<<(llvm::raw_ostream& out, SMTExprVec vec) {
 	if (vec.ExprVec.get() == nullptr) {
 		out << "(empty vector)";
+		return out;
 	}
 	out << Z3_ast_vector_to_string(vec.ExprVec->ctx(), *vec.ExprVec);
 	return out;
