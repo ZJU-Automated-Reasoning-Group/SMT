@@ -365,21 +365,23 @@ public:
 
 	unsigned constraintSize() const;
 
-	void push_back(SMTExpr e);
+	// If Enforce is set, all exprs will be added to the vector,
+	// otherwise, "true" will be filtered
+	void push_back(SMTExpr Expr, bool Enforce = false);
 
-	SMTExpr operator[](unsigned i) const;
+	SMTExpr operator[](unsigned I) const;
 
 	bool empty() const;
 
 	SMTExprVec copy();
 
 	/// *this = *this && v2
-	void mergeWithAnd(const SMTExprVec& v2);
+	void mergeWithAnd(const SMTExprVec& Vec);
 
-	static SMTExprVec merge(SMTExprVec v1, SMTExprVec v2);
+	static SMTExprVec merge(SMTExprVec Vec1, SMTExprVec Vec2);
 
 	/// *this = *this || v2
-	void mergeWithOr(const SMTExprVec& v2);
+	void mergeWithOr(const SMTExprVec& Vec);
 
 	/// From the vector create one expr to represent the AND result.
 	/// Create  bool expr to represent this vector
@@ -393,11 +395,15 @@ public:
 	friend class SMTSolver;
 	friend class SMTExpr;
 
-	friend llvm::raw_ostream & operator<<(llvm::raw_ostream& out, SMTExprVec vec);
+	friend llvm::raw_ostream & operator<<(llvm::raw_ostream& Out, SMTExprVec Vec);
 
-	friend std::ostream & operator<<(std::ostream & out, SMTExprVec vec) {
-		out << *vec.ExprVec;
-		return out;
+	friend std::ostream & operator<<(std::ostream& Out, SMTExprVec Vec) {
+		if (Vec.ExprVec.get() == nullptr) {
+			Out << "(empty vector)";
+			return Out;
+		}
+		Out << *Vec.ExprVec;
+		return Out;
 	}
 };
 

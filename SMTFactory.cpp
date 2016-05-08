@@ -198,7 +198,7 @@ SMTSolver SMTFactory::createSMTSolver() {
 SMTExprVec SMTFactory::createBoolSMTExprVec(bool Content, size_t Size) {
 	SMTExprVec Ret = createEmptySMTExprVec();
 	for (unsigned J = 0; J < Size; J++) {
-		Ret.push_back(createBoolVal(Content));
+		Ret.push_back(createBoolVal(Content), true);
 	}
 	return Ret;
 }
