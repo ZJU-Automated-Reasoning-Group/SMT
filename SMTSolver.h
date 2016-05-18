@@ -9,7 +9,7 @@
 #include <llvm/Support/raw_ostream.h>
 
 enum SMTResult {
-	UNSAT, SAT, UNKNOWN
+	UNSAT, SAT, UNKNOWN, UNCHECK
 };
 
 class SMTFactory;
