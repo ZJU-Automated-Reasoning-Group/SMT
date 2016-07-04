@@ -22,7 +22,7 @@ private:
 	z3::solver Solver;
 	SMTFactory* Factory;
 
-	SMTSolver(SMTFactory* F, z3::solver& s);
+	SMTSolver(SMTFactory* F, z3::solver& Z3Solver);
 
 public:
 	virtual ~SMTSolver();
@@ -31,9 +31,9 @@ public:
 
 	SMTSolver& operator=(const SMTSolver& Solver);
 
-	void add(SMTExpr e);
+	void add(SMTExpr);
 
-	void addAll(SMTExprVec es);
+	void addAll(SMTExprVec);
 
 	virtual SMTResult check();
 
@@ -45,7 +45,7 @@ public:
 
 	virtual void push();
 
-	virtual void pop(unsigned n = 1);
+	virtual void pop(unsigned N = 1);
 
 	bool operator<(const SMTSolver& Solver) const;
 

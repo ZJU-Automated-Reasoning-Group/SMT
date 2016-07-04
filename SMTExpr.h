@@ -20,119 +20,84 @@ private:
 	z3::expr Expr;
 	SMTFactory* Factory;
 
-	SMTExpr(SMTFactory* F, z3::expr e);
+	SMTExpr(SMTFactory* F, z3::expr Z3Expr);
 
 public:
 
-	SMTExpr(SMTExpr const & e);
+	SMTExpr(SMTExpr const & E);
 
-	SMTExpr& operator=(const SMTExpr& e);
+	SMTExpr& operator=(const SMTExpr& E);
 
-	friend SMTExpr operator!(SMTExpr const & a);
+#define DECLARE_UNARY_OPERATION_EXPR(X) \
+	friend SMTExpr operator X(SMTExpr const &);
 
-	friend SMTExpr operator||(SMTExpr const & a, SMTExpr const & b);
+	DECLARE_UNARY_OPERATION_EXPR(!)
+	DECLARE_UNARY_OPERATION_EXPR(-)
+	DECLARE_UNARY_OPERATION_EXPR(~)
 
-	friend SMTExpr operator||(SMTExpr const & a, bool b);
+#define DECLARE_BINARY_OPERATION_EXPR_EXPR(X) \
+	friend SMTExpr operator X(SMTExpr const &, SMTExpr const &);
 
-	friend SMTExpr operator||(bool a, SMTExpr const & b);
+	DECLARE_BINARY_OPERATION_EXPR_EXPR(||)
+	DECLARE_BINARY_OPERATION_EXPR_EXPR(&&)
+	DECLARE_BINARY_OPERATION_EXPR_EXPR(==)
+	DECLARE_BINARY_OPERATION_EXPR_EXPR(!=)
+	DECLARE_BINARY_OPERATION_EXPR_EXPR(+)
+	DECLARE_BINARY_OPERATION_EXPR_EXPR(-)
+	DECLARE_BINARY_OPERATION_EXPR_EXPR(*)
+	DECLARE_BINARY_OPERATION_EXPR_EXPR(/)
+	DECLARE_BINARY_OPERATION_EXPR_EXPR(>)
+	DECLARE_BINARY_OPERATION_EXPR_EXPR(<)
+	DECLARE_BINARY_OPERATION_EXPR_EXPR(>=)
+	DECLARE_BINARY_OPERATION_EXPR_EXPR(<=)
+	DECLARE_BINARY_OPERATION_EXPR_EXPR(|)
+	DECLARE_BINARY_OPERATION_EXPR_EXPR(&)
+	DECLARE_BINARY_OPERATION_EXPR_EXPR(^)
 
-	friend SMTExpr operator&&(SMTExpr const & a, SMTExpr const & b);
+#define DECLARE_BINARY_OPERATION_EXPR_T(X, T) \
+	friend SMTExpr operator X(SMTExpr const &, T);
 
-	friend SMTExpr operator&&(SMTExpr const & a, bool b);
+	DECLARE_BINARY_OPERATION_EXPR_T(==, int)
+	DECLARE_BINARY_OPERATION_EXPR_T(!=, int)
+	DECLARE_BINARY_OPERATION_EXPR_T(+, int)
+	DECLARE_BINARY_OPERATION_EXPR_T(-, int)
+	DECLARE_BINARY_OPERATION_EXPR_T(*, int)
+	DECLARE_BINARY_OPERATION_EXPR_T(/, int)
+	DECLARE_BINARY_OPERATION_EXPR_T(>, int)
+	DECLARE_BINARY_OPERATION_EXPR_T(<, int)
+	DECLARE_BINARY_OPERATION_EXPR_T(>=, int)
+	DECLARE_BINARY_OPERATION_EXPR_T(<=, int)
+	DECLARE_BINARY_OPERATION_EXPR_T(&, int)
+	DECLARE_BINARY_OPERATION_EXPR_T(|, int)
+	DECLARE_BINARY_OPERATION_EXPR_T(^, int)
+	DECLARE_BINARY_OPERATION_EXPR_T(||, bool)
+	DECLARE_BINARY_OPERATION_EXPR_T(&&, bool)
 
-	friend SMTExpr operator&&(bool a, SMTExpr const & b);
+#define DECLARE_BINARY_OPERATION_T_EXPR(X, T) \
+	friend SMTExpr operator X(T, SMTExpr const &);
 
-	friend SMTExpr operator==(SMTExpr const & a, SMTExpr const & b);
+	DECLARE_BINARY_OPERATION_T_EXPR(==, int)
+	DECLARE_BINARY_OPERATION_T_EXPR(!=, int)
+	DECLARE_BINARY_OPERATION_T_EXPR(+, int)
+	DECLARE_BINARY_OPERATION_T_EXPR(-, int)
+	DECLARE_BINARY_OPERATION_T_EXPR(*, int)
+	DECLARE_BINARY_OPERATION_T_EXPR(/, int)
+	DECLARE_BINARY_OPERATION_T_EXPR(>, int)
+	DECLARE_BINARY_OPERATION_T_EXPR(<, int)
+	DECLARE_BINARY_OPERATION_T_EXPR(>=, int)
+	DECLARE_BINARY_OPERATION_T_EXPR(<=, int)
+	DECLARE_BINARY_OPERATION_T_EXPR(&, int)
+	DECLARE_BINARY_OPERATION_T_EXPR(|, int)
+	DECLARE_BINARY_OPERATION_T_EXPR(^, int)
+	DECLARE_BINARY_OPERATION_T_EXPR(||, bool)
+	DECLARE_BINARY_OPERATION_T_EXPR(&&, bool)
 
-	friend SMTExpr operator==(SMTExpr const & a, int b);
+	friend llvm::raw_ostream& operator<<(llvm::raw_ostream&, SMTExpr);
 
-	friend SMTExpr operator==(int a, SMTExpr const & b);
+	friend std::ostream & operator<<(std::ostream &, SMTExpr const &);
 
-	friend SMTExpr operator!=(SMTExpr const & a, SMTExpr const & b);
-
-	friend SMTExpr operator!=(SMTExpr const & a, int b);
-
-	friend SMTExpr operator!=(int a, SMTExpr const & b);
-
-	friend SMTExpr operator+(SMTExpr const & a, SMTExpr const & b);
-
-	friend SMTExpr operator+(SMTExpr const & a, int b);
-
-	friend SMTExpr operator+(int a, SMTExpr const & b);
-
-	friend SMTExpr operator*(SMTExpr const & a, SMTExpr const & b);
-
-	friend SMTExpr operator*(SMTExpr const & a, int b);
-
-	friend SMTExpr operator*(int a, SMTExpr const & b);
-
-	friend SMTExpr operator/(SMTExpr const & a, SMTExpr const & b);
-
-	friend SMTExpr operator/(SMTExpr const & a, int b);
-
-	friend SMTExpr operator/(int a, SMTExpr const & b);
-
-	friend SMTExpr operator-(SMTExpr const & a, SMTExpr const & b);
-
-	friend SMTExpr operator-(SMTExpr const & a, int b);
-
-	friend SMTExpr operator-(int a, SMTExpr const & b);
-
-	friend SMTExpr operator-(SMTExpr const & a);
-
-	friend SMTExpr operator<=(SMTExpr const & a, SMTExpr const & b);
-
-	friend SMTExpr operator<=(SMTExpr const & a, int b);
-
-	friend SMTExpr operator<=(int a, SMTExpr const & b);
-
-	friend SMTExpr operator<(SMTExpr const & a, SMTExpr const & b);
-
-	friend SMTExpr operator<(SMTExpr const & a, int b);
-
-	friend SMTExpr operator<(int a, SMTExpr const & b);
-
-	friend SMTExpr operator>=(SMTExpr const & a, SMTExpr const & b);
-
-	friend SMTExpr operator>=(SMTExpr const & a, int b);
-
-	friend SMTExpr operator>=(int a, SMTExpr const & b);
-
-	friend SMTExpr operator>(SMTExpr const & a, SMTExpr const & b);
-
-	friend SMTExpr operator>(SMTExpr const & a, int b);
-
-	friend SMTExpr operator>(int a, SMTExpr const & b);
-
-	friend SMTExpr operator&(SMTExpr const & a, SMTExpr const & b);
-
-	friend SMTExpr operator&(SMTExpr const & a, int b);
-
-	friend SMTExpr operator&(int a, SMTExpr const & b);
-
-	friend SMTExpr operator^(SMTExpr const & a, SMTExpr const & b);
-
-	friend SMTExpr operator^(SMTExpr const & a, int b);
-
-	friend SMTExpr operator^(int a, SMTExpr const & b);
-
-	friend SMTExpr operator|(SMTExpr const & a, SMTExpr const & b);
-
-	friend SMTExpr operator|(SMTExpr const & a, int b);
-
-	friend SMTExpr operator|(int a, SMTExpr const & b);
-
-	friend SMTExpr operator~(SMTExpr const & a);
-
-	friend llvm::raw_ostream& operator<<(llvm::raw_ostream& out, SMTExpr n);
-
-	friend std::ostream & operator<<(std::ostream & out, SMTExpr const & n) {
-		out << n.Expr;
-		return out;
-	}
-
-	bool isSameSort(SMTExpr const & b) const {
-		return z3::eq(Expr.get_sort(), b.Expr.get_sort());
+	bool isSameSort(SMTExpr const & E) const {
+		return z3::eq(Expr.get_sort(), E.Expr.get_sort());
 	}
 
 	bool isArray() {
@@ -184,7 +149,7 @@ public:
 		return Expr.num_args();
 	}
 
-	SMTExpr getArg(unsigned i) const;
+	SMTExpr getArg(unsigned Index) const;
 
 	unsigned getBitVecSize() {
 		return Expr.get_sort().bv_size();
@@ -325,7 +290,6 @@ public:
 	friend class SMTFactory;
 	friend class SMTSolver;
 	friend class SMTExprVec;
-	friend class SimplificationUtil;
 	friend class SMTExprComparator;
 
 private:
@@ -396,15 +360,7 @@ public:
 	friend class SMTExpr;
 
 	friend llvm::raw_ostream & operator<<(llvm::raw_ostream& Out, SMTExprVec Vec);
-
-	friend std::ostream & operator<<(std::ostream& Out, SMTExprVec Vec) {
-		if (Vec.ExprVec.get() == nullptr) {
-			Out << "(empty vector)";
-			return Out;
-		}
-		Out << *Vec.ExprVec;
-		return Out;
-	}
+	friend std::ostream & operator<<(std::ostream& Out, SMTExprVec Vec);
 };
 
 #endif

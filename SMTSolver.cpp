@@ -32,14 +32,14 @@ static llvm::cl::opt<int> SolverTimeOut("solver-time-out", llvm::cl::init(-1), l
 // only for debugging (single-thread)
 bool SMTSolvingTimeOut = false;
 
-SMTSolver::SMTSolver(SMTFactory* F, z3::solver& s) :
-		Solver(s), Factory(F) {
-	z3::params p(s.ctx());
+SMTSolver::SMTSolver(SMTFactory* F, z3::solver& Z3Solver) :
+		Solver(Z3Solver), Factory(F) {
+	z3::params Z3Params(Z3Solver.ctx());
 	if (SolverTimeOut.getValue() > 0) {
 		// the unit is ms
-		p.set("timeout", (unsigned) SolverTimeOut.getValue());
+		Z3Params.set("timeout", (unsigned) SolverTimeOut.getValue());
 	}
-	s.set(p);
+	Z3Solver.set(Z3Params);
 }
 
 SMTSolver::~SMTSolver() {
@@ -68,14 +68,14 @@ SMTResult SMTSolver::check() {
 		}
 
 		if (UsingSimplify.getNumOccurrences()) {
-			z3::solver solver4sim(Solver.ctx());
+			z3::solver Z3Solver4Sim(Solver.ctx());
 
 			// 1. merge as one
 			SMTExpr Whole = this->assertions().toAndExpr();
 
 			// 2. simplify
 			if (UsingSimplify.getValue() == "local") {
-				solver4sim.add(Whole.localSimplify().Expr);
+				Z3Solver4Sim.add(Whole.localSimplify().Expr);
 			} else if (UsingSimplify.getValue() == "dillig") {
 				SMTExpr SimplifiedForm = Whole.dilligSimplify();
 				// if (SimplifiedForm.equals(z3_solver.ctx().bool_val(false))) {
@@ -87,14 +87,14 @@ SMTResult SMTSolver::check() {
 				//		}
 				//		return SMTResult::SAT;
 				// }
-				solver4sim.add(SimplifiedForm.Expr);
+				Z3Solver4Sim.add(SimplifiedForm.Expr);
 			} else {
-				solver4sim.add(Whole.Expr);
+				Z3Solver4Sim.add(Whole.Expr);
 			}
 
 			DEBUG(std::cerr << "Simplifying Done: (" << (double)(clock() - Start) * 1000 / CLOCKS_PER_SEC << ")\n");
 
-			Result = solver4sim.check();
+			Result = Z3Solver4Sim.check();
 		} else {
 			Result = Solver.check();
 		}
@@ -126,35 +126,34 @@ SMTResult SMTSolver::check() {
 		} else {
 			DEBUG(std::cerr << "Solving done: (" << (double)(clock() - Start) * 1000 / CLOCKS_PER_SEC << ", " << Result << ")\n");
 		}
-	} catch (z3::exception & e) {
-		std::cerr << __FILE__ << " : " << __LINE__ << " : " << e << "\n";
-		// std::cerr << z3_solver.to_smt2() << "\n";
+	} catch (z3::exception &Ex) {
+		std::cerr << __FILE__ << " : " << __LINE__ << " : " << Ex << "\n";
 		return SMTResult::UNKNOWN;
 	}
 
 	// Use a return value to suppress gcc warning
-	SMTResult ret_val = SMTResult::UNKNOWN;
+	SMTResult RetVal = SMTResult::UNKNOWN;
 
 	switch (Result) {
 	case z3::check_result::sat:
-		ret_val = SMTResult::SAT;
+		RetVal = SMTResult::SAT;
 		break;
 	case z3::check_result::unsat:
-		ret_val = SMTResult::UNSAT;
+		RetVal = SMTResult::UNSAT;
 		break;
 	case z3::check_result::unknown:
-		ret_val = SMTResult::UNKNOWN;
+		RetVal = SMTResult::UNKNOWN;
 		break;
 	}
 
-	return ret_val;
+	return RetVal;
 }
 
 void SMTSolver::push() {
 	try {
 		Solver.push();
-	} catch (z3::exception & e) {
-		std::cerr << __FILE__ << " : " << __LINE__ << " : " << e << "\n";
+	} catch (z3::exception &Ex) {
+		std::cerr << __FILE__ << " : " << __LINE__ << " : " << Ex << "\n";
 		exit(1);
 	}
 }
@@ -162,35 +161,34 @@ void SMTSolver::push() {
 void SMTSolver::pop(unsigned N) {
 	try {
 		Solver.pop(N);
-	} catch (z3::exception & e) {
-		std::cerr << __FILE__ << " : " << __LINE__ << " : " << e << "\n";
+	} catch (z3::exception &Ex) {
+		std::cerr << __FILE__ << " : " << __LINE__ << " : " << Ex << "\n";
 		exit(1);
 	}
 }
 
-void SMTSolver::add(SMTExpr e) {
-	if (e.isTrue()) {
+void SMTSolver::add(SMTExpr E) {
+	if (E.isTrue()) {
 		return;
 	}
 
 	try {
 		// FIXME In some cases (ar._bfd_elf_parse_eh_frame.bc),
 		// simplify() will seriously affect the performance.
-		Solver.add(e.Expr/*.simplify()*/);
-	} catch (z3::exception & e) {
-		std::cerr << __FILE__ << " : " << __LINE__ << " : " << e << "\n";
+		Solver.add(E.Expr/*.simplify()*/);
+	} catch (z3::exception &Ex) {
+		std::cerr << __FILE__ << " : " << __LINE__ << " : " << Ex << "\n";
 		exit(1);
 	}
 }
 
-void SMTSolver::addAll(SMTExprVec es) {
-	for (unsigned i = 0; i < es.size(); i++) {
-		add(es[i]);
+void SMTSolver::addAll(SMTExprVec EVec) {
+	for (unsigned I = 0; I < EVec.size(); I++) {
+		add(EVec[I]);
 	}
 }
 
 SMTExprVec SMTSolver::assertions() {
-	//z3::expr_vector Vec = Solver.assertions();
 	std::shared_ptr<z3::expr_vector> Vec(new z3::expr_vector(Solver.assertions()));
 	return SMTExprVec(Factory, Vec);
 }

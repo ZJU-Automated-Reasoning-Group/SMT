@@ -14,11 +14,11 @@ private:
 	z3::model Model;
 	SMTFactory* Factory;
 
-	SMTModel(SMTFactory* F, z3::model m);
+	SMTModel(SMTFactory* F, z3::model Z3Model);
 
 public:
 
-	SMTModel(SMTModel const & m);
+	SMTModel(SMTModel const & M);
 
 	~SMTModel();
 

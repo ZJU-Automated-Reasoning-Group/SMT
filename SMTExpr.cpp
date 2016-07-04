@@ -10,18 +10,18 @@
 #include "SMTExpr.h"
 #include "SMTFactory.h"
 
-SMTExpr::SMTExpr(SMTFactory* F, z3::expr e) :
-		Expr(e), Factory(F) {
+SMTExpr::SMTExpr(SMTFactory* F, z3::expr Z3Expr) :
+		Expr(Z3Expr), Factory(F) {
 }
 
-SMTExpr::SMTExpr(SMTExpr const & e) :
-		Expr(e.Expr), Factory(e.Factory) {
+SMTExpr::SMTExpr(SMTExpr const & E) :
+		Expr(E.Expr), Factory(E.Factory) {
 }
 
-SMTExpr& SMTExpr::operator=(const SMTExpr& e) {
-	if (this != &e) {
-		this->Expr = e.Expr;
-		this->Factory = e.Factory;
+SMTExpr& SMTExpr::operator=(const SMTExpr& E) {
+	if (this != &E) {
+		this->Expr = E.Expr;
+		this->Factory = E.Factory;
 	}
 	return *this;
 }
@@ -134,52 +134,52 @@ SMTExpr SMTExpr::dilligSimplify(SMTExpr N, z3::solver& Solver4Sim, z3::context& 
 
 		if (N.isLogicAnd()) {
 			Z3_ast* Args = new Z3_ast[C.size()];
-			size_t j = 0;
-			for (size_t i = 0; i < C.size(); i++) {
-				if (C[i].isTrue()) {
+			size_t J = 0;
+			for (size_t I = 0; I < C.size(); I++) {
+				if (C[I].isTrue()) {
 					continue;
 				}
-				Args[j++] = C[i].Expr;
+				Args[J++] = C[I].Expr;
 			}
 
-			if (j == 1) {
+			if (J == 1) {
 				SMTExpr Ret(Factory, to_expr(Ctx, Args[0]));
 				delete[] Args;
 				return Ret;
 			}
 
-			if (j == 0) {
+			if (J == 0) {
 				delete[] Args;
 				return SMTExpr(Factory, Ctx.bool_val(true));
 			}
 
-			SMTExpr Ret(Factory, to_expr(Ctx, Z3_mk_and(Ctx, j, Args)));
+			SMTExpr Ret(Factory, to_expr(Ctx, Z3_mk_and(Ctx, J, Args)));
 			delete[] Args;
 
 			return Ret;
 		} else {
 			// is logic OR
 			Z3_ast* Args = new Z3_ast[C.size()];
-			size_t j = 0;
-			for (size_t i = 0; i < C.size(); i++) {
-				if (C[i].isFalse()) {
+			size_t J = 0;
+			for (size_t I = 0; I < C.size(); I++) {
+				if (C[I].isFalse()) {
 					continue;
 				}
-				Args[j++] = C[i].Expr;
+				Args[J++] = C[I].Expr;
 			}
 
-			if (j == 1) {
+			if (J == 1) {
 				SMTExpr Ret(Factory, to_expr(Ctx, Args[0]));
 				delete[] Args;
 				return Ret;
 			}
 
-			if (j == 0) {
+			if (J == 0) {
 				delete[] Args;
 				return SMTExpr(Factory, Ctx.bool_val(false));
 			}
 
-			SMTExpr Ret(Factory, to_expr(Ctx, Z3_mk_or(Ctx, j, Args)));
+			SMTExpr Ret(Factory, to_expr(Ctx, Z3_mk_or(Ctx, J, Args)));
 			delete[] Args;
 
 			return Ret;
@@ -224,8 +224,8 @@ SMTExpr SMTExpr::getQuantifierBody() const {
 	return SMTExpr(Factory, Expr.body());
 }
 
-SMTExpr SMTExpr::getArg(unsigned i) const {
-	return SMTExpr(Factory, Expr.arg(i));
+SMTExpr SMTExpr::getArg(unsigned I) const {
+	return SMTExpr(Factory, Expr.arg(I));
 }
 
 SMTExpr SMTExpr::bv12bool() {
@@ -611,223 +611,133 @@ SMTFactory& SMTExpr::getSMTFactory() {
 	return *Factory;
 }
 
-SMTExpr operator!(SMTExpr const & a) {
-	if (a.isLogicNot()) {
-		assert(a.numArgs() == 1);
-		return a.getArg(0);
-	} else if (a.isTrue()) {
-		return a.Factory->createBoolVal(false);
-	} else if (a.isFalse()) {
-		return a.Factory->createBoolVal(true);
+SMTExpr operator!(SMTExpr const & A) {
+	if (A.isLogicNot()) {
+		assert(A.numArgs() == 1);
+		return A.getArg(0);
+	} else if (A.isTrue()) {
+		return A.Factory->createBoolVal(false);
+	} else if (A.isFalse()) {
+		return A.Factory->createBoolVal(true);
 	} else {
-		return SMTExpr(a.Factory, !a.Expr);
+		return SMTExpr(A.Factory, !A.Expr);
 	}
 }
 
-SMTExpr operator||(SMTExpr const & a, SMTExpr const & b) {
-	if (a.isTrue() || b.isTrue()) {
-		return a.Factory->createBoolVal(true);
-	} else if (a.isFalse()) {
-		return b;
-	} else if (b.isFalse()) {
-		return a;
+SMTExpr operator||(SMTExpr const & A, SMTExpr const & B) {
+	if (A.isFalse() || B.isTrue()) {
+		return B;
+	} else if (A.isTrue() || B.isFalse()) {
+		return A;
 	}
 
-	return SMTExpr(a.Factory, a.Expr || b.Expr);
+	return SMTExpr(A.Factory, A.Expr || B.Expr);
 }
 
-SMTExpr operator||(SMTExpr const & a, bool b) {
-	return a || a.Factory->createBoolVal(b);
+SMTExpr operator||(SMTExpr const & A, bool B) {
+	return A || A.Factory->createBoolVal(B);
 }
 
-SMTExpr operator||(bool a, SMTExpr const & b) {
-	return b || a;
+SMTExpr operator||(bool A, SMTExpr const & B) {
+	return B || A;
 }
 
-SMTExpr operator&&(SMTExpr const & a, SMTExpr const & b) {
-	if (a.isFalse() || b.isFalse()) {
-		return a.Factory->createBoolVal(false);
-	} else if (a.isTrue()) {
-		return b;
-	} else if (b.isTrue()) {
-		return a;
+SMTExpr operator&&(SMTExpr const & A, SMTExpr const & B) {
+	if (A.isTrue() || B.isFalse()) {
+		return B;
+	} else if (B.isTrue() || A.isFalse()) {
+		return A;
 	}
 
-	return SMTExpr(a.Factory, a.Expr && b.Expr);
+	return SMTExpr(A.Factory, A.Expr && B.Expr);
 }
 
-SMTExpr operator&&(SMTExpr const & a, bool b) {
-	return a && a.Factory->createBoolVal(b);
+SMTExpr operator&&(SMTExpr const & A, bool B) {
+	return A && A.Factory->createBoolVal(B);
 }
 
-SMTExpr operator&&(bool a, SMTExpr const & b) {
-	return b && a;
+SMTExpr operator&&(bool A, SMTExpr const & B) {
+	return B && A;
 }
 
-SMTExpr operator==(SMTExpr const & a, SMTExpr const & b) {
-	assert(a.isSameSort(b));
-	return SMTExpr(a.Factory, a.Expr == b.Expr);
+#define UNARY_OPERATION_EXPR(X) \
+SMTExpr operator X(SMTExpr const & A) { \
+	return SMTExpr(A.Factory, X(A.Expr)); \
 }
 
-SMTExpr operator==(SMTExpr const & a, int b) {
-	return SMTExpr(a.Factory, a.Expr == b);
+UNARY_OPERATION_EXPR(-)
+UNARY_OPERATION_EXPR(~)
+
+#define BINARY_OPERATION_EXPR_EXPR(X) \
+SMTExpr operator X(SMTExpr const & A, SMTExpr const & B) { \
+	assert(A.isSameSort(B)); \
+	return SMTExpr(A.Factory, A.Expr X B.Expr); \
 }
 
-SMTExpr operator==(int a, SMTExpr const & b) {
-	return SMTExpr(b.Factory, a == b.Expr);
+BINARY_OPERATION_EXPR_EXPR(|)
+BINARY_OPERATION_EXPR_EXPR(^)
+BINARY_OPERATION_EXPR_EXPR(&)
+BINARY_OPERATION_EXPR_EXPR(>)
+BINARY_OPERATION_EXPR_EXPR(<)
+BINARY_OPERATION_EXPR_EXPR(>=)
+BINARY_OPERATION_EXPR_EXPR(<=)
+BINARY_OPERATION_EXPR_EXPR(!=)
+BINARY_OPERATION_EXPR_EXPR(==)
+BINARY_OPERATION_EXPR_EXPR(+)
+BINARY_OPERATION_EXPR_EXPR(-)
+BINARY_OPERATION_EXPR_EXPR(*)
+BINARY_OPERATION_EXPR_EXPR(/)
+
+#define BINARY_OPERATION_EXPR_INT(X) \
+SMTExpr operator X(SMTExpr const & A, int B) { \
+	return SMTExpr(A.Factory, A.Expr X B); \
 }
 
-SMTExpr operator!=(SMTExpr const & a, SMTExpr const & b) {
-	return SMTExpr(a.Factory, a.Expr != b.Expr);
+BINARY_OPERATION_EXPR_INT(|)
+BINARY_OPERATION_EXPR_INT(^)
+BINARY_OPERATION_EXPR_INT(&)
+BINARY_OPERATION_EXPR_INT(>)
+BINARY_OPERATION_EXPR_INT(<)
+BINARY_OPERATION_EXPR_INT(>=)
+BINARY_OPERATION_EXPR_INT(<=)
+BINARY_OPERATION_EXPR_INT(!=)
+BINARY_OPERATION_EXPR_INT(==)
+BINARY_OPERATION_EXPR_INT(+)
+BINARY_OPERATION_EXPR_INT(-)
+BINARY_OPERATION_EXPR_INT(*)
+BINARY_OPERATION_EXPR_INT(/)
+
+#define BINARY_OPERATION_INT_EXPR(X) \
+SMTExpr operator X(int A, SMTExpr const & B) { \
+	return SMTExpr(B.Factory, A X B.Expr); \
 }
 
-SMTExpr operator!=(SMTExpr const & a, int b) {
-	return SMTExpr(a.Factory, a.Expr != b);
+BINARY_OPERATION_INT_EXPR(|)
+BINARY_OPERATION_INT_EXPR(^)
+BINARY_OPERATION_INT_EXPR(&)
+BINARY_OPERATION_INT_EXPR(>)
+BINARY_OPERATION_INT_EXPR(<)
+BINARY_OPERATION_INT_EXPR(>=)
+BINARY_OPERATION_INT_EXPR(<=)
+BINARY_OPERATION_INT_EXPR(!=)
+BINARY_OPERATION_INT_EXPR(==)
+BINARY_OPERATION_INT_EXPR(+)
+BINARY_OPERATION_INT_EXPR(-)
+BINARY_OPERATION_INT_EXPR(*)
+BINARY_OPERATION_INT_EXPR(/)
+
+llvm::raw_ostream& operator<<(llvm::raw_ostream& Out, SMTExpr E) {
+	z3::expr& Z3Expr = E.Expr;
+	Out << Z3_ast_to_string(Z3Expr.ctx(), Z3Expr);
+	return Out;
 }
 
-SMTExpr operator!=(int a, SMTExpr const & b) {
-	return SMTExpr(b.Factory, a != b.Expr);
+std::ostream & operator<<(std::ostream& Out, SMTExpr const & N) {
+	Out << N.Expr;
+	return Out;
 }
 
-SMTExpr operator+(SMTExpr const & a, SMTExpr const & b) {
-	return SMTExpr(a.Factory, a.Expr + b.Expr);
-}
-
-SMTExpr operator+(SMTExpr const & a, int b) {
-	return SMTExpr(a.Factory, a.Expr + b);
-}
-
-SMTExpr operator+(int a, SMTExpr const & b) {
-	return SMTExpr(b.Factory, a + b.Expr);
-}
-
-SMTExpr operator*(SMTExpr const & a, SMTExpr const & b) {
-	return SMTExpr(a.Factory, a.Expr * b.Expr);
-}
-
-SMTExpr operator*(SMTExpr const & a, int b) {
-	return SMTExpr(a.Factory, a.Expr * b);
-}
-
-SMTExpr operator*(int a, SMTExpr const & b) {
-	return SMTExpr(b.Factory, a * b.Expr);
-}
-
-SMTExpr operator/(SMTExpr const & a, SMTExpr const & b) {
-	return SMTExpr(a.Factory, a.Expr / b.Expr);
-}
-
-SMTExpr operator/(SMTExpr const & a, int b) {
-	return SMTExpr(a.Factory, a.Expr / b);
-}
-
-SMTExpr operator/(int a, SMTExpr const & b) {
-	return SMTExpr(b.Factory, a / b.Expr);
-}
-
-SMTExpr operator-(SMTExpr const & a, SMTExpr const & b) {
-	return SMTExpr(a.Factory, a.Expr - b.Expr);
-}
-
-SMTExpr operator-(SMTExpr const & a, int b) {
-	return SMTExpr(a.Factory, a.Expr - b);
-}
-
-SMTExpr operator-(int a, SMTExpr const & b) {
-	return SMTExpr(b.Factory, a - b.Expr);
-}
-
-SMTExpr operator-(SMTExpr const & a) {
-	return SMTExpr(a.Factory, -a.Expr);
-}
-
-SMTExpr operator<=(SMTExpr const & a, SMTExpr const & b) {
-	return SMTExpr(a.Factory, a.Expr <= b.Expr);
-}
-
-SMTExpr operator<=(SMTExpr const & a, int b) {
-	return SMTExpr(a.Factory, a.Expr <= b);
-}
-
-SMTExpr operator<=(int a, SMTExpr const & b) {
-	return SMTExpr(b.Factory, a <= b.Expr);
-}
-
-SMTExpr operator<(SMTExpr const & a, SMTExpr const & b) {
-	return SMTExpr(a.Factory, a.Expr < b.Expr);
-}
-
-SMTExpr operator<(SMTExpr const & a, int b) {
-	return SMTExpr(a.Factory, a.Expr < b);
-}
-
-SMTExpr operator<(int a, SMTExpr const & b) {
-	return SMTExpr(b.Factory, a < b.Expr);
-}
-
-SMTExpr operator>=(SMTExpr const & a, SMTExpr const & b) {
-	return SMTExpr(a.Factory, a.Expr >= b.Expr);
-}
-
-SMTExpr operator>=(SMTExpr const & a, int b) {
-	return SMTExpr(a.Factory, a.Expr >= b);
-}
-
-SMTExpr operator>=(int a, SMTExpr const & b) {
-	return SMTExpr(b.Factory, a >= b.Expr);
-}
-
-SMTExpr operator>(SMTExpr const & a, SMTExpr const & b) {
-	return SMTExpr(a.Factory, a.Expr > b.Expr);
-}
-
-SMTExpr operator>(SMTExpr const & a, int b) {
-	return SMTExpr(a.Factory, a.Expr > b);
-}
-
-SMTExpr operator>(int a, SMTExpr const & b) {
-	return SMTExpr(b.Factory, a > b.Expr);
-}
-
-SMTExpr operator&(SMTExpr const & a, SMTExpr const & b) {
-	return SMTExpr(a.Factory, a.Expr & b.Expr);
-}
-
-SMTExpr operator&(SMTExpr const & a, int b) {
-	return SMTExpr(a.Factory, a.Expr & b);
-}
-
-SMTExpr operator&(int a, SMTExpr const & b) {
-	return SMTExpr(b.Factory, a & b.Expr);
-}
-
-SMTExpr operator^(SMTExpr const & a, SMTExpr const & b) {
-	return SMTExpr(a.Factory, a.Expr ^ b.Expr);
-}
-
-SMTExpr operator^(SMTExpr const & a, int b) {
-	return SMTExpr(a.Factory, a.Expr ^ b);
-}
-
-SMTExpr operator^(int a, SMTExpr const & b) {
-	return SMTExpr(b.Factory, a ^ b.Expr);
-}
-
-SMTExpr operator|(SMTExpr const & a, SMTExpr const & b) {
-	return SMTExpr(a.Factory, a.Expr | b.Expr);
-}
-
-SMTExpr operator|(SMTExpr const & a, int b) {
-	return SMTExpr(a.Factory, a.Expr | b);
-}
-
-SMTExpr operator|(int a, SMTExpr const & b) {
-	return SMTExpr(b.Factory, a | b.Expr);
-}
-
-SMTExpr operator~(SMTExpr const & a) {
-	return SMTExpr(a.Factory, ~a.Expr);
-}
+/*==-- SMTExprVec --==*/
 
 SMTExprVec::SMTExprVec(SMTFactory* F, std::shared_ptr<z3::expr_vector> Vec) :
 		Factory(F), ExprVec(Vec) {
@@ -1003,17 +913,20 @@ SMTFactory& SMTExprVec::getSMTFactory() const {
 	return *Factory;
 }
 
-llvm::raw_ostream& operator<<(llvm::raw_ostream& Out, SMTExpr E) {
-	z3::expr& expr = E.Expr;
-	Out << Z3_ast_to_string(expr.ctx(), expr);
-	return Out;
-}
-
 llvm::raw_ostream& operator<<(llvm::raw_ostream& Out, SMTExprVec Vec) {
 	if (Vec.ExprVec.get() == nullptr) {
 		Out << "(empty vector)";
 		return Out;
 	}
 	Out << Z3_ast_vector_to_string(Vec.ExprVec->ctx(), *Vec.ExprVec);
+	return Out;
+}
+
+std::ostream & operator<<(std::ostream& Out, SMTExprVec Vec) {
+	if (Vec.ExprVec.get() == nullptr) {
+		Out << "(empty vector)";
+		return Out;
+	}
+	Out << *Vec.ExprVec;
 	return Out;
 }

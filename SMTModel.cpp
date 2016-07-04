@@ -5,12 +5,12 @@
 #include "SMTModel.h"
 #include "SMTFactory.h"
 
-SMTModel::SMTModel(SMTFactory* F, z3::model m) :
-		Model(m), Factory(F) {
+SMTModel::SMTModel(SMTFactory* F, z3::model Z3Model) :
+		Model(Z3Model), Factory(F) {
 }
 
-SMTModel::SMTModel(SMTModel const & m) :
-		Model(m.Model), Factory(m.Factory) {
+SMTModel::SMTModel(SMTModel const & M) :
+		Model(M.Model), Factory(M.Factory) {
 }
 
 SMTModel::~SMTModel() {

@@ -57,35 +57,35 @@ public:
 
 	SMTExprVec createEmptySMTExprVec();
 
-	SMTExprVec createBoolSMTExprVec(bool, size_t);
+	SMTExprVec createBoolSMTExprVec(bool Val, size_t Sz);
 
-	SMTExpr createRealConst(const std::string& name);
+	SMTExpr createRealConst(const std::string& Name);
 
-	SMTExpr createRealVal(const std::string& name);
+	SMTExpr createRealVal(const std::string& ValStr);
 
-	SMTExpr createBitVecConst(const std::string& name, uint64_t sz);
+	SMTExpr createBitVecConst(const std::string& Name, uint64_t Sz);
 
-	SMTExpr createBoolConst(const std::string& name);
+	SMTExpr createBoolConst(const std::string& Name);
 
-	SMTExpr createTemporaryBitVecConst(uint64_t sz);
+	SMTExpr createBoolVal(bool Val);
 
-	SMTExpr createBitVecVal(const std::string& name, uint64_t sz);
+	SMTExpr createTemporaryBitVecConst(uint64_t Sz);
 
-	SMTExpr createBitVecVal(uint64_t val, uint64_t sz);
+	SMTExpr createBitVecVal(const std::string& ValStr, uint64_t Sz);
 
-	SMTExpr createIntVal(int i);
+	SMTExpr createBitVecVal(uint64_t Val, uint64_t Sz);
 
-	SMTExpr createSelect(SMTExpr& vec, SMTExpr index);
+	SMTExpr createIntVal(int Val);
 
-	SMTExpr createStore(SMTExpr& vec, SMTExpr index, SMTExpr& val2insert);
+	SMTExpr createSelect(SMTExpr& Vec, SMTExpr Index);
 
-	SMTExpr createIntRealArrayConstFromStringSymbol(const std::string& name);
+	SMTExpr createStore(SMTExpr& Vec, SMTExpr Index, SMTExpr& Val2Store);
 
-	SMTExpr createIntBvArrayConstFromStringSymbol(const std::string& name, uint64_t sz);
+	SMTExpr createIntRealArrayConstFromStringSymbol(const std::string& Name);
+
+	SMTExpr createIntBvArrayConstFromStringSymbol(const std::string& Name, uint64_t Sz);
 
 	SMTExpr createIntDomainConstantArray(SMTExpr& ElmtExpr);
-
-	SMTExpr createBoolVal(bool b);
 
 	/// This function translate an SMTExprVec (the 1st parameter) created
 	/// by other SMTFactory to the context of this SMTFactory.
