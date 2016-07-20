@@ -35,6 +35,8 @@ public:
 
 	void addAll(SMTExprVec);
 
+	void addAll(const std::vector<SMTExpr>& EVec);
+
 	virtual SMTResult check();
 
 	SMTModel getSMTModel();

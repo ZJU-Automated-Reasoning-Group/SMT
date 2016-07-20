@@ -188,6 +188,12 @@ void SMTSolver::addAll(SMTExprVec EVec) {
 	}
 }
 
+void SMTSolver::addAll(const std::vector<SMTExpr>& EVec) {
+	for (unsigned I = 0; I < EVec.size(); I++) {
+		add(EVec[I]);
+	}
+}
+
 SMTExprVec SMTSolver::assertions() {
 	std::shared_ptr<z3::expr_vector> Vec(new z3::expr_vector(Solver.assertions()));
 	return SMTExprVec(Factory, Vec);
