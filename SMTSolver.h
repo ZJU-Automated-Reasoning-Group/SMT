@@ -49,6 +49,8 @@ public:
 
 	virtual void pop(unsigned N = 1);
 
+	unsigned getNumScopes();
+
 	bool operator<(const SMTSolver& Solver) const;
 
 	friend std::ostream & operator<<(std::ostream & O, SMTSolver& Solver) {

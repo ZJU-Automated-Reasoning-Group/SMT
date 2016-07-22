@@ -167,6 +167,10 @@ void SMTSolver::pop(unsigned N) {
 	}
 }
 
+unsigned SMTSolver::getNumScopes() {
+	return Z3_solver_get_num_scopes(Solver.ctx(), Solver);
+}
+
 void SMTSolver::add(SMTExpr E) {
 	if (E.isTrue()) {
 		return;
