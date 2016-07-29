@@ -2,14 +2,17 @@
  * Authors: Qingkai & Andy
  */
 
-#ifndef UTILS_SMT_SMTSOLVER_H
-#define UTILS_SMT_SMTSOLVER_H
+#ifndef SMT_SMTSOLVER_H
+#define SMT_SMTSOLVER_H
 
 #include <z3++.h>
 #include <llvm/Support/raw_ostream.h>
 
-enum SMTResult {
-	UNSAT, SAT, UNKNOWN, UNCHECK
+enum SMTResultType {
+	SMTRT_Unsat,
+	SMTRT_Sat,
+	SMTRT_Unknown,
+	SMTRT_Uncheck
 };
 
 class SMTFactory;
@@ -37,7 +40,7 @@ public:
 
 	void addAll(const std::vector<SMTExpr>& EVec);
 
-	virtual SMTResult check();
+	virtual SMTResultType check();
 
 	SMTModel getSMTModel();
 

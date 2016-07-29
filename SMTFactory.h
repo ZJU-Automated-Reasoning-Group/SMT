@@ -2,11 +2,10 @@
  * Authors: Qingkai & Andy
  */
 
-#ifndef UTILS_SMT_SMTFACTORY_H
-#define UTILS_SMT_SMTFACTORY_H
+#ifndef SMT_SMTFACTORY_H
+#define SMT_SMTFACTORY_H
 
 #include <z3++.h>
-#include <stdio.h>
 #include <string>
 #include <mutex>
 #include <set>
@@ -25,16 +24,15 @@ public:
 	}
 };
 
-/**
- * When a SMTFactory is deconstructed, the SMTExpr, SMTExprVec,
- * SMTModel, SMTSolver created by the factory become invalid.
- * Thus, please deconstruct them before deconstructing
- * the factory.
- *
- * Constraints built by the same SMTFactory instance cannot be
- * accessed concurrently. SMTFactory provides a FactoryLock
- * for concurrency issues.
- */
+
+/// When a SMTFactory is deconstructed, the SMTExpr, SMTExprVec,
+/// SMTModel, SMTSolver created by the factory become invalid.
+/// Thus, please deconstruct them before deconstructing
+/// the factory.
+///
+/// Constraints built by the same SMTFactory instance cannot be
+/// accessed concurrently. SMTFactory provides a FactoryLock
+/// for concurrency issues.
 class SMTFactory {
 private:
 	z3::context Ctx;

@@ -2,8 +2,8 @@
  * Authors: Qingkai & Andy
  */
 
-#ifndef UTILS_SMT_SMTMODEL_H
-#define UTILS_SMT_SMTMODEL_H
+#ifndef SMT_SMTMODEL_H
+#define SMT_SMTMODEL_H
 
 #include <z3++.h>
 

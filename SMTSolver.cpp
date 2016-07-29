@@ -57,7 +57,7 @@ SMTSolver& SMTSolver::operator=(const SMTSolver& Solver) {
 	return *this;
 }
 
-SMTResult SMTSolver::check() {
+SMTResultType SMTSolver::check() {
 	z3::check_result Result;
 	try {
 		clock_t Start;
@@ -128,21 +128,21 @@ SMTResult SMTSolver::check() {
 		}
 	} catch (z3::exception &Ex) {
 		std::cerr << __FILE__ << " : " << __LINE__ << " : " << Ex << "\n";
-		return SMTResult::UNKNOWN;
+		return SMTResultType::SMTRT_Unknown;
 	}
 
 	// Use a return value to suppress gcc warning
-	SMTResult RetVal = SMTResult::UNKNOWN;
+	SMTResultType RetVal = SMTResultType::SMTRT_Unknown;
 
 	switch (Result) {
 	case z3::check_result::sat:
-		RetVal = SMTResult::SAT;
+		RetVal = SMTResultType::SMTRT_Sat;
 		break;
 	case z3::check_result::unsat:
-		RetVal = SMTResult::UNSAT;
+		RetVal = SMTResultType::SMTRT_Unsat;
 		break;
 	case z3::check_result::unknown:
-		RetVal = SMTResult::UNKNOWN;
+		RetVal = SMTResultType::SMTRT_Unknown;
 		break;
 	}
 

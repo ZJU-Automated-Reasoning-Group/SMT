@@ -2,8 +2,8 @@
  * Authors: Qingkai & Andy
  */
 
-#ifndef UTILS_SMT_SMTEXPR_H
-#define UTILS_SMT_SMTEXPR_H
+#ifndef SMT_SMTEXPR_H
+#define SMT_SMTEXPR_H
 
 #include <z3++.h>
 #include <map>
