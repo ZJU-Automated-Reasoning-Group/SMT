@@ -8,19 +8,20 @@
 #include <z3++.h>
 #include <llvm/Support/raw_ostream.h>
 
-enum SMTResultType {
-	SMTRT_Unsat,
-	SMTRT_Sat,
-	SMTRT_Unknown,
-	SMTRT_Uncheck
-};
-
 class SMTFactory;
 class SMTModel;
 class SMTExpr;
 class SMTExprVec;
 
 class SMTSolver {
+public:
+	enum SMTResultType {
+		SMTRT_Unsat,
+		SMTRT_Sat,
+		SMTRT_Unknown,
+		SMTRT_Uncheck
+	};
+	
 private:
 	z3::solver Solver;
 	SMTFactory* Factory;

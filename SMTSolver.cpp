@@ -57,7 +57,7 @@ SMTSolver& SMTSolver::operator=(const SMTSolver& Solver) {
 	return *this;
 }
 
-SMTResultType SMTSolver::check() {
+SMTSolver::SMTResultType SMTSolver::check() {
 	z3::check_result Result;
 	try {
 		clock_t Start;
