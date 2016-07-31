@@ -199,7 +199,7 @@ void SMTSolver::addAll(const std::vector<SMTExpr>& EVec) {
 }
 
 SMTExprVec SMTSolver::assertions() {
-	std::shared_ptr<z3::expr_vector> Vec(new z3::expr_vector(Solver.assertions()));
+	std::shared_ptr<z3::expr_vector> Vec = std::make_shared<z3::expr_vector>(Solver.assertions());
 	return SMTExprVec(Factory, Vec);
 }
 

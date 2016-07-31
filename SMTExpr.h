@@ -321,7 +321,7 @@ private:
 	SMTExprVec(SMTFactory* F, std::shared_ptr<z3::expr_vector> Vec);
 
 public:
-	SMTExprVec(SMTExprVec const &Vec);
+	SMTExprVec(const SMTExprVec &Vec);
 
 	SMTExprVec& operator=(const SMTExprVec& Vec);
 
