@@ -32,8 +32,8 @@ static llvm::cl::opt<int> SolverTimeOut("solver-time-out", llvm::cl::init(-1), l
 // only for debugging (single-thread)
 bool SMTSolvingTimeOut = false;
 
-SMTSolver::SMTSolver(SMTFactory* F, z3::solver& Z3Solver) :
-		Solver(Z3Solver), Factory(F) {
+SMTSolver::SMTSolver(SMTFactory* F, z3::solver& Z3Solver) : SMTObject(F),
+		Solver(Z3Solver) {
 	z3::params Z3Params(Z3Solver.ctx());
 	if (SolverTimeOut.getValue() > 0) {
 		// the unit is ms
@@ -45,14 +45,14 @@ SMTSolver::SMTSolver(SMTFactory* F, z3::solver& Z3Solver) :
 SMTSolver::~SMTSolver() {
 }
 
-SMTSolver::SMTSolver(const SMTSolver& Solver) :
-		Solver(Solver.Solver), Factory(Solver.Factory) {
+SMTSolver::SMTSolver(const SMTSolver& Solver) : SMTObject(Solver),
+		Solver(Solver.Solver) {
 }
 
 SMTSolver& SMTSolver::operator=(const SMTSolver& Solver) {
+	SMTObject::operator =(Solver);
 	if (this != &Solver) {
 		this->Solver = Solver.Solver;
-		this->Factory = Solver.Factory;
 	}
 	return *this;
 }
@@ -200,7 +200,7 @@ void SMTSolver::addAll(const std::vector<SMTExpr>& EVec) {
 
 SMTExprVec SMTSolver::assertions() {
 	std::shared_ptr<z3::expr_vector> Vec = std::make_shared<z3::expr_vector>(Solver.assertions());
-	return SMTExprVec(Factory, Vec);
+	return SMTExprVec(&getSMTFactory(), Vec);
 }
 
 void SMTSolver::reset() {
@@ -213,7 +213,7 @@ bool SMTSolver::operator<(const SMTSolver& Solver) const {
 
 SMTModel SMTSolver::getSMTModel() {
 	try {
-		return SMTModel(Factory, Solver.get_model());
+		return SMTModel(&getSMTFactory(), Solver.get_model());
 	} catch (z3::exception & e) {
 		std::cerr << __FILE__ << " : " << __LINE__ << " : " << e << "\n";
 		exit(1);

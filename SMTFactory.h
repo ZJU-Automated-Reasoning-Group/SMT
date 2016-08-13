@@ -57,6 +57,8 @@ public:
 
 	SMTExprVec createBoolSMTExprVec(bool Val, size_t Sz);
 
+	SMTExprVec createSMTExprVec(const std::vector<SMTExpr>& ExprVec);
+
 	SMTExpr createRealConst(const std::string& Name);
 
 	SMTExpr createRealVal(const std::string& ValStr);

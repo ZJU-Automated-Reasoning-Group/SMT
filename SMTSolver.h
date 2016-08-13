@@ -8,12 +8,14 @@
 #include <z3++.h>
 #include <llvm/Support/raw_ostream.h>
 
+#include "SMTObject.h"
+
 class SMTFactory;
 class SMTModel;
 class SMTExpr;
 class SMTExprVec;
 
-class SMTSolver {
+class SMTSolver : public SMTObject {
 public:
 	enum SMTResultType {
 		SMTRT_Unsat,
@@ -24,7 +26,6 @@ public:
 	
 private:
 	z3::solver Solver;
-	SMTFactory* Factory;
 
 	SMTSolver(SMTFactory* F, z3::solver& Z3Solver);
 

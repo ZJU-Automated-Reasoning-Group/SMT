@@ -11,18 +11,20 @@
 #include <memory>
 #include <llvm/Support/raw_ostream.h>
 
+#include "SMTObject.h"
+
 class SMTFactory;
 class SMTExprVec;
 class SMTExprComparator;
 
-class SMTExpr {
+class SMTExpr : public SMTObject {
 private:
 	z3::expr Expr;
-	SMTFactory* Factory;
 
 	SMTExpr(SMTFactory* F, z3::expr Z3Expr);
 
 public:
+	virtual ~SMTExpr() {}
 
 	SMTExpr(SMTExpr const & E);
 
@@ -285,8 +287,6 @@ public:
 
 	unsigned size(std::map<SMTExpr, unsigned, SMTExprComparator>&);
 
-	SMTFactory& getSMTFactory();
-
 	friend class SMTFactory;
 	friend class SMTSolver;
 	friend class SMTExprVec;
@@ -313,14 +313,15 @@ public:
  * and = operator have the copy semantics. Otherwise,
  * they have move semantics.
  */
-class SMTExprVec {
+class SMTExprVec : public SMTObject {
 private:
-	SMTFactory* Factory;
 	std::shared_ptr<z3::expr_vector> ExprVec;
 
 	SMTExprVec(SMTFactory* F, std::shared_ptr<z3::expr_vector> Vec);
 
 public:
+	~SMTExprVec() {}
+
 	SMTExprVec(const SMTExprVec &Vec);
 
 	SMTExprVec& operator=(const SMTExprVec& Vec);
@@ -352,8 +353,6 @@ public:
 	SMTExpr toAndExpr() const;
 
 	SMTExpr toOrExpr() const;
-
-	SMTFactory& getSMTFactory() const;
 
 	friend class SMTFactory;
 	friend class SMTSolver;

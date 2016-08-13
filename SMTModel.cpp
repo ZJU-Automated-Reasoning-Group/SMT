@@ -5,21 +5,21 @@
 #include "SMTModel.h"
 #include "SMTFactory.h"
 
-SMTModel::SMTModel(SMTFactory* F, z3::model Z3Model) :
-		Model(Z3Model), Factory(F) {
+SMTModel::SMTModel(SMTFactory* F, z3::model Z3Model) : SMTObject(F),
+		Model(Z3Model) {
 }
 
-SMTModel::SMTModel(SMTModel const & M) :
-		Model(M.Model), Factory(M.Factory) {
+SMTModel::SMTModel(SMTModel const & M) : SMTObject(M),
+		Model(M.Model) {
 }
 
 SMTModel::~SMTModel() {
 }
 
 SMTModel& SMTModel::operator=(const SMTModel& M) {
+	SMTObject::operator =(M);
 	if (this != &M) {
 		this->Model = M.Model;
-		this->Factory = M.Factory;
 	}
 	return *this;
 }

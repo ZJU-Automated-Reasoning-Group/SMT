@@ -10,18 +10,18 @@
 #include "SMTExpr.h"
 #include "SMTFactory.h"
 
-SMTExpr::SMTExpr(SMTFactory* F, z3::expr Z3Expr) :
-		Expr(Z3Expr), Factory(F) {
+SMTExpr::SMTExpr(SMTFactory* F, z3::expr Z3Expr) : SMTObject(F),
+		Expr(Z3Expr) {
 }
 
-SMTExpr::SMTExpr(SMTExpr const & E) :
-		Expr(E.Expr), Factory(E.Factory) {
+SMTExpr::SMTExpr(SMTExpr const & E) : SMTObject(E),
+		Expr(E.Expr) {
 }
 
 SMTExpr& SMTExpr::operator=(const SMTExpr& E) {
+	SMTObject::operator =(E);
 	if (this != &E) {
 		this->Expr = E.Expr;
-		this->Factory = E.Factory;
 	}
 	return *this;
 }
@@ -31,11 +31,11 @@ SMTExpr SMTExpr::substitute(SMTExprVec& From, SMTExprVec& To) {
 	if (From.empty()) {
 		return *this;
 	}
-	return SMTExpr(Factory, Expr.substitute(*From.ExprVec, *To.ExprVec));
+	return SMTExpr(&getSMTFactory(), Expr.substitute(*From.ExprVec, *To.ExprVec));
 }
 
 SMTExpr SMTExpr::localSimplify() {
-	return SMTExpr(Factory, Expr.simplify());
+	return SMTExpr(&getSMTFactory(), Expr.simplify());
 }
 
 SMTExpr SMTExpr::dilligSimplify(SMTExpr N, z3::solver& Solver4Sim, z3::context& Ctx) {
@@ -45,14 +45,14 @@ SMTExpr SMTExpr::dilligSimplify(SMTExpr N, z3::solver& Solver4Sim, z3::context& 
 		Solver4Sim.add(N.Expr);
 		if (Solver4Sim.check() == z3::check_result::unsat) {
 			Solver4Sim.pop();
-			return SMTExpr(Factory, Ctx.bool_val(false));
+			return SMTExpr(&getSMTFactory(), Ctx.bool_val(false));
 		}
 		Solver4Sim.pop();
 		Solver4Sim.push();
 		Solver4Sim.add(!N.Expr);
 		if (Solver4Sim.check() == z3::check_result::unsat) {
 			Solver4Sim.pop();
-			return SMTExpr(Factory, Ctx.bool_val(true));
+			return SMTExpr(&getSMTFactory(), Ctx.bool_val(true));
 		}
 		Solver4Sim.pop();
 		return N;
@@ -67,11 +67,11 @@ SMTExpr SMTExpr::dilligSimplify(SMTExpr N, z3::solver& Solver4Sim, z3::context& 
 				if (N.isLogicAnd()) {
 					continue;
 				} else if (N.isLogicOr()) {
-					return SMTExpr(Factory, Ctx.bool_val(true));
+					return SMTExpr(&getSMTFactory(), Ctx.bool_val(true));
 				}
 			} else if (N.getArg(I).isFalse()) {
 				if (N.isLogicAnd()) {
-					return SMTExpr(Factory, Ctx.bool_val(false));
+					return SMTExpr(&getSMTFactory(), Ctx.bool_val(false));
 				} else if (N.isLogicOr()) {
 					continue;
 				}
@@ -105,7 +105,7 @@ SMTExpr SMTExpr::dilligSimplify(SMTExpr N, z3::solver& Solver4Sim, z3::context& 
 						Args[J] = (*Candidate).Expr;
 					}
 				}
-				SMTExpr Alpha(Factory, to_expr(Ctx, Z3_mk_and(Ctx, C.size() - 1, Args)));
+				SMTExpr Alpha(&getSMTFactory(), to_expr(Ctx, Z3_mk_and(Ctx, C.size() - 1, Args)));
 				delete[] Args;
 
 				SMTExpr& Ci = C[I];
@@ -122,9 +122,9 @@ SMTExpr SMTExpr::dilligSimplify(SMTExpr N, z3::solver& Solver4Sim, z3::context& 
 				}
 
 				if (NewCi.isTrue() && N.isLogicOr()) {
-					return SMTExpr(Factory, Ctx.bool_val(true));
+					return SMTExpr(&getSMTFactory(), Ctx.bool_val(true));
 				} else if (NewCi.isFalse() && N.isLogicAnd()) {
-					return SMTExpr(Factory, Ctx.bool_val(false));
+					return SMTExpr(&getSMTFactory(), Ctx.bool_val(false));
 				}
 			}
 
@@ -143,17 +143,17 @@ SMTExpr SMTExpr::dilligSimplify(SMTExpr N, z3::solver& Solver4Sim, z3::context& 
 			}
 
 			if (J == 1) {
-				SMTExpr Ret(Factory, to_expr(Ctx, Args[0]));
+				SMTExpr Ret(&getSMTFactory(), to_expr(Ctx, Args[0]));
 				delete[] Args;
 				return Ret;
 			}
 
 			if (J == 0) {
 				delete[] Args;
-				return SMTExpr(Factory, Ctx.bool_val(true));
+				return SMTExpr(&getSMTFactory(), Ctx.bool_val(true));
 			}
 
-			SMTExpr Ret(Factory, to_expr(Ctx, Z3_mk_and(Ctx, J, Args)));
+			SMTExpr Ret(&getSMTFactory(), to_expr(Ctx, Z3_mk_and(Ctx, J, Args)));
 			delete[] Args;
 
 			return Ret;
@@ -169,17 +169,17 @@ SMTExpr SMTExpr::dilligSimplify(SMTExpr N, z3::solver& Solver4Sim, z3::context& 
 			}
 
 			if (J == 1) {
-				SMTExpr Ret(Factory, to_expr(Ctx, Args[0]));
+				SMTExpr Ret(&getSMTFactory(), to_expr(Ctx, Args[0]));
 				delete[] Args;
 				return Ret;
 			}
 
 			if (J == 0) {
 				delete[] Args;
-				return SMTExpr(Factory, Ctx.bool_val(false));
+				return SMTExpr(&getSMTFactory(), Ctx.bool_val(false));
 			}
 
-			SMTExpr Ret(Factory, to_expr(Ctx, Z3_mk_or(Ctx, J, Args)));
+			SMTExpr Ret(&getSMTFactory(), to_expr(Ctx, Z3_mk_or(Ctx, J, Args)));
 			delete[] Args;
 
 			return Ret;
@@ -221,11 +221,11 @@ unsigned SMTExpr::size(std::map<SMTExpr, unsigned, SMTExprComparator>& SizeCache
 }
 
 SMTExpr SMTExpr::getQuantifierBody() const {
-	return SMTExpr(Factory, Expr.body());
+	return SMTExpr(&getSMTFactory(), Expr.body());
 }
 
 SMTExpr SMTExpr::getArg(unsigned I) const {
-	return SMTExpr(Factory, Expr.arg(I));
+	return SMTExpr(&getSMTFactory(), Expr.arg(I));
 }
 
 SMTExpr SMTExpr::bv12bool() {
@@ -238,10 +238,10 @@ SMTExpr SMTExpr::bv12bool() {
 		z3::expr const_bv1 = const_array(Expr.get_sort().array_domain(), Expr.ctx().bv_val("1", 1));
 		Z3_ast mapargs[2] = { Expr, const_bv1 };
 
-		return SMTExpr(Factory, z3::expr(Expr.ctx(), Z3_mk_map(Expr.ctx(), func, 2, mapargs)));
+		return SMTExpr(&getSMTFactory(), z3::expr(Expr.ctx(), Z3_mk_map(Expr.ctx(), func, 2, mapargs)));
 	} else {
 		assert(Expr.is_bv() && Expr.get_sort().bv_size() == 1);
-		return SMTExpr(Factory, Expr == Expr.ctx().bv_val(1, 1));
+		return SMTExpr(&getSMTFactory(), Expr == Expr.ctx().bv_val(1, 1));
 	}
 }
 
@@ -257,10 +257,10 @@ SMTExpr SMTExpr::bool2bv1() {
 		Z3_ast mapargs[3] = { Expr, const_bv0, const_bv1 };
 
 		z3::expr bvret(ctx, Z3_mk_map(ctx, func, 3, mapargs));
-		return SMTExpr(Factory, bvret);
+		return SMTExpr(&getSMTFactory(), bvret);
 	} else {
 		assert(Expr.is_bool());
-		return SMTExpr(Factory, ite(Expr, ctx.bv_val(1, 1), ctx.bv_val(0, 1)));
+		return SMTExpr(&getSMTFactory(), ite(Expr, ctx.bv_val(1, 1), ctx.bv_val(0, 1)));
 	}
 }
 
@@ -271,10 +271,10 @@ SMTExpr SMTExpr::real2int() {
 		auto func = z3::expr(ctx, Z3_mk_real2int(ctx, ctx.real_val("0.0"))).decl();
 
 		Z3_ast mapargs[1] = { Expr };
-		return SMTExpr(Factory, z3::expr(ctx, Z3_mk_map(ctx, func, 1, mapargs)));
+		return SMTExpr(&getSMTFactory(), z3::expr(ctx, Z3_mk_map(ctx, func, 1, mapargs)));
 	} else {
 		assert(Expr.is_real());
-		return SMTExpr(Factory, z3::expr(ctx, Z3_mk_real2int(ctx, Expr)));
+		return SMTExpr(&getSMTFactory(), z3::expr(ctx, Z3_mk_real2int(ctx, Expr)));
 	}
 }
 
@@ -285,10 +285,10 @@ SMTExpr SMTExpr::int2real() {
 
 		auto func = to_real(Expr).decl();
 		Z3_ast mapargs[1] = { Expr };
-		return SMTExpr(Factory, z3::expr(ctx, Z3_mk_map(ctx, func, 1, mapargs)));
+		return SMTExpr(&getSMTFactory(), z3::expr(ctx, Z3_mk_map(ctx, func, 1, mapargs)));
 	} else {
 		assert(Expr.is_int());
-		return SMTExpr(Factory, to_real(Expr));
+		return SMTExpr(&getSMTFactory(), to_real(Expr));
 	}
 }
 
@@ -299,10 +299,10 @@ SMTExpr SMTExpr::int2bv(unsigned sz) {
 		auto func = z3::expr(ctx, Z3_mk_int2bv(ctx, sz, ctx.int_val("0"))).decl();
 
 		Z3_ast mapargs[1] = { Expr };
-		return SMTExpr(Factory, z3::expr(ctx, Z3_mk_map(ctx, func, 1, mapargs)));
+		return SMTExpr(&getSMTFactory(), z3::expr(ctx, Z3_mk_map(ctx, func, 1, mapargs)));
 	} else {
 		assert(Expr.is_int());
-		return SMTExpr(Factory, z3::expr(ctx, Z3_mk_int2bv(ctx, sz, Expr)));
+		return SMTExpr(&getSMTFactory(), z3::expr(ctx, Z3_mk_int2bv(ctx, sz, Expr)));
 	}
 }
 
@@ -314,10 +314,10 @@ SMTExpr SMTExpr::bv2int(bool isSigned) {
 		auto func = z3::expr(ctx, Z3_mk_bv2int(ctx, ctx.bv_val("0", bvSz), isSigned)).decl();
 
 		Z3_ast mapargs[1] = { Expr };
-		return SMTExpr(Factory, z3::expr(ctx, Z3_mk_map(ctx, func, 1, mapargs)));
+		return SMTExpr(&getSMTFactory(), z3::expr(ctx, Z3_mk_map(ctx, func, 1, mapargs)));
 	} else {
 		assert(Expr.is_bv());
-		return SMTExpr(Factory, z3::expr(ctx, Z3_mk_bv2int(ctx, Expr, isSigned)));
+		return SMTExpr(&getSMTFactory(), z3::expr(ctx, Z3_mk_bv2int(ctx, Expr, isSigned)));
 	}
 }
 
@@ -333,10 +333,10 @@ SMTExpr SMTExpr::basic_##X(SMTExpr &b) { \
 		} else {\
 			assert(false); \
 		}\
-		return SMTExpr(Factory, z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs)));\
+		return SMTExpr(&getSMTFactory(), z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs)));\
 	} else {\
 		assert(isBitVector() && b.isBitVector()); \
-		return SMTExpr(Factory, z3::expr(ctx, Z3_mk_bv##X(ctx, Expr, b.Expr)));\
+		return SMTExpr(&getSMTFactory(), z3::expr(ctx, Z3_mk_bv##X(ctx, Expr, b.Expr)));\
 	}\
 }\
 
@@ -374,9 +374,9 @@ SMTExpr SMTExpr::basic_concat(SMTExpr &b) {
 		} else {
 			assert(false);
 		}
-		return SMTExpr(Factory, z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs)));
+		return SMTExpr(&getSMTFactory(), z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs)));
 	} else {
-		return SMTExpr(Factory, z3::expr(ctx, Z3_mk_concat(ctx, Expr, b.Expr)));
+		return SMTExpr(&getSMTFactory(), z3::expr(ctx, Z3_mk_concat(ctx, Expr, b.Expr)));
 	}
 }
 
@@ -391,7 +391,7 @@ SMTExpr SMTExpr::basic_eq(SMTExpr &b) {
 		} else {
 			func = (ctx.real_val("0.0") == ctx.real_val("0.0")).decl();
 		}
-		return SMTExpr(Factory, z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs)));
+		return SMTExpr(&getSMTFactory(), z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs)));
 	} else {
 		return *this == b;
 	}
@@ -408,7 +408,7 @@ SMTExpr SMTExpr::basic_ne(SMTExpr &b) {
 		} else {
 			func = (ctx.real_val("0.0") != ctx.real_val("0.0")).decl();
 		}
-		return SMTExpr(Factory, z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs)));
+		return SMTExpr(&getSMTFactory(), z3::expr(ctx, Z3_mk_map(ctx, func, 2, mapargs)));
 	} else {
 		return *this != b;
 	}
@@ -421,10 +421,10 @@ SMTExpr SMTExpr::basic_extract(unsigned high, unsigned low) {
 		unsigned bvSz = Expr.get_sort().array_range().bv_size();
 		auto func = z3::expr(ctx, Z3_mk_extract(ctx, high, low, ctx.bv_val("10", bvSz))).decl();
 		Z3_ast mapargs[1] = { Expr };
-		return SMTExpr(Factory, z3::expr(ctx, Z3_mk_map(ctx, func, 1, mapargs)));
+		return SMTExpr(&getSMTFactory(), z3::expr(ctx, Z3_mk_map(ctx, func, 1, mapargs)));
 	} else {
 		assert(Expr.is_bv());
-		return SMTExpr(Factory, z3::expr(ctx, Z3_mk_extract(ctx, high, low, Expr)));
+		return SMTExpr(&getSMTFactory(), z3::expr(ctx, Z3_mk_extract(ctx, high, low, Expr)));
 	}
 }
 
@@ -435,10 +435,10 @@ SMTExpr SMTExpr::basic_sext(unsigned sz) {
 		unsigned bvSz = Expr.get_sort().array_range().bv_size();
 		auto func = z3::expr(ctx, Z3_mk_sign_ext(ctx, sz, ctx.bv_val("10", bvSz))).decl();
 		Z3_ast mapargs[1] = { Expr };
-		return SMTExpr(Factory, z3::expr(ctx, Z3_mk_map(ctx, func, 1, mapargs)));
+		return SMTExpr(&getSMTFactory(), z3::expr(ctx, Z3_mk_map(ctx, func, 1, mapargs)));
 	} else {
 		assert(Expr.is_bv());
-		return SMTExpr(Factory, z3::expr(ctx, Z3_mk_sign_ext(ctx, sz, Expr)));
+		return SMTExpr(&getSMTFactory(), z3::expr(ctx, Z3_mk_sign_ext(ctx, sz, Expr)));
 	}
 }
 
@@ -449,10 +449,10 @@ SMTExpr SMTExpr::basic_zext(unsigned sz) {
 		unsigned bvSz = Expr.get_sort().array_range().bv_size();
 		auto func = z3::expr(ctx, Z3_mk_zero_ext(ctx, sz, ctx.bv_val("10", bvSz))).decl();
 		Z3_ast mapargs[1] = { Expr };
-		return SMTExpr(Factory, z3::expr(ctx, Z3_mk_map(ctx, func, 1, mapargs)));
+		return SMTExpr(&getSMTFactory(), z3::expr(ctx, Z3_mk_map(ctx, func, 1, mapargs)));
 	} else {
 		assert(Expr.is_bv());
-		return SMTExpr(Factory, z3::expr(ctx, Z3_mk_zero_ext(ctx, sz, Expr)));
+		return SMTExpr(&getSMTFactory(), z3::expr(ctx, Z3_mk_zero_ext(ctx, sz, Expr)));
 	}
 }
 
@@ -475,9 +475,9 @@ SMTExpr SMTExpr::basic_ite(SMTExpr& TBValue, SMTExpr& FBValue) {
 		}
 
 		z3::expr mapped(ctx, Z3_mk_map(ctx, func, 3, mapargs));
-		return SMTExpr(Factory, z3::expr(ctx, Z3_mk_map(ctx, func, 3, mapargs)));
+		return SMTExpr(&getSMTFactory(), z3::expr(ctx, Z3_mk_map(ctx, func, 3, mapargs)));
 	} else {
-		return SMTExpr(Factory, ite(condition, TBValue.Expr, FBValue.Expr));
+		return SMTExpr(&getSMTFactory(), ite(condition, TBValue.Expr, FBValue.Expr));
 	}
 }
 
@@ -607,20 +607,16 @@ SMTExpr SMTExpr::array_trunc(unsigned Sz, unsigned ElmtNum) {
 	}
 }
 
-SMTFactory& SMTExpr::getSMTFactory() {
-	return *Factory;
-}
-
 SMTExpr operator!(SMTExpr const & A) {
 	if (A.isLogicNot()) {
 		assert(A.numArgs() == 1);
 		return A.getArg(0);
 	} else if (A.isTrue()) {
-		return A.Factory->createBoolVal(false);
+		return A.getSMTFactory().createBoolVal(false);
 	} else if (A.isFalse()) {
-		return A.Factory->createBoolVal(true);
+		return A.getSMTFactory().createBoolVal(true);
 	} else {
-		return SMTExpr(A.Factory, !A.Expr);
+		return SMTExpr(&A.getSMTFactory(), !A.Expr);
 	}
 }
 
@@ -631,11 +627,11 @@ SMTExpr operator||(SMTExpr const & A, SMTExpr const & B) {
 		return A;
 	}
 
-	return SMTExpr(A.Factory, A.Expr || B.Expr);
+	return SMTExpr(&A.getSMTFactory(), A.Expr || B.Expr);
 }
 
 SMTExpr operator||(SMTExpr const & A, bool B) {
-	return A || A.Factory->createBoolVal(B);
+	return A || A.getSMTFactory().createBoolVal(B);
 }
 
 SMTExpr operator||(bool A, SMTExpr const & B) {
@@ -649,11 +645,11 @@ SMTExpr operator&&(SMTExpr const & A, SMTExpr const & B) {
 		return A;
 	}
 
-	return SMTExpr(A.Factory, A.Expr && B.Expr);
+	return SMTExpr(&A.getSMTFactory(), A.Expr && B.Expr);
 }
 
 SMTExpr operator&&(SMTExpr const & A, bool B) {
-	return A && A.Factory->createBoolVal(B);
+	return A && A.getSMTFactory().createBoolVal(B);
 }
 
 SMTExpr operator&&(bool A, SMTExpr const & B) {
@@ -662,7 +658,7 @@ SMTExpr operator&&(bool A, SMTExpr const & B) {
 
 #define UNARY_OPERATION_EXPR(X) \
 SMTExpr operator X(SMTExpr const & A) { \
-	return SMTExpr(A.Factory, X(A.Expr)); \
+	return SMTExpr(&A.getSMTFactory(), X(A.Expr)); \
 }
 
 UNARY_OPERATION_EXPR(-)
@@ -671,7 +667,7 @@ UNARY_OPERATION_EXPR(~)
 #define BINARY_OPERATION_EXPR_EXPR(X) \
 SMTExpr operator X(SMTExpr const & A, SMTExpr const & B) { \
 	assert(A.isSameSort(B)); \
-	return SMTExpr(A.Factory, A.Expr X B.Expr); \
+	return SMTExpr(&A.getSMTFactory(), A.Expr X B.Expr); \
 }
 
 BINARY_OPERATION_EXPR_EXPR(|)
@@ -690,7 +686,7 @@ BINARY_OPERATION_EXPR_EXPR(/)
 
 #define BINARY_OPERATION_EXPR_INT(X) \
 SMTExpr operator X(SMTExpr const & A, int B) { \
-	return SMTExpr(A.Factory, A.Expr X B); \
+	return SMTExpr(&A.getSMTFactory(), A.Expr X B); \
 }
 
 BINARY_OPERATION_EXPR_INT(|)
@@ -709,7 +705,7 @@ BINARY_OPERATION_EXPR_INT(/)
 
 #define BINARY_OPERATION_INT_EXPR(X) \
 SMTExpr operator X(int A, SMTExpr const & B) { \
-	return SMTExpr(B.Factory, A X B.Expr); \
+	return SMTExpr(&B.getSMTFactory(), A X B.Expr); \
 }
 
 BINARY_OPERATION_INT_EXPR(|)
@@ -739,18 +735,18 @@ std::ostream & operator<<(std::ostream& Out, SMTExpr const & N) {
 
 /*==-- SMTExprVec --==*/
 
-SMTExprVec::SMTExprVec(SMTFactory* F, std::shared_ptr<z3::expr_vector> Vec) :
-		Factory(F), ExprVec(Vec) {
+SMTExprVec::SMTExprVec(SMTFactory* F, std::shared_ptr<z3::expr_vector> Vec) : SMTObject(F),
+		ExprVec(Vec) {
 }
 
-SMTExprVec::SMTExprVec(SMTExprVec const &Vec) :
-		Factory(Vec.Factory), ExprVec(Vec.ExprVec) {
+SMTExprVec::SMTExprVec(const SMTExprVec& Vec) : SMTObject(Vec),
+		ExprVec(Vec.ExprVec) {
 }
 
 SMTExprVec& SMTExprVec::operator=(const SMTExprVec& Vec) {
+	SMTObject::operator =(Vec);
 	if (this != &Vec) {
 		this->ExprVec = Vec.ExprVec;
-		this->Factory = Vec.Factory;
 	}
 	return *this;
 }
@@ -774,7 +770,7 @@ void SMTExprVec::push_back(SMTExpr E, bool Enforce) {
 
 SMTExpr SMTExprVec::operator[](unsigned I) const {
 	assert(I < size());
-	return SMTExpr(Factory, (*ExprVec)[I]);
+	return SMTExpr(&getSMTFactory(), (*ExprVec)[I]);
 }
 
 bool SMTExprVec::empty() const {
@@ -793,7 +789,7 @@ SMTExprVec SMTExprVec::copy() {
 	for (unsigned Idx = 0; Idx < ExprVec->size(); Idx++) {
 		Z3_ast_vector_set(ExprVec->ctx(), *Ret, Idx, (*ExprVec)[Idx]);
 	}
-	return SMTExprVec(Factory, Ret);
+	return SMTExprVec(&getSMTFactory(), Ret);
 }
 
 /// *this = *this && v2
@@ -823,9 +819,9 @@ SMTExprVec SMTExprVec::merge(SMTExprVec Vec1, SMTExprVec Vec2) {
 
 /// *this = *this || v2
 void SMTExprVec::mergeWithOr(const SMTExprVec& Vec) {
-	SMTExprVec Ret = Factory->createEmptySMTExprVec();
+	SMTExprVec Ret = getSMTFactory().createEmptySMTExprVec();
 	if (Vec.empty() || empty()) {
-		Ret.push_back(Factory->createBoolVal(true));
+		Ret.push_back(getSMTFactory().createBoolVal(true));
 		*this = Ret;
 		return;
 	}
@@ -839,7 +835,7 @@ void SMTExprVec::mergeWithOr(const SMTExprVec& Vec) {
 
 SMTExpr SMTExprVec::toAndExpr() const {
 	if (empty()) {
-		return Factory->createBoolVal(true);
+		return getSMTFactory().createBoolVal(true);
 	}
 
 	z3::expr t = ExprVec->ctx().bool_val(true), f = ExprVec->ctx().bool_val(false);
@@ -852,7 +848,7 @@ SMTExpr SMTExprVec::toAndExpr() const {
 			continue;
 		} else if (z3::eq(e, f)) {
 			delete[] Args;
-			return Factory->createBoolVal(false);
+			return getSMTFactory().createBoolVal(false);
 		}
 		Args[ActualSz++] = (*ExprVec)[I];
 		Index = I;
@@ -860,10 +856,10 @@ SMTExpr SMTExprVec::toAndExpr() const {
 
 	if (ActualSz == 1) {
 		delete[] Args;
-		return SMTExpr(Factory, (*ExprVec)[Index]);
+		return SMTExpr(&getSMTFactory(), (*ExprVec)[Index]);
 	}
 
-	SMTExpr Ret(Factory, to_expr(ExprVec->ctx(), Z3_mk_and(ExprVec->ctx(), ActualSz, Args)));
+	SMTExpr Ret(&getSMTFactory(), to_expr(ExprVec->ctx(), Z3_mk_and(ExprVec->ctx(), ActualSz, Args)));
 	delete[] Args;
 
 	return Ret;
@@ -871,7 +867,7 @@ SMTExpr SMTExprVec::toAndExpr() const {
 
 SMTExpr SMTExprVec::toOrExpr() const {
 	if (empty()) {
-		return Factory->createBoolVal(true);
+		return getSMTFactory().createBoolVal(true);
 	}
 
 	z3::expr t = ExprVec->ctx().bool_val(true), f = ExprVec->ctx().bool_val(false);
@@ -884,7 +880,7 @@ SMTExpr SMTExprVec::toOrExpr() const {
 			continue;
 		} else if (z3::eq(e, t)) {
 			delete[] Args;
-			return SMTExpr(Factory, t);
+			return SMTExpr(&getSMTFactory(), t);
 		}
 		Args[ActualSz++] = (*ExprVec)[I];
 		Index = I;
@@ -892,10 +888,10 @@ SMTExpr SMTExprVec::toOrExpr() const {
 
 	if (ActualSz == 1) {
 		delete[] Args;
-		return SMTExpr(Factory, (*ExprVec)[Index]);
+		return SMTExpr(&getSMTFactory(), (*ExprVec)[Index]);
 	}
 
-	SMTExpr Ret(Factory, to_expr(ExprVec->ctx(), Z3_mk_or(ExprVec->ctx(), ActualSz, Args)));
+	SMTExpr Ret(&getSMTFactory(), to_expr(ExprVec->ctx(), Z3_mk_or(ExprVec->ctx(), ActualSz, Args)));
 	delete[] Args;
 	return Ret;
 }
@@ -907,10 +903,6 @@ unsigned SMTExprVec::constraintSize() const {
 		Ret += (*this)[I].size(Cache);
 	}
 	return Ret;
-}
-
-SMTFactory& SMTExprVec::getSMTFactory() const {
-	return *Factory;
 }
 
 llvm::raw_ostream& operator<<(llvm::raw_ostream& Out, SMTExprVec Vec) {

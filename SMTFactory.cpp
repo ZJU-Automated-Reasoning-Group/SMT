@@ -203,6 +203,16 @@ SMTExprVec SMTFactory::createBoolSMTExprVec(bool Content, size_t Size) {
 	return Ret;
 }
 
+SMTExprVec SMTFactory::createSMTExprVec(const std::vector<SMTExpr>& ExprVec) {
+	SMTExprVec Ret = createEmptySMTExprVec();
+	for (size_t J = 0; J < ExprVec.size(); J++) {
+		const SMTExpr& Ex = ExprVec[J];
+		assert(&Ret.getSMTFactory() == &Ex.getSMTFactory() && "Contexts are not compatible!");
+		Ret.push_back(Ex);
+	}
+	return Ret;
+}
+
 SMTExprVec SMTFactory::parseSMTLib2File(const std::string& FileName) {
 	Z3_ast Ast = Z3_parse_smtlib2_file(Ctx, FileName.c_str(), 0, 0, 0, 0, 0, 0);
 	z3::expr Whole(Ctx, Ast);

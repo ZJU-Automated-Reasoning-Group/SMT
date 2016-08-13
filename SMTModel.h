@@ -6,13 +6,13 @@
 #define SMT_SMTMODEL_H
 
 #include <z3++.h>
+#include "SMTObject.h"
 
 class SMTFactory;
 
-class SMTModel {
+class SMTModel : public SMTObject {
 private:
 	z3::model Model;
-	SMTFactory* Factory;
 
 	SMTModel(SMTFactory* F, z3::model Z3Model);
 
@@ -20,7 +20,7 @@ public:
 
 	SMTModel(SMTModel const & M);
 
-	~SMTModel();
+	virtual ~SMTModel();
 
 	SMTModel& operator=(const SMTModel& M);
 
