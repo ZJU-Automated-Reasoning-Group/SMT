@@ -8,19 +8,18 @@
 class SMTFactory;
 
 class SMTObject {
-private:
-	SMTFactory* Context;
-
 protected:
-	SMTObject(SMTFactory* Ctx) : Context(Ctx) {
+	SMTFactory* Factory;
+
+	SMTObject(SMTFactory* F) : Factory(F) {
 	}
 
-	SMTObject(const SMTObject& Obj) : Context(Obj.Context) {
+	SMTObject(const SMTObject& Obj) : Factory(Obj.Factory) {
 	}
 
 	SMTObject& operator=(const SMTObject& Obj) {
 		if (this != &Obj) {
-			this->Context = Obj.Context;
+			this->Factory = Obj.Factory;
 		}
 		return *this;
 	}
@@ -29,7 +28,7 @@ public:
 	virtual ~SMTObject() = 0;
 
 	SMTFactory& getSMTFactory() const {
-		return *Context;
+		return *Factory;
 	}
 };
 
