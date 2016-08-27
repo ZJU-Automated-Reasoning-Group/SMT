@@ -1,7 +1,7 @@
 # Path to top level of LLVM hierarchy
 LEVEL = ../..
 
-LIBRARYNAME = PPSMT
+LIBRARYNAME = SMT
 BUILD_ARCHIVE = 1
 
 #ifneq ($(OS),Cygwin)
