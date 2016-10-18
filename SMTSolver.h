@@ -6,6 +6,7 @@
 #define SMT_SMTSOLVER_H
 
 #include <z3++.h>
+#include <vector>
 #include <llvm/Support/raw_ostream.h>
 
 #include "SMTObject.h"

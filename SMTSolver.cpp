@@ -12,7 +12,6 @@
 
 #include <time.h>
 #include <map>
-#include <stack>
 #include <iostream>
 #include <fstream>
 

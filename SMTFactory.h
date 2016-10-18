@@ -8,7 +8,7 @@
 #include <z3++.h>
 #include <string>
 #include <mutex>
-#include <set>
+#include <vector>
 #include <unordered_map>
 #include <map>
 
