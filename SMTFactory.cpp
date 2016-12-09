@@ -219,6 +219,12 @@ SMTExprVec SMTFactory::parseSMTLib2File(const std::string& FileName) {
 	return Assertions;
 }
 
+SMTExpr SMTFactory::parseSMTLib2String(const std::string& Raw) {
+    Z3_ast Ast = Z3_parse_smtlib2_string(Ctx, Raw.c_str(), 0, 0, 0, 0, 0, 0);
+    z3::expr Whole(Ctx, Ast);
+    return SMTExpr(this, Whole);
+}
+
 SMTExpr SMTFactory::createEmptySMTExpr() {
 	return SMTExpr(this, z3::expr(Ctx));
 }

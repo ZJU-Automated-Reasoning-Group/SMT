@@ -112,7 +112,9 @@ public:
 		return FactoryLock;
 	}
 
-	SMTExprVec parseSMTLib2File(const std::string& FileName);
+	SMTExpr parseSMTLib2String(const std::string&);
+
+	SMTExprVec parseSMTLib2File(const std::string&);
 
 private:
 	typedef struct RenamingUtility {
