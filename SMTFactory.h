@@ -114,7 +114,7 @@ public:
 
 	SMTExpr parseSMTLib2String(const std::string&);
 
-	SMTExprVec parseSMTLib2File(const std::string&);
+	SMTExpr parseSMTLib2File(const std::string&);
 
 private:
 	typedef struct RenamingUtility {
