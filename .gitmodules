@@ -1,0 +1,3 @@
+[submodule "third-party/z3"]
+	path = third-party/z3
+	url = git@bitbucket.org:prismers/z3.git

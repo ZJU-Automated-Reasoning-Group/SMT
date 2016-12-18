@@ -5,10 +5,10 @@
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/Debug.h>
 
-#include "SMTSolver.h"
-#include "SMTFactory.h"
-#include "SMTExpr.h"
-#include "SMTModel.h"
+#include "SMT/SMTSolver.h"
+#include "SMT/SMTFactory.h"
+#include "SMT/SMTExpr.h"
+#include "SMT/SMTModel.h"
 
 #include <time.h>
 #include <map>
@@ -16,6 +16,8 @@
 #include <fstream>
 
 #define DEBUG_TYPE "smt-solver"
+
+using namespace llvm;
 
 static llvm::cl::opt<std::string> UsingSimplify("simplify", llvm::cl::init(""),
 		llvm::cl::desc("Using online simplification technique. Candidates are local and dillig."));
@@ -28,6 +30,12 @@ static llvm::cl::opt<int> DumpingConstraintsTimeout("dump-cnts-timeout",
 
 static llvm::cl::opt<int> SolverTimeOut("solver-timeout", llvm::cl::init(1000), llvm::cl::desc("Set the timeout (ms) of the smt solver. The default value is 1000ms."));
 
+static llvm::cl::opt<int> EnableSMTD("solver-enable-smtd", llvm::cl::init(0), llvm::cl::ValueRequired,
+        llvm::cl::desc("Using smtd service"));
+
+static llvm::cl::opt<bool> EnableSMTDIncremental("solver-enable-smtd-incremental", llvm::cl::init(false),
+        llvm::cl::desc("Using incremental when smtd is enabled"));
+
 // only for debugging (single-thread)
 bool SMTSolvingTimeOut = false;
 
@@ -39,9 +47,62 @@ SMTSolver::SMTSolver(SMTFactory* F, z3::solver& Z3Solver) : SMTObject(F),
 		Z3Params.set("timeout", (unsigned) SolverTimeOut.getValue());
 	}
 	Z3Solver.set(Z3Params);
+
+	if (EnableSMTD.getNumOccurrences()) {
+		unsigned ThreadID = 1;// FIXME ThreadPool::getThreadId();
+
+		int MasterKey = EnableSMTD.getValue();
+		CommandMSQ = new MessageQueue(MasterKey);
+		CommunicateMSQ = new MessageQueue(++MasterKey);
+
+		DEBUG_WITH_TYPE("solver-smtd", errs() << "[Client] Connect to Master.\n");
+		if (-1 == CommandMSQ->sendMessage(std::to_string(ThreadID) + ":open")) {
+			llvm_unreachable("Fail to send open command!");
+		}
+		DEBUG_WITH_TYPE("solver-smtd", errs() << "[Client] Request sended: " << ThreadID << ":open\n");
+		std::string SlaveIdStr;
+		if (-1 == CommunicateMSQ->recvMessage(SlaveIdStr, ThreadID)) {
+			llvm_unreachable("Fail to recv worker id!");
+		}
+		DEBUG_WITH_TYPE("solver-smtd", errs() << "[Client] Receive Slave Id: " << SlaveIdStr << "\n");
+		if (-1 == CommunicateMSQ->sendMessage(std::to_string(ThreadID) + ":got", 11)) {
+			llvm_unreachable("Fail to send got command!");
+		}
+		DEBUG_WITH_TYPE("solver-smtd", errs() << "[Client] Confirmation sended\n");
+		WorkerMSQ = new MessageQueue(std::stoi(SlaveIdStr));
+		DEBUG_WITH_TYPE("solver-smtd", errs() << "[Client] Connect to Slave\n");
+	}
 }
 
 SMTSolver::~SMTSolver() {
+	if (EnableSMTD.getNumOccurrences()) {
+		unsigned TID = 1;// FIXME ThreadPool::getThreadId();
+		CommandMSQ->sendMessage(std::to_string(TID) + ":close");
+		delete CommandMSQ;
+		delete CommunicateMSQ;
+		delete WorkerMSQ;
+	}
+}
+
+void SMTSolver::reconnect() {
+    unsigned ThreadID = 1; // FIXME ThreadPool::getThreadId();
+
+    if (-1 == CommandMSQ->sendMessage(std::to_string(ThreadID) + ":reopen")) {
+        llvm_unreachable("Fail to send open command!");
+    }
+    DEBUG_WITH_TYPE("segsolver-smtd", errs() << "[Client] Request sended: " << ThreadID << ":open\n");
+    std::string SlaveIdStr;
+    if (-1 == CommunicateMSQ->recvMessage(SlaveIdStr, ThreadID)) {
+        llvm_unreachable("Fail to recv worker id!");
+    }
+    DEBUG_WITH_TYPE("segsolver-smtd", errs() << "[Client] Receive Slave Id: " << SlaveIdStr << "\n");
+    if (-1 == CommunicateMSQ->sendMessage(std::to_string(ThreadID) + ":got", 11)) {
+        llvm_unreachable("Fail to send got command!");
+    }
+    DEBUG_WITH_TYPE("segsolver-smtd", errs() << "[Client] Confirmation sended\n");
+    delete WorkerMSQ; // avoid memory leak
+    WorkerMSQ = new MessageQueue(std::stoi(SlaveIdStr));
+    DEBUG_WITH_TYPE("segsolver-smtd", errs() << "[Client] Connect to Slave\n");
 }
 
 SMTSolver::SMTSolver(const SMTSolver& Solver) : SMTObject(Solver),
@@ -57,6 +118,27 @@ SMTSolver& SMTSolver::operator=(const SMTSolver& Solver) {
 }
 
 SMTSolver::SMTResultType SMTSolver::check() {
+	if (EnableSMTD.getNumOccurrences()) {
+		std::string Contraints;
+		llvm::raw_string_ostream StringStream(Contraints);
+		StringStream << *((SMTSolver*)this);
+
+		// fault tolerance
+		while (-1 == WorkerMSQ->sendMessage(StringStream.str(), 1)) {
+			reconnect();
+		}
+		std::string ResultString;
+		while (-1 == WorkerMSQ->recvMessage(ResultString, 2)) {
+			reconnect();
+			while (-1 == WorkerMSQ->sendMessage(StringStream.str(), 1)) {
+				reconnect();
+			}
+		}
+
+		SMTResultType Result = (SMTResultType) std::stoi(ResultString);
+		return Result;
+	}
+
 	z3::check_result Result;
 	try {
 		clock_t Start;

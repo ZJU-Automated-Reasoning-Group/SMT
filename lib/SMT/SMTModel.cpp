@@ -2,8 +2,8 @@
  * Authors: Qingkai & Andy
  */
 
-#include "SMTModel.h"
-#include "SMTFactory.h"
+#include "SMT/SMTModel.h"
+#include "SMT/SMTFactory.h"
 
 SMTModel::SMTModel(SMTFactory* F, z3::model Z3Model) : SMTObject(F),
 		Model(Z3Model) {

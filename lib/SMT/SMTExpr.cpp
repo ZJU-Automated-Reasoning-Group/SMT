@@ -7,8 +7,8 @@
 
 #include <llvm/Support/Debug.h>
 
-#include "SMTExpr.h"
-#include "SMTFactory.h"
+#include "SMT/SMTExpr.h"
+#include "SMT/SMTFactory.h"
 
 SMTExpr::SMTExpr(SMTFactory* F, z3::expr Z3Expr) : SMTObject(F),
 		Expr(Z3Expr) {

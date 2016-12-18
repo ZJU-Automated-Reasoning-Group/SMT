@@ -5,13 +5,13 @@
 #ifndef SMT_SMTFACTORY_H
 #define SMT_SMTFACTORY_H
 
-#include <z3++.h>
 #include <string>
 #include <mutex>
 #include <vector>
 #include <unordered_map>
 #include <map>
 
+#include "z3++.h"
 #include "SMTExpr.h"
 #include "SMTSolver.h"
 

@@ -5,11 +5,12 @@
 #ifndef SMT_SMTSOLVER_H
 #define SMT_SMTSOLVER_H
 
-#include <z3++.h>
 #include <vector>
-#include <llvm/Support/raw_ostream.h>
+#include <llvm/Support/Debug.h>
 
+#include "z3++.h"
 #include "SMTObject.h"
+#include "Support/MessageQueue.h"
 
 class SMTFactory;
 class SMTModel;
@@ -71,6 +72,20 @@ public:
 
 	friend class SMTModel;
 	friend class SMTFactory;
+
+private:
+	/// The followings are used when smtd is enabled
+	/// @{
+	/// This field is to pass command to smtd's master
+	MessageQueue* CommandMSQ = nullptr;
+	/// This field is for other communication with smtd's master
+	MessageQueue* CommunicateMSQ = nullptr;
+	/// This field is for communication with one of the smtd's slaves
+	MessageQueue* WorkerMSQ = nullptr;
+
+	/// reconnect to smtd
+	void reconnect();
+	/// @}
 };
 
 #endif

@@ -1,16 +1,26 @@
-# Path to top level of LLVM hierarchy
-LEVEL = ../..
+#
+# This is a sample Makefile for a project that uses LLVM.
+#
 
-LIBRARYNAME = SMT
-BUILD_ARCHIVE = 1
+#
+# Indicates our relative path to the top of the project's root directory.
+#
+LEVEL = .
 
-#ifneq ($(OS),Cygwin)
-#	ifneq ($(OS),MingW)
-#		SHARED_LIBRARY := 1
-#		LOADABLE_MODULE := 1
-#	endif
-#endif
+#
+# Directories that needs to be built.
+#
+DIRS = lib third-party tools
 
-# Include the makefile implementation stuff
-include $(LEVEL)/Makefile.common
+#
+# Include the Master Makefile that knows how to build all.
+#
+-include $(LEVEL)/Makefile.common
+
+notconfigured:
+	@echo "ERROR: You must configure this project before you can use it!"
+	@exit 1
+
+distclean:: clean
+	${RM} -f Makefile.common Makefile.config
 

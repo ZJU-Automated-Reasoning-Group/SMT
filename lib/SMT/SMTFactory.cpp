@@ -5,7 +5,7 @@
 #include <llvm/Support/Debug.h>
 #include <llvm/Support/CommandLine.h>
 
-#include "SMTFactory.h"
+#include "SMT/SMTFactory.h"
 
 #define DEBUG_TYPE "smt-fctry"
 

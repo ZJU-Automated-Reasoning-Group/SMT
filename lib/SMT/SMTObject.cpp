@@ -2,7 +2,7 @@
  * Authors: Qingkai
  */
 
-#include "SMTObject.h"
+#include "SMT/SMTObject.h"
 
 SMTObject::~SMTObject() {
 

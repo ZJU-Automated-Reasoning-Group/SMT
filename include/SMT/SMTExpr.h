@@ -5,12 +5,12 @@
 #ifndef SMT_SMTEXPR_H
 #define SMT_SMTEXPR_H
 
-#include <z3++.h>
 #include <map>
 #include <iostream>
 #include <memory>
 #include <llvm/Support/raw_ostream.h>
 
+#include "z3++.h"
 #include "SMTObject.h"
 
 class SMTFactory;

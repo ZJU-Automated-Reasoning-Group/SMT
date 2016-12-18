@@ -5,7 +5,9 @@
 #ifndef SMT_SMTMODEL_H
 #define SMT_SMTMODEL_H
 
-#include <z3++.h>
+#include <string>
+
+#include "z3++.h"
 #include "SMTObject.h"
 
 class SMTFactory;
