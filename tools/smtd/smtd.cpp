@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
     llvm::EnableDebugBuffering = true;
     llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
-    cl::ParseCommandLineOptions(argc, argv, "SMT solving service for Pinpoint.\n");
+    cl::ParseCommandLineOptions(argc, argv, "SMT solving service.\n");
 
     if (TestClient.getValue()) {
         test(MSQKey.getValue());
