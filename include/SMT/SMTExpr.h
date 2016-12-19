@@ -1,5 +1,5 @@
 /**
- * Authors: Qingkai & Andy
+ * Authors: Qingkai
  */
 
 #ifndef SMT_SMTEXPR_H

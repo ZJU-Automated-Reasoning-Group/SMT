@@ -1,10 +1,7 @@
 /*
  * SignalHandler.h
  *
- *  Created on: 17/07/2015
- *      Author: andyzhou
- *
- *  Modified on: 30/09/2015
+ *  Created on: 19/12/2015
  *      Author: Qingkai
  */
 

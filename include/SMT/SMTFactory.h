@@ -1,5 +1,5 @@
 /**
- * Authors: Qingkai & Andy
+ * Authors: Qingkai
  */
 
 #ifndef SMT_SMTFACTORY_H
