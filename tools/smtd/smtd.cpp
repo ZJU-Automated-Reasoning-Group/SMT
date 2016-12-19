@@ -4,7 +4,6 @@
  * Author: Qingkai
  */
 
-
 #include <llvm/Support/Signals.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/PrettyStackTrace.h>
@@ -34,92 +33,14 @@ static cl::opt<bool> Incremental("smtd-incremental", cl::desc("Enable incrementa
 
 static cl::opt<bool> TestClient("smtd-test", cl::desc("Run a testing client."), cl::init(false), cl::ReallyHidden);
 
-static void testReconnect(int UserID, MessageQueue* CommandMSQ, MessageQueue* CommunicateMSQ, MessageQueue*& WorkerMSQ) {
-    if (-1 == CommandMSQ->sendMessage(std::to_string(UserID) + ":reopen")) {
-        llvm_unreachable("Fail to send open command!");
-    }
-    DEBUG(errs() << "[Client] Request sended: " << UserID << ":open\n");
-    std::string SlaveIdStr;
-    if (-1 == CommunicateMSQ->recvMessage(SlaveIdStr, UserID)) {
-        llvm_unreachable("Fail to recv worker id!");
-    }
-    DEBUG(errs() << "[Client] Receive Slave Id: " << SlaveIdStr << "\n");
-    if (-1 == CommunicateMSQ->sendMessage(std::to_string(UserID) + ":got", 11)) {
-        llvm_unreachable("Fail to send got command!");
-    }
-    DEBUG(errs() << "[Client] Confirmation sended\n");
-    delete WorkerMSQ; // avoid memory leak
-    WorkerMSQ = new MessageQueue(std::stoi(SlaveIdStr));
-    DEBUG(errs() << "[Client] Connect to Slave\n");
-}
-
-static void test() {
-    MessageQueue* MasterCommandMSQ = new MessageQueue(MSQKey.getValue());
-    MessageQueue* MasterCommunicateMSQ = new MessageQueue(1 + MSQKey.getValue());
-
-    while (true) {
-        // Step 1: send command: userid:request
-        int UserId;
-        char Request[100];
-        printf("%s", "Enter message to master: ");
-        if (scanf("%d:%s", &UserId, Request) == EOF) {
-            perror("Scanf error: ");
-            llvm_unreachable("Scanf error!");
-        }
-        DEBUG(errs() << "SEND TO MASTER: " << UserId << ":" << Request << "\n");
-        MasterCommandMSQ->sendMessage(std::to_string(UserId) + ":" + Request);
-        DEBUG(errs() << "SEND DONE\n");
-
-        // Step 2: get worker key
-        std::string Reply;
-        MasterCommunicateMSQ->recvMessage(Reply, UserId);
-        DEBUG(errs() << "RECV FROM MASTER: " << Reply << "\n");
-
-        // Step 3: confirmation
-        DEBUG(errs() << "SEND TO MASTER: " << std::to_string(UserId) + ":got" << "\n");
-        MasterCommunicateMSQ->sendMessage(std::to_string(UserId) + ":got", 11);
-        DEBUG(errs() << "SEND DONE\n");
-
-        // Step 4: connect to worker
-        int SlaveKey = std::stoi(Reply);
-        MessageQueue* SlaveMSQ = new MessageQueue(SlaveKey);
-
-        SMTFactory Factory;
-        SMTSolver Solver = Factory.createSMTSolver();
-        SMTExpr A = Factory.createBitVecConst("A", 32);
-        Solver.add(A > 10);
-
-        std::string Constraints;
-        raw_string_ostream Stream(Constraints);
-        Stream << Solver;
-
-        // Step 5: send constraints to worker
-        DEBUG(errs() << "SEND TO SLAVE: \n" << Stream.str() << "\n");
-        SlaveMSQ->sendMessage(Stream.str(), 1);
-        DEBUG(errs() << "SEND DONE\n");
-
-        // Step 6: get result
-        std::string ReplyFromSlave;
-        while (-1 == SlaveMSQ->recvMessage(ReplyFromSlave, 2)) {
-            testReconnect(UserId, MasterCommandMSQ, MasterCommunicateMSQ, SlaveMSQ);
-            SlaveMSQ->sendMessage(Stream.str(), 1);
-        }
-        DEBUG(errs() << "RECV FROM SLAVE: " << ReplyFromSlave << "\n");
-
-        delete SlaveMSQ;
-    }
-
-    delete MasterCommandMSQ;
-    delete MasterCommunicateMSQ;
-}
+// a testing client
+extern void test(int Key);
 
 static MessageQueue* SlaveMSQ = nullptr;
 
 static MessageQueue* CommandMSQ = nullptr;
 
 static MessageQueue* CommunicateMSQ = nullptr;
-
-static MessageQueue* UserIDMSQ = nullptr;
 
 static pid_t MainProcessId;
 
@@ -162,7 +83,7 @@ int main(int argc, char **argv) {
     cl::ParseCommandLineOptions(argc, argv, "SMT solving service for Pinpoint.\n");
 
     if (TestClient.getValue()) {
-        test();
+        test(MSQKey.getValue());
         return 0;
     }
 
@@ -172,7 +93,7 @@ int main(int argc, char **argv) {
             << "*******************************\n";
 
     if (Incremental.getValue()) {
-        llvm_unreachable("Incremental mode has not supported yet!");
+        llvm_unreachable("Incremental mode has not been supported yet!");
     }
 
     // Signal handlers
@@ -183,10 +104,8 @@ int main(int argc, char **argv) {
         if (MainProcessId == getpid()) {
             CommandMSQ->destroy();
             CommunicateMSQ->destroy();
-            UserIDMSQ->destroy();
             delete CommunicateMSQ;
             delete CommandMSQ;
-            delete UserIDMSQ;
 
             while (waitpid(-1, nullptr, 0)) {
                 if (errno == ECHILD) {
@@ -202,7 +121,6 @@ int main(int argc, char **argv) {
         }
         CommunicateMSQ = nullptr;
         CommandMSQ = nullptr;
-        UserIDMSQ = nullptr;
         SlaveMSQ = nullptr;
     };
     AddInterruptSigHandler(ExitHandler);
@@ -217,7 +135,6 @@ int main(int argc, char **argv) {
 
     CommandMSQ = new MessageQueue(MSQKey.getValue(), true);
     CommunicateMSQ = new MessageQueue(MSQKey.getValue() + ++Counter, true);
-    UserIDMSQ = new MessageQueue(MSQKey.getValue() + ++Counter, true);
 
     std::string Command, CtrlMsg;
     while (true) {
@@ -230,7 +147,7 @@ int main(int argc, char **argv) {
         try {
             if (Command == "requestid") {
                 UserId = allocateUserID(ExistingUsers, FreeUserIDs);
-                UserIDMSQ->sendMessage(std::to_string(UserId));
+                CommunicateMSQ->sendMessage(std::to_string(UserId), 12);
                 continue;
             }
 
@@ -347,10 +264,8 @@ int main(int argc, char **argv) {
             // The parent process' MSQ is not needed here.
             delete CommandMSQ;
             delete CommunicateMSQ;
-            delete UserIDMSQ;
             CommandMSQ = nullptr;
             CommunicateMSQ = nullptr;
-            UserIDMSQ = nullptr;
 
             SMTFactory Factory;
             SMTSolver Solver = Factory.createSMTSolver();

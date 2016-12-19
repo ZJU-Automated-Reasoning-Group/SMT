@@ -82,8 +82,6 @@ private:
 
         /// This field is to pass command to smtd's master
         MessageQueue* CommandMSQ = nullptr;
-        /// This field is to get user id from the master
-        MessageQueue* UserIDMSQ = nullptr;
         /// This field is for other communication with smtd's master
         MessageQueue* CommunicateMSQ = nullptr;
         /// This field is for communication with one of the smtd's slaves

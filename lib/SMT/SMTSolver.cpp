@@ -55,7 +55,6 @@ SMTSolver::SMTSolver(SMTFactory* F, z3::solver& Z3Solver) : SMTObject(F),
         int MasterKey = EnableSMTD.getValue();
         Channels->CommandMSQ = new MessageQueue(MasterKey);
         Channels->CommunicateMSQ = new MessageQueue(++MasterKey);
-        Channels->UserIDMSQ = new MessageQueue(++MasterKey);
 
         // Step 0: send id-request
         DEBUG_WITH_TYPE("solver-smtd", errs() << "[Client] Try to connect to master.\n");
@@ -63,7 +62,7 @@ SMTSolver::SMTSolver(SMTFactory* F, z3::solver& Z3Solver) : SMTObject(F),
             llvm_unreachable("Fail to send open command!");
         }
         std::string UserIDStr;
-        if (-1 == Channels->UserIDMSQ->recvMessage(UserIDStr)) {
+        if (-1 == Channels->CommunicateMSQ->recvMessage(UserIDStr, 12)) {
             llvm_unreachable("Fail to recv user id!");
         }
         Channels->UserID = std::stol(UserIDStr);
