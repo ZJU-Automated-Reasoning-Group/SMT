@@ -45,25 +45,7 @@ static MessageQueue* CommunicateMSQ = nullptr;
 
 static pid_t MainProcessID;
 
-int main(int argc, char **argv) {
-    PrettyStackTraceProgram X(argc, argv);
-
-    // Enable debug stream buffering.
-    llvm::EnableDebugBuffering = true;
-    llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
-
-    cl::ParseCommandLineOptions(argc, argv, "SMT solving service.\n");
-
-    if (RunTestClient.getValue()) {
-        test(MSQKey.getValue());
-        return 0;
-    }
-
-    if (Incremental.getValue()) {
-        llvm_unreachable("Incremental mode has not been supported yet!");
-        abort();
-    }
-
+static void RegisterSigHandler() {
     // Signal handlers
     MainProcessID = getpid();
     RegisterSignalHandler();
@@ -93,6 +75,33 @@ int main(int argc, char **argv) {
     };
     AddInterruptSigHandler(ExitHandler);
     AddErrorSigHandler(ExitHandler);
+}
+
+int main(int argc, char **argv) {
+    // Print stack trace when crash occurs
+    llvm::PrettyStackTraceProgram X(argc, argv);
+
+    // Enable debug stream buffering.
+    llvm::EnableDebugBuffering = true;
+
+    // Call llvm_shutdown() on exit by calling destructor.
+    llvm::llvm_shutdown_obj Y;
+
+    // Parse command line options
+    llvm::cl::ParseCommandLineOptions(argc, argv, "SMT solving service.\n");
+
+    // Register signal handlers
+    RegisterSigHandler();
+
+    if (RunTestClient.getValue()) {
+        test(MSQKey.getValue());
+        return 0;
+    }
+
+    if (Incremental.getValue()) {
+        llvm_unreachable("Incremental mode has not been supported yet!");
+        abort();
+    }
 
     outs() << "*******************************\n"
            << "Please run your applications with -solver-enable-smtd=" << MSQKey.getValue()
