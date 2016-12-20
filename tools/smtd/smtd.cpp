@@ -44,35 +44,6 @@ static MessageQueue* CommunicateMSQ = nullptr;
 
 static pid_t MainProcessId;
 
-static inline long allocateUserID(std::set<long>& ExistingUsers, std::vector<long>& FreeUserIDs) {
-    static long ID = 101;
-
-    if (FreeUserIDs.empty()) {
-        bool Overflow = false;
-        for (; ; ++ID) {
-            if (ID > 0 && !ExistingUsers.count(ID)) {
-                ExistingUsers.insert(ID);
-                return ID;
-            } else if (ID <= 0) { // overflow
-                if (!Overflow) {
-                    Overflow = true;
-                    ID = 100;
-                } else {
-                    llvm_unreachable("Too many users and no available ID can be assigned.");
-                }
-            }
-        }
-        llvm_unreachable("Too many users and no available ID can be assigned.");
-        return ID;
-    } else {
-        long Ret = FreeUserIDs.back();
-        FreeUserIDs.pop_back();
-
-        ExistingUsers.insert(Ret);
-        return Ret;
-    }
-}
-
 int main(int argc, char **argv) {
     PrettyStackTraceProgram X(argc, argv);
 
@@ -126,8 +97,7 @@ int main(int argc, char **argv) {
     AddInterruptSigHandler(ExitHandler);
     AddErrorSigHandler(ExitHandler);
 
-    std::set<long> ExistingUsers;
-    std::vector<long> FreeUserIDs;
+    UserIDAllocator* IDAllocator = UserIDAllocator::getUserAllocator();
     std::vector<std::pair<pid_t, int>> FreeMSQs;
     std::map<long, std::pair<pid_t, int>> UserWorkerMap;
 
@@ -146,7 +116,7 @@ int main(int argc, char **argv) {
         long UserId = -1;
         try {
             if (Command == "requestid") {
-                UserId = allocateUserID(ExistingUsers, FreeUserIDs);
+                UserId = IDAllocator->allocate();
                 CommunicateMSQ->sendMessage(std::to_string(UserId), 12);
                 continue;
             }
@@ -196,7 +166,7 @@ int main(int argc, char **argv) {
                 if (It != UserWorkerMap.end()) {
                     UserWorkerMap.erase(It);
                     FreeMSQs.push_back(It->second);
-                    FreeUserIDs.push_back(UserId);
+                    IDAllocator->recycle(UserId);
                     continue;
                 } else {
                     throw std::runtime_error("[Master] Non-existent user requests close!");
