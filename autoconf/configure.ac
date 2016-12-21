@@ -5,7 +5,7 @@ AC_INIT([[[SMT]]],[[[1.0]]],[qingkaishi@gmail.com])
 
 dnl Tell autoconf that the auxilliary files are actually located in
 dnl the LLVM autoconf directory, not here.
-# AC_CONFIG_AUX_DIR($LLVM_SRC_ROOT/autoconf)
+AC_CONFIG_AUX_DIR(autoconf)
 
 #AC_CONFIG_MACRO_DIR($srcdir/autoconf)
 
