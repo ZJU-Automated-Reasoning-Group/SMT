@@ -17,17 +17,31 @@ PROJ_OBJ_ROOT := $(subst //,/,@abs_top_builddir@)
 # Set the root directory of this project's install prefix
 PROJ_INSTALL_ROOT := @prefix@
 
+# Determine if a static z3 library will be used
+ENABLE_STATICZ3 := @ENABLE_STATICZ3@
+
+# Determine if address sanitizer is enabled according to configuration
+ENABLE_ASAN=@ENABLE_ASAN@
+
 # Include LLVM's Master Makefile.
 include $(LLVM_SRC_ROOT)/Makefile.common
 
 # Options
 CXXFLAGS += -Wall -Wno-deprecated -I${PROJ_SRC_ROOT}/third-party/z3/src/api/c++ -I${PROJ_SRC_ROOT}/third-party/z3/src/api/ -fexceptions
 
+ifeq ($(ENABLE_ASAN), 1)
+	ASANFLAGS = -fsanitize=address -fuse-ld=gold -fno-omit-frame-pointer
+	CXXFLAGS += $(ASANFLAGS)
+	CFLAGS += $(ASANFLAGS)
+	LDFLAGS += $(ASANFLAGS)
+endif
+
 z3::
 	if test -d ${PROJ_SRC_ROOT}/third-party/z3/build/; then ${MAKE} -C ${PROJ_SRC_ROOT}/third-party/z3/build/; \
 	else cd ${PROJ_SRC_ROOT}/third-party/z3/; python scripts/mk_make.py --staticlib; cd ${PROJ_OBJ_ROOT}; \
 	${MAKE} -C ${PROJ_SRC_ROOT}/third-party/z3/build/; fi
-	cp ${PROJ_SRC_ROOT}/third-party/z3/build/libz3.a ${PROJ_OBJ_ROOT}/${BuildMode}/lib
+	if test $(ENABLE_STATICZ3) -eq 1; then cp ${PROJ_SRC_ROOT}/third-party/z3/build/libz3.a ${PROJ_OBJ_ROOT}/${BuildMode}/lib;\
+	else cp ${PROJ_SRC_ROOT}/third-party/z3/build/libz3.so ${PROJ_OBJ_ROOT}/${BuildMode}/lib; fi
 
 z3-clean::
 	rm -rf ${PROJ_SRC_ROOT}/third-party/z3/build/

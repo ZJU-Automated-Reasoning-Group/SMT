@@ -47,9 +47,24 @@ LLVM_OBJ="`(cd $LLVM_OBJ; pwd)`"
 dnl Verify that the source directory is valid
 AC_CONFIG_SRCDIR(["Makefile.common.in"])
 
+AC_ARG_ENABLE(asan, AS_HELP_STRING(
+ --enable-asan,[Compile with address-sanitizer enabled (default is NO)]),,enableval="no")
+if test ${enableval} = "no" ; then
+  AC_SUBST(ENABLE_ASAN,[[0]])
+else
+  AC_SUBST(ENABLE_ASAN,[[1]])
+fi
+
+AC_ARG_ENABLE(staticz3, AS_HELP_STRING(
+ --enable-staticz3,[Link with static z3 library (default is NO)]),,enableval="no")
+if test ${enableval} = "no" ; then
+  AC_SUBST(ENABLE_STATICZ3,[[0]])
+else
+  AC_SUBST(ENABLE_STATICZ3,[[1]])
+fi
+
 dnl Configure a common Makefile
 AC_CONFIG_FILES(Makefile.common)
- 
 
 dnl Configure project makefiles
 dnl List every Makefile that exists within your source tree
