@@ -50,11 +50,11 @@ SMTSolver::SMTSolver(SMTFactory* F, z3::solver& Z3Solver) : SMTObject(F),
     }
 
     if (EnableSMTD.getNumOccurrences()) {
-        Channels = new SMTDMessageQueues;
+        Channels = std::make_shared<SMTDMessageQueues>();
 
         int MasterKey = EnableSMTD.getValue();
-        Channels->CommandMSQ = new MessageQueue(MasterKey);
-        Channels->CommunicateMSQ = new MessageQueue(++MasterKey);
+        Channels->CommandMSQ = std::make_shared<MessageQueue>(MasterKey);
+        Channels->CommunicateMSQ = std::make_shared<MessageQueue>(++MasterKey);
 
         // Step 0: send id-request
         DEBUG_WITH_TYPE("solver-smtd", errs() << "[Client] Try to connect to master.\n");
@@ -89,20 +89,25 @@ SMTSolver::SMTSolver(SMTFactory* F, z3::solver& Z3Solver) : SMTObject(F),
         DEBUG_WITH_TYPE("solver-smtd", errs() << "[Client] Confirmation sended\n");
 
         // Step 4: connect to server
-        Channels->WorkerMSQ = new MessageQueue(SlaveID);
+        Channels->WorkerMSQ = std::make_shared<MessageQueue>(SlaveID);
         DEBUG_WITH_TYPE("solver-smtd", errs() << "[Client] Connect to Slave\n");
     }
 }
 
-SMTSolver::~SMTSolver() {
-    if (EnableSMTD.getNumOccurrences()) {
-        Channels->CommandMSQ->sendMessage(std::to_string(Channels->UserID) + ":close");
-        delete Channels->CommandMSQ;
-        delete Channels->CommunicateMSQ;
-        delete Channels->WorkerMSQ;
+SMTSolver::SMTSolver(const SMTSolver& Solver) : SMTObject(Solver),
+        Solver(Solver.Solver), Channels(Solver.Channels) {
+}
 
-        delete Channels;
+SMTSolver& SMTSolver::operator=(const SMTSolver& Solver) {
+    SMTObject::operator =(Solver);
+    if (this != &Solver) {
+        this->Solver = Solver.Solver;
+        this->Channels = Solver.Channels;
     }
+    return *this;
+}
+
+SMTSolver::~SMTSolver() {
 }
 
 void SMTSolver::reconnect() {
@@ -119,21 +124,8 @@ void SMTSolver::reconnect() {
         llvm_unreachable("Fail to send got command!");
     }
     DEBUG_WITH_TYPE("solver-smtd", errs() << "[Client] Confirmation sended\n");
-    delete Channels->WorkerMSQ; // avoid memory leak
-    Channels->WorkerMSQ = new MessageQueue(std::stoi(SlaveIdStr));
+    Channels->WorkerMSQ = std::make_shared<MessageQueue>(std::stoi(SlaveIdStr));
     DEBUG_WITH_TYPE("solver-smtd", errs() << "[Client] Connect to Slave\n");
-}
-
-SMTSolver::SMTSolver(const SMTSolver& Solver) : SMTObject(Solver),
-        Solver(Solver.Solver) {
-}
-
-SMTSolver& SMTSolver::operator=(const SMTSolver& Solver) {
-    SMTObject::operator =(Solver);
-    if (this != &Solver) {
-        this->Solver = Solver.Solver;
-    }
-    return *this;
 }
 
 SMTSolver::SMTResultType SMTSolver::check() {

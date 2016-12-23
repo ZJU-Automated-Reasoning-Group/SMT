@@ -81,14 +81,14 @@ private:
         long UserID = 0;
 
         /// This field is to pass command to smtd's master
-        MessageQueue* CommandMSQ = nullptr;
+        std::shared_ptr<MessageQueue> CommandMSQ;
         /// This field is for other communication with smtd's master
-        MessageQueue* CommunicateMSQ = nullptr;
+        std::shared_ptr<MessageQueue> CommunicateMSQ;
         /// This field is for communication with one of the smtd's slaves
-        MessageQueue* WorkerMSQ = nullptr;
+        std::shared_ptr<MessageQueue> WorkerMSQ;
     } SMTDMessageQueues;
 
-    SMTDMessageQueues* Channels = nullptr;
+    std::shared_ptr<SMTDMessageQueues> Channels;
 
     /// reconnect to smtd
     void reconnect();
