@@ -47,6 +47,7 @@ LLVM_OBJ="`(cd $LLVM_OBJ; pwd)`"
 dnl Verify that the source directory is valid
 AC_CONFIG_SRCDIR(["Makefile.common.in"])
 
+dnl Specify whether asan is used
 AC_ARG_ENABLE(asan, AS_HELP_STRING(
  --enable-asan,[Compile with address-sanitizer enabled (default is NO)]),,enableval="no")
 if test ${enableval} = "no" ; then
@@ -55,6 +56,7 @@ else
   AC_SUBST(ENABLE_ASAN,[[1]])
 fi
 
+dnl Specify z3 library
 AC_ARG_ENABLE(staticz3, AS_HELP_STRING(
  --enable-staticz3,[Link with static z3 library (default is NO)]),,enableval="no")
 if test ${enableval} = "no" ; then
@@ -62,6 +64,17 @@ if test ${enableval} = "no" ; then
 else
   AC_SUBST(ENABLE_STATICZ3,[[1]])
 fi
+
+dnl Specify extra linker build options
+AC_ARG_WITH(extra-ld-options,
+  AS_HELP_STRING([--with-extra-ld-options],
+                 [Specify additional options to link LLVM with]),,
+                 withval=default)
+case "$withval" in
+   default) EXTRA_LD_OPTIONS= ;;
+   *) EXTRA_LD_OPTIONS=$withval ;;
+esac
+AC_SUBST(EXTRA_LD_OPTIONS,$EXTRA_LD_OPTIONS)
 
 dnl Configure a common Makefile
 AC_CONFIG_FILES(Makefile.common)
