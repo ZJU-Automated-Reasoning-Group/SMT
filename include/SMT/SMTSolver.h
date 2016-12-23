@@ -76,7 +76,8 @@ public:
 private:
     /// The followings are used when smtd is enabled
     /// @{
-    typedef struct {
+    class SMTDMessageQueues {
+    public:
         /// User ID for communication
         long UserID = 0;
 
@@ -86,7 +87,9 @@ private:
         std::shared_ptr<MessageQueue> CommunicateMSQ;
         /// This field is for communication with one of the smtd's slaves
         std::shared_ptr<MessageQueue> WorkerMSQ;
-    } SMTDMessageQueues;
+
+        ~SMTDMessageQueues();
+    };
 
     std::shared_ptr<SMTDMessageQueues> Channels;
 

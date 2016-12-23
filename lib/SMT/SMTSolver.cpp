@@ -110,7 +110,14 @@ SMTSolver& SMTSolver::operator=(const SMTSolver& Solver) {
 SMTSolver::~SMTSolver() {
 }
 
+SMTSolver::SMTDMessageQueues::~SMTDMessageQueues() {
+    assert(CommandMSQ.get() && "CommandMSQ is not initialized in a channel!");
+    CommandMSQ->sendMessage(std::to_string(UserID) + ":close");
+}
+
 void SMTSolver::reconnect() {
+    assert(EnableSMTD.getNumOccurrences() && "reconnect can be used only if --solver-enable-smtd is opened!");
+
     if (-1 == Channels->CommandMSQ->sendMessage(std::to_string(Channels->UserID) + ":reopen")) {
         llvm_unreachable("Fail to send open command!");
     }
