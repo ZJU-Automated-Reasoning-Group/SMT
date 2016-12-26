@@ -43,7 +43,7 @@ endif
 
 z3::
 	if test -d ${PROJ_SRC_ROOT}/third-party/z3/build/; then ${MAKE} -C ${PROJ_SRC_ROOT}/third-party/z3/build/; \
-	else cd ${PROJ_SRC_ROOT}/third-party/z3/; python scripts/mk_make.py --staticlib; cd ${PROJ_OBJ_ROOT}; \
+	else cd ${PROJ_SRC_ROOT}/third-party/z3/; python2.7 scripts/mk_make.py --staticlib; cd ${PROJ_OBJ_ROOT}; \
 	${MAKE} -C ${PROJ_SRC_ROOT}/third-party/z3/build/; fi
 	if test $(ENABLE_STATICZ3) -eq 1; then \
 	${CP} ${PROJ_SRC_ROOT}/third-party/z3/build/libz3.a ${PROJ_OBJ_ROOT}/${BuildMode}/lib;\
