@@ -41,6 +41,8 @@ ifeq ($(ENABLE_ASAN), 1)
 	LDFLAGS += $(ASANFLAGS)
 endif
 
+LIBS += -static-libgcc -static-libstdc++
+
 z3::
 	if test -d ${PROJ_SRC_ROOT}/third-party/z3/build/; then ${MAKE} -C ${PROJ_SRC_ROOT}/third-party/z3/build/; \
 	else cd ${PROJ_SRC_ROOT}/third-party/z3/; python2.7 scripts/mk_make.py --staticlib; cd ${PROJ_OBJ_ROOT}; \
