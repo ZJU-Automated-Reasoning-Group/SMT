@@ -127,7 +127,7 @@ dnl * Configure submodule Z3
 dnl **************************************************************************
 if test -f ${srcdir}/third-party/z3/scripts/mk_make.py; then
    pushd ${srcdir}/third-party/z3
-   python scripts/mk_make.py --staticlib
+   python2.7 scripts/mk_make.py --staticlib
    popd
 else
    AC_MSG_ERROR([Submodule Z3 is not initialized!])

@@ -3835,7 +3835,7 @@ fi
 
 if test -f ${srcdir}/third-party/z3/scripts/mk_make.py; then
    pushd ${srcdir}/third-party/z3
-   python scripts/mk_make.py --staticlib
+   python2.7 scripts/mk_make.py --staticlib
    popd
 else
    as_fn_error $? "Submodule Z3 is not initialized!" "$LINENO" 5
