@@ -15,13 +15,18 @@
 #include "SMTExpr.h"
 #include "SMTSolver.h"
 
-class SMTExprPruner {
+class SMTRenamingAdvisor {
 public:
-	/// See SMTFactory::translate for details
-	virtual bool shouldPrune(const SMTExpr&) = 0;
+    virtual ~SMTRenamingAdvisor() {
+    }
 
-	virtual ~SMTExprPruner() {
-	}
+    /// It determines if an expr will be pruned when renaming
+    /// See SMTFactory::rename for details
+    virtual bool prune(const SMTExpr&) = 0;
+
+    /// It determines if an expr will be renamed
+    /// See SMTFactory::rename for details
+    virtual bool rename(const SMTExpr&) = 0;
 };
 
 
@@ -96,7 +101,7 @@ public:
 	/// Since the symbols of the variables are renamed, we record the
 	/// <old symbol, new expr> map in the 3rd parameter.
 	///
-	/// The last parameter is optional, which indicates when a expr should
+	/// The last parameter is optional, which indicates when an expr should
 	/// be pruned in the translated constraints. For examples, the original
 	/// constraint is as following:
 	///                 "x + y > z && (a || b) && !c",
@@ -106,7 +111,7 @@ public:
 	///
 	/// This function returns a std::pair, in which the first is the translated
 	/// constraint, and the second indicates if some variables are pruned.
-	std::pair<SMTExprVec, bool> rename(const SMTExprVec&, const std::string&, std::unordered_map<std::string, SMTExpr>&, SMTExprPruner* = nullptr);
+	std::pair<SMTExprVec, bool> rename(const SMTExprVec&, const std::string&, std::unordered_map<std::string, SMTExpr>&, SMTRenamingAdvisor* = nullptr);
 
 	std::mutex& getFactoryLock() {
 		return FactoryLock;
@@ -128,7 +133,7 @@ private:
 
 	/// Utility for public function translate
 	/// It visits all exprs in a ``big" expr.
-	bool visit(SMTExpr&, std::unordered_map<std::string, SMTExpr>&, SMTExprVec&, std::map<SMTExpr, bool, SMTExprComparator>&, SMTExprPruner*);
+	bool visit(SMTExpr&, std::unordered_map<std::string, SMTExpr>&, SMTExprVec&, std::map<SMTExpr, bool, SMTExprComparator>&, SMTRenamingAdvisor*);
 };
 
 #endif

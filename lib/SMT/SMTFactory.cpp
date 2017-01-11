@@ -22,94 +22,98 @@ SMTExprVec SMTFactory::translate(const SMTExprVec & Exprs) {
 }
 
 std::pair<SMTExprVec, bool> SMTFactory::rename(const SMTExprVec& Exprs, const std::string& RenamingSuffix,
-		std::unordered_map<std::string, SMTExpr>& Mapping, SMTExprPruner* Pruner) {
+        std::unordered_map<std::string, SMTExpr>& Mapping, SMTRenamingAdvisor* Advisor) {
 
-	DEBUG(llvm::dbgs() << "Start translating and pruning ...\n");
+    DEBUG(llvm::dbgs() << "Start translating and pruning ...\n");
 
-	SMTExprVec RetExprVec = this->createEmptySMTExprVec();
-	bool RetBool = false; // the constraint is pruned?
+    SMTExprVec RetExprVec = this->createEmptySMTExprVec();
+    bool RetBool = false; // the constraint is pruned?
 
-	for (unsigned ExprIdx = 0; ExprIdx < Exprs.size(); ExprIdx++) {
-		SMTExpr Ret = Exprs[ExprIdx];
+    for (unsigned ExprIdx = 0; ExprIdx < Exprs.size(); ExprIdx++) {
+        SMTExpr Ret = Exprs[ExprIdx];
 
-		std::unordered_map<std::string, SMTExpr> LocalMapping;
+        std::unordered_map<std::string, SMTExpr> LocalMapping;
 
-		auto It = ExprRenamingCache.find(Ret);
-		if (It != ExprRenamingCache.end()) {
-			auto & Cache = ExprRenamingCache.at(Ret);
-			if (Cache.WillBePruned) {
-				RetBool = true;
-				Ret = Cache.AfterBeingPruned;
+        auto It = ExprRenamingCache.find(Ret);
+        if (It != ExprRenamingCache.end()) {
+            auto & Cache = ExprRenamingCache.at(Ret);
+            if (Cache.WillBePruned) {
+                RetBool = true;
+                Ret = Cache.AfterBeingPruned;
 
-				if (Ret.isTrue()) {
-					continue;
-				} else {
-					LocalMapping = Cache.SymbolMapping;
-				}
-			} else {
-				LocalMapping = Cache.SymbolMapping;
-			}
-		} else {
-			SMTExprVec ToPrune = this->createEmptySMTExprVec();
-			std::map<SMTExpr, bool, SMTExprComparator> Visited;
+                if (Ret.isTrue()) {
+                    continue;
+                } else {
+                    LocalMapping = Cache.SymbolMapping;
+                }
+            } else {
+                LocalMapping = Cache.SymbolMapping;
+            }
+        } else {
+            SMTExprVec ToPrune = this->createEmptySMTExprVec();
+            std::map<SMTExpr, bool, SMTExprComparator> Visited;
 
-			bool AllPruned = visit(Ret, LocalMapping, ToPrune, Visited, Pruner);
-			if (AllPruned) {
-				RenamingUtility RU { true, createBoolVal(true), createEmptySMTExprVec(), LocalMapping };
-				ExprRenamingCache.insert(std::make_pair(Ret, RU));
+            bool AllPruned = visit(Ret, LocalMapping, ToPrune, Visited, Advisor);
+            if (AllPruned) {
+                RenamingUtility RU { true, createBoolVal(true), createEmptySMTExprVec(), LocalMapping };
+                ExprRenamingCache.insert(std::make_pair(Ret, RU));
 
-				RetBool = true;
-				continue;
-			} else if (ToPrune.size()) {
-				SMTExprVec TrueVec = this->createBoolSMTExprVec(true, ToPrune.size());
-				assert(ToPrune.size() == TrueVec.size());
-				SMTExpr AfterSubstitution = Ret.substitute(ToPrune, TrueVec);
-				RenamingUtility RU { true, AfterSubstitution, ToPrune, LocalMapping };
-				ExprRenamingCache.insert(std::make_pair(Ret, RU));
+                RetBool = true;
+                continue;
+            } else if (ToPrune.size()) {
+                SMTExprVec TrueVec = this->createBoolSMTExprVec(true, ToPrune.size());
+                assert(ToPrune.size() == TrueVec.size());
+                SMTExpr AfterSubstitution = Ret.substitute(ToPrune, TrueVec);
+                RenamingUtility RU { true, AfterSubstitution, ToPrune, LocalMapping };
+                ExprRenamingCache.insert(std::make_pair(Ret, RU));
 
-				RetBool = true;
-				Ret = AfterSubstitution;
-			} else {
-				RenamingUtility RU { false, createBoolVal(true), createEmptySMTExprVec(), LocalMapping };
-				ExprRenamingCache.insert(std::make_pair(Ret, RU));
-			}
-		}
+                RetBool = true;
+                Ret = AfterSubstitution;
+            } else {
+                RenamingUtility RU { false, createBoolVal(true), createEmptySMTExprVec(), LocalMapping };
+                ExprRenamingCache.insert(std::make_pair(Ret, RU));
+            }
+        }
 
-		// renaming
-		assert(RenamingSuffix.find(' ') == std::string::npos);
-		if (RenamingSuffix != "") {
-			// Utility for replacement
-			SMTExprVec From = createEmptySMTExprVec(), To = createEmptySMTExprVec();
+        // renaming
+        assert(RenamingSuffix.find(' ') == std::string::npos);
+        if (RenamingSuffix != "") {
+            // Utility for replacement
+            SMTExprVec From = createEmptySMTExprVec(), To = createEmptySMTExprVec();
 
-			// Mapping.string + suffix --> new string + Mapping.expr.sort -> new expr
-			for (auto& It : LocalMapping) {
-				std::string OldSymbol = It.first;
-				SMTExpr OldExpr = It.second;
+            // Mapping.string + suffix --> new string + Mapping.expr.sort -> new expr
+            for (auto& It : LocalMapping) {
+                std::string OldSymbol = It.first;
+                SMTExpr OldExpr = It.second;
 
-				std::string NewSymbol = OldSymbol + RenamingSuffix;
-				SMTExpr NewExpr(this, z3::expr(Ctx, Z3_mk_const(Ctx, Z3_mk_string_symbol(Ctx, NewSymbol.c_str()), OldExpr.Expr.get_sort())));
-				Mapping.insert(std::pair<std::string, SMTExpr>(OldSymbol, NewExpr));
+                if (!Advisor || Advisor->rename(OldExpr)) {
+                    std::string NewSymbol = OldSymbol + RenamingSuffix;
+                    SMTExpr NewExpr(this, z3::expr(Ctx, Z3_mk_const(Ctx, Z3_mk_string_symbol(Ctx, NewSymbol.c_str()), OldExpr.Expr.get_sort())));
+                    Mapping.insert(std::pair<std::string, SMTExpr>(OldSymbol, NewExpr));
 
-				From.push_back(OldExpr);
-				To.push_back(NewExpr);
-			}
+                    From.push_back(OldExpr);
+                    To.push_back(NewExpr);
+                } else {
+                    Mapping.insert(std::pair<std::string, SMTExpr>(OldSymbol, OldExpr));
+                }
+            }
 
-			if (From.size()) {
-				assert(From.size() == To.size());
-				Ret = Ret.substitute(From, To);
-			}
-		}
+            if (From.size()) {
+                assert(From.size() == To.size());
+                Ret = Ret.substitute(From, To);
+            }
+        }
 
-		RetExprVec.push_back(Ret);
-	}
+        RetExprVec.push_back(Ret);
+    }
 
-	DEBUG(llvm::dbgs() << "End translating and pruning ...\n");
+    DEBUG(llvm::dbgs() << "End translating and pruning ...\n");
 
-	return std::make_pair(RetExprVec, RetBool);
+    return std::make_pair(RetExprVec, RetBool);
 }
 
 bool SMTFactory::visit(SMTExpr& Expr2Visit, std::unordered_map<std::string, SMTExpr>& Mapping, SMTExprVec& ToPrune,
-		std::map<SMTExpr, bool, SMTExprComparator>& Visited, SMTExprPruner* Pruner) {
+		std::map<SMTExpr, bool, SMTExprComparator>& Visited, SMTRenamingAdvisor* Advisor) {
 	assert(Expr2Visit.isApp() && "Must be an app-only constraints.");
 
 	if (Visited.count(Expr2Visit)) {
@@ -141,7 +145,7 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::unordered_map<std::string, SMTE
 		bool One2Prune = false;
 		for (unsigned I = 0; I < NumArgs; I++) {
 			SMTExpr Arg = Expr2Visit.getArg(I);
-			bool WillPrune = visit(Arg, Mapping, ToPrune, Visited, Pruner);
+			bool WillPrune = visit(Arg, Mapping, ToPrune, Visited, Advisor);
 			Arg2Prune.push_back(WillPrune);
 			if (!WillPrune && All2Prune) {
 				All2Prune = false;
@@ -151,7 +155,7 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::unordered_map<std::string, SMTE
 		}
 
 		if (Expr2Visit.isConst() && !Expr2Visit.isNumeral()) {
-			if (Pruner && Pruner->shouldPrune(Expr2Visit)) {
+			if (Advisor && Advisor->prune(Expr2Visit)) {
 				Visited[Expr2Visit] = true;
 				return true;
 			} else {
