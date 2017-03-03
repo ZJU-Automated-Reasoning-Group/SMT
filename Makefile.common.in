@@ -1,4 +1,4 @@
-PROJECT_NAME := pinpoint
+PROJECT_NAME := SMT
 PROJ_VERSION := 1.0
 
 # Set this variable to the top of the LLVM source tree.
@@ -43,6 +43,27 @@ endif
 
 LIBS += -static-libgcc -static-libstdc++
 
+dylib_ext = "so"
+
+ifeq ($(OS),Windows_NT)
+    dylib_ext := "dll"
+else
+	case "$(uname -s)" in
+
+	Linux)
+	     dylib_ext := "so"
+	     ;;
+	     
+	Darwin)
+		dylib_ext := "dylib"
+		;;
+	
+	*)
+	     dylib_ext := "so"
+	     ;;
+	esac
+endif
+
 z3::
 	if test -d ${PROJ_SRC_ROOT}/third-party/z3/build/; then ${MAKE} -C ${PROJ_SRC_ROOT}/third-party/z3/build/; \
 	else cd ${PROJ_SRC_ROOT}/third-party/z3/; python2.7 scripts/mk_make.py --staticlib; cd ${PROJ_OBJ_ROOT}; \
@@ -50,7 +71,7 @@ z3::
 	if test $(ENABLE_STATICZ3) -eq 1; then \
 	${CP} ${PROJ_SRC_ROOT}/third-party/z3/build/libz3.a ${PROJ_OBJ_ROOT}/${BuildMode}/lib;\
 	else \
-	${CP} ${PROJ_SRC_ROOT}/third-party/z3/build/libz3.so ${PROJ_OBJ_ROOT}/${BuildMode}/lib; fi
+	${CP} ${PROJ_SRC_ROOT}/third-party/z3/build/libz3.${dylib_ext} ${PROJ_OBJ_ROOT}/${BuildMode}/lib; fi
 
 z3-clean::
 	rm -rf ${PROJ_SRC_ROOT}/third-party/z3/build/
