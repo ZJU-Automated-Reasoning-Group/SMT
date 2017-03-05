@@ -43,35 +43,58 @@ endif
 
 LIBS += -static-libgcc -static-libstdc++
 
+
+# Check operating system
+ifeq ($(OS),Windows_NT)
+    PPHOST_OS = WINDOWS
+else
+	UNAME_S := $(shell uname -s)
+	ifeq ("$(UNAME_S)", Linux)
+		PPHOST_OS = LINUX
+	endif
+	ifeq ("$(UNAME_S)", Darwin)
+		PPHOST_OS = DARWIN
+	endif
+	ifneq (,$(findstring CYGWIN, "$(UNAME_S)"))
+		PPHOST_OS = WINDOWS
+	endif
+endif
+
+
+####################################################
+# Submodule libraries
+####################################################
+# Check dynamic library extension
 dylib_ext = "so"
 
-ifeq ($(OS),Windows_NT)
-    dylib_ext := "dll"
+ifeq ("$(PPHOST_OS)", WINDOWS)
+	dylib_ext = dll
 else
-	case "$(uname -s)" in
+	ifeq ("$(PPHOST_OS)", DARWIN)
+		dylib_ext = dylib
+	endif
+endif
 
-	Linux)
-	     dylib_ext := "so"
-	     ;;
-	     
-	Darwin)
-		dylib_ext := "dylib"
-		;;
-	
-	*)
-	     dylib_ext := "so"
-	     ;;
-	esac
+# Default is dynamic linking
+Z3Lib = libz3.${dylib_ext}
+#Z3MAKEARGS =
+
+ifeq ($(ENABLE_STATICZ3), 1)
+	Z3Lib = libz3.a
+	#Z3MAKEARGS = --staticlib
 endif
 
 z3::
-	if test -d ${PROJ_SRC_ROOT}/third-party/z3/build/; then ${MAKE} -C ${PROJ_SRC_ROOT}/third-party/z3/build/; \
-	else cd ${PROJ_SRC_ROOT}/third-party/z3/; python2.7 scripts/mk_make.py --staticlib; cd ${PROJ_OBJ_ROOT}; \
-	${MAKE} -C ${PROJ_SRC_ROOT}/third-party/z3/build/; fi
-	if test $(ENABLE_STATICZ3) -eq 1; then \
-	${CP} ${PROJ_SRC_ROOT}/third-party/z3/build/libz3.a ${PROJ_OBJ_ROOT}/${BuildMode}/lib;\
+	if test -d ${PROJ_SRC_ROOT}/third-party/z3/build/; then \
+		${MAKE} -C ${PROJ_SRC_ROOT}/third-party/z3/build/; \
 	else \
-	${CP} ${PROJ_SRC_ROOT}/third-party/z3/build/libz3.${dylib_ext} ${PROJ_OBJ_ROOT}/${BuildMode}/lib; fi
+		cd ${PROJ_OBJ_ROOT}; \
+		${MAKE} -C ${PROJ_SRC_ROOT}/third-party/z3/build/; \ 
+	fi
+	${CP} ${PROJ_SRC_ROOT}/third-party/z3/build/${Z3Lib} ${PROJ_OBJ_ROOT}/${BuildMode}/lib;
 
 z3-clean::
 	rm -rf ${PROJ_SRC_ROOT}/third-party/z3/build/
+
+clean:: z3-clean
+
