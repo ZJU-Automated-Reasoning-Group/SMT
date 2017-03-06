@@ -14,6 +14,3 @@ BUILD_ARCHIVE = 1
 # Include the makefile implementation stuff
 include $(LEVEL)/Makefile.common
 
-LIBS += -lz3
-
-${LibDir}/${Z3Lib} : z3

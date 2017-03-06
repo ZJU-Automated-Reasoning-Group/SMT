@@ -65,7 +65,7 @@ endif
 # Submodule libraries
 ####################################################
 # Check dynamic library extension
-dylib_ext = "so"
+dylib_ext = so
 
 ifeq ("$(PPHOST_OS)", WINDOWS)
 	dylib_ext = dll
@@ -75,26 +75,23 @@ else
 	endif
 endif
 
-# Default is dynamic linking
-Z3Lib = libz3.${dylib_ext}
-#Z3MAKEARGS =
-
 ifeq ($(ENABLE_STATICZ3), 1)
 	Z3Lib = libz3.a
-	#Z3MAKEARGS = --staticlib
+	Z3LinkOpt = -Wl,-Bstatic -lz3 -Wl,-Bdynamic
+else
+	Z3Lib = libz3.${dylib_ext}
+	Z3LinkOpt = -lz3
 endif
 
+Z3LinkOpt += -fopenmp -lrt
+
 z3::
-	if test -d ${PROJ_SRC_ROOT}/third-party/z3/build/; then \
-		${MAKE} -C ${PROJ_SRC_ROOT}/third-party/z3/build/; \
-	else \
-		cd ${PROJ_OBJ_ROOT}; \
-		${MAKE} -C ${PROJ_SRC_ROOT}/third-party/z3/build/; \ 
-	fi
-	${CP} ${PROJ_SRC_ROOT}/third-party/z3/build/${Z3Lib} ${PROJ_OBJ_ROOT}/${BuildMode}/lib;
+	${MAKE} -C ${PROJ_SRC_ROOT}/third-party/z3/build/
+	${CP} ${PROJ_SRC_ROOT}/third-party/z3/build/${Z3Lib} ${LibDir}
 
-z3-clean::
-	rm -rf ${PROJ_SRC_ROOT}/third-party/z3/build/
+${LibDir}/libSMT.a :z3
+${LibDir}/${Z3Lib} : z3
 
-clean:: z3-clean
 
+#z3-clean::
+#	rm -rf ${PROJ_SRC_ROOT}/third-party/z3/build/
