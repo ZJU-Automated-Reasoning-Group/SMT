@@ -586,6 +586,7 @@ PACKAGE_BUGREPORT='report@sbrella.com'
 PACKAGE_URL=''
 
 ac_unique_file=""Makefile.common.in""
+ac_unique_file=""Makefile.common.in""
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
@@ -2261,6 +2262,8 @@ case "$withval" in
    *) EXTRA_LD_OPTIONS=$withval ;;
 esac
 EXTRA_LD_OPTIONS=$EXTRA_LD_OPTIONS
+
+
 
 
 ac_config_files="$ac_config_files Makefile.common"

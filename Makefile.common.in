@@ -26,8 +26,6 @@ ENABLE_ASAN := @ENABLE_ASAN@
 # Receive extra ld flags from configure
 EXTRA_LD_OPTIONS=@EXTRA_LD_OPTIONS@
 
-# Include LLVM's Master Makefile.
-include $(LLVM_SRC_ROOT)/Makefile.common
 
 # Options
 CXXFLAGS += -Wall -Wno-deprecated -I${PROJ_SRC_ROOT}/third-party/z3/src/api/c++ -I${PROJ_SRC_ROOT}/third-party/z3/src/api/ -fexceptions
@@ -42,7 +40,6 @@ ifeq ($(ENABLE_ASAN), 1)
 endif
 
 LIBS += -static-libgcc -static-libstdc++
-
 
 # Check operating system
 ifeq ($(OS),Windows_NT)
@@ -60,38 +57,56 @@ else
 	endif
 endif
 
+# For linux we need the —start-group commands
+# For OS X we don’t need them. 
+ifeq ($(PPHOST_OS),OSX)
+
+else
+	# The LLVM options TOOLLINKOPTS and TOOLLINKOPTSB are the secret sauce for adding linking options before/after linked libraries 
+	TOOLLINKOPTS = -Wl,--start-group
+	TOOLLINKOPTSB = -Wl,--end-group
+endif
+
+# LLVM's variables should be set before before including LLVM's Makefile
+include $(LLVM_SRC_ROOT)/Makefile.common
+
 
 ####################################################
 # Submodule libraries
 ####################################################
 # Check dynamic library extension
-dylib_ext = so
+DylibExt = so
 
-ifeq ("$(PPHOST_OS)", WINDOWS)
-	dylib_ext = dll
+ifeq ($(PPHOST_OS), WINDOWS)
+	DylibExt = dll
 else
-	ifeq ("$(PPHOST_OS)", DARWIN)
-		dylib_ext = dylib
+	ifeq ($(PPHOST_OS), DARWIN)
+		DylibExt = dylib
 	endif
 endif
 
 ifeq ($(ENABLE_STATICZ3), 1)
 	Z3Lib = libz3.a
-	Z3LinkOpt = -Wl,-Bstatic -lz3 -Wl,-Bdynamic
+	Z3LinkOpt = -l:libz3.a
 else
-	Z3Lib = libz3.${dylib_ext}
+	Z3Lib = libz3.${DylibExt}
 	Z3LinkOpt = -lz3
 endif
 
 Z3LinkOpt += -fopenmp -lrt
+Z3LibPath = ${LibDir}/${Z3Lib}
 
 z3::
 	${MAKE} -C ${PROJ_SRC_ROOT}/third-party/z3/build/
 	${CP} ${PROJ_SRC_ROOT}/third-party/z3/build/${Z3Lib} ${LibDir}
 
-${LibDir}/libSMT.a :z3
-${LibDir}/${Z3Lib} : z3
+${Z3LibPath} : z3
 
 
-#z3-clean::
-#	rm -rf ${PROJ_SRC_ROOT}/third-party/z3/build/
+z3-clean::
+	rm -rf ${PROJ_SRC_ROOT}/third-party/z3/build/
+	
+dist-clean:: z3-clean
+
+
+

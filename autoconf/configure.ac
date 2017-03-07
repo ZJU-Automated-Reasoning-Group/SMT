@@ -79,6 +79,9 @@ case "$withval" in
 esac
 AC_SUBST(EXTRA_LD_OPTIONS,$EXTRA_LD_OPTIONS)
 
+dnl Verify that the source directory is valid
+AC_CONFIG_SRCDIR(["Makefile.common.in"])
+
 dnl Configure a common Makefile
 AC_CONFIG_FILES(Makefile.common)
 
