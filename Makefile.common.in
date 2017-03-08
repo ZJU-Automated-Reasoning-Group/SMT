@@ -67,7 +67,7 @@ else
 	TOOLLINKOPTSB = -Wl,--end-group
 endif
 
-# LLVM's variables should be set before before including LLVM's Makefile
+# LLVM's variables should be set before including LLVM's Makefile
 include $(LLVM_SRC_ROOT)/Makefile.common
 
 
@@ -107,5 +107,5 @@ ${Z3LibPath} : z3
 
 
 z3-clean::
-	rm -rf ${PROJ_SRC_ROOT}/third-party/z3/build/
+	$(RM) -rf ${PROJ_SRC_ROOT}/third-party/z3/build/
 
