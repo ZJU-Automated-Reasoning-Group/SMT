@@ -8,4 +8,3 @@ PARALLEL_DIRS= #$(patsubst $(PROJ_SRC_DIR)/%/Makefile,%,$(wildcard $(PROJ_SRC_DI
 
 include $(LEVEL)/Makefile.common
 
-clean:: z3-clean

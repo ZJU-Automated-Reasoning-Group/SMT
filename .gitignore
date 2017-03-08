@@ -30,8 +30,7 @@
 autom4te.cache
 cscope.files
 cscope.out
-autoconf/aclocal.m4
-autoconf/autom4te.cache
+autoconf/configure
 compile_commands.json
 
 #==============================================================================#

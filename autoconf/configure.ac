@@ -1,7 +1,7 @@
 dnl **************************************************************************
 dnl * Initialize
 dnl **************************************************************************
-AC_INIT([[[SMT]]],[[[1.0]]],[qingkaishi@gmail.com])
+AC_INIT([[[SMT]]],[[[1.0]]],[report@sbrella.com])
 
 dnl Tell autoconf that the auxilliary files are actually located in
 dnl the LLVM autoconf directory, not here.
@@ -36,8 +36,11 @@ if [[ "$LLVM_SRC" == "unknown" ]] ; then
 fi
 
 if [[ "$LLVM_OBJ" == "unknown" ]] ; then
-   # The LLVM_OBJ path must be specified
-   AC_MSG_ERROR([Please specify the LLVM build path by --with-llvmobj])
+   if [[ "$llvm_config_path" == "no" ]] ; then
+      AC_MSG_ERROR([Please specify the LLVM build path by --with-llvmobj])
+   else
+      LLVM_SRC="`llvm-config --obj-root`"
+   fi
 fi
 
 # Obtain the absolute path	
@@ -75,6 +78,9 @@ case "$withval" in
    *) EXTRA_LD_OPTIONS=$withval ;;
 esac
 AC_SUBST(EXTRA_LD_OPTIONS,$EXTRA_LD_OPTIONS)
+
+dnl Verify that the source directory is valid
+AC_CONFIG_SRCDIR(["Makefile.common.in"])
 
 dnl Configure a common Makefile
 AC_CONFIG_FILES(Makefile.common)
