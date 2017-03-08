@@ -42,24 +42,24 @@ endif
 LIBS += -static-libgcc -static-libstdc++
 
 # Check operating system
-ifeq ($(OS),Windows_NT)
+ifeq ($(OS), Windows_NT)
     PPHOST_OS = WINDOWS
 else
 	UNAME_S := $(shell uname -s)
-	ifeq ("$(UNAME_S)", Linux)
+	ifeq ($(UNAME_S), Linux)
 		PPHOST_OS = LINUX
 	endif
-	ifeq ("$(UNAME_S)", Darwin)
+	ifeq ($(UNAME_S), Darwin)
 		PPHOST_OS = DARWIN
 	endif
-	ifneq (,$(findstring CYGWIN, "$(UNAME_S)"))
+	ifneq (,$(findstring CYGWIN, $(UNAME_S)))
 		PPHOST_OS = WINDOWS
 	endif
 endif
 
 # For linux we need the —start-group commands
 # For OS X we don’t need them. 
-ifeq ($(PPHOST_OS),OSX)
+ifeq ($(PPHOST_OS), OSX)
 
 else
 	# The LLVM options TOOLLINKOPTS and TOOLLINKOPTSB are the secret sauce for adding linking options before/after linked libraries 
