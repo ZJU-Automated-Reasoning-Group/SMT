@@ -1,0 +1,5 @@
+set(LLVM_LINK_COMPONENTS2 option)
+llvm_map_components_to_libnames(llvm_libs2 ${LLVM_LINK_COMPONENTS2})
+aux_source_directory(. smtd_src)
+add_executable(smtd ${smtd_src})
+TARGET_LINK_LIBRARIES(smtd SMT SMTSupport z3 ${llvm_libs2})
