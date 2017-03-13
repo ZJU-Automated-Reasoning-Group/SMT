@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.8)
 
 
-# 1: find LLVM package
+# find LLVM package
 if (NOT LLVM_BUILD_PATH)
     message(FATAL_ERROR "please specified the build folder of LLVM by -DLLVM_BUILD_PATH=")
 else()
