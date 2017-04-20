@@ -828,7 +828,7 @@ void SMTExprVec::mergeWithOr(const SMTExprVec& Vec) {
 
 	SMTExpr E1 = this->toAndExpr();
 	SMTExpr E2 = Vec.toAndExpr();
-	Ret.ExprVec->push_back(E1.Expr || E2.Expr);
+	Ret.push_back(E1||E2);
 	*this = Ret;
 	return;
 }
