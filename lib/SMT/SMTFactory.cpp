@@ -195,19 +195,19 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::unordered_map<std::string, SMTE
 }
 
 SMTSolver SMTFactory::createSMTSolver() {
-    std::string t = IncTactic.getValue();
+    std::string& Tactic = IncTactic.getValue();
     // Set the tactic for creating the incremental solver:
     // TODO: inc_sat_solver(under development)
-    if (t == "smt_tactic") 	z3::set_param("inc_qfbv", 0);
-    else if (t == "qfbv_tactic") z3::set_param("inc_qfbv", 1);
-    else if (t == "pp_qfbv_tactic") z3::set_param("inc_qfbv", 2);
+    if (Tactic == "smt_tactic")          z3::set_param("inc_qfbv", 0);
+    else if (Tactic == "qfbv_tactic")    z3::set_param("inc_qfbv", 1);
+    else if (Tactic == "pp_qfbv_tactic") z3::set_param("inc_qfbv", 2);
 
     z3::solver Ret(Ctx);
-    // If t == qfbv_tactic or pp_qfbv_tactic, 
+    // If Tactic == qfbv_tactic or pp_qfbv_tactic,
     // only use the result of the incremental solver.
     // That is, when the incremental solver returns unknown,
     // just return unknown.
-    if (t == "qfbv_tactic" || t == "pp_qfbv_tactic") {
+    if (Tactic == "qfbv_tactic" || Tactic == "pp_qfbv_tactic") {
         z3::params Z3Params(Ctx);
         Z3Params.set("solver2-unknown", 0u);
         Ret.set(Z3Params);
