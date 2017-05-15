@@ -9,7 +9,9 @@
 
 #define DEBUG_TYPE "smt-fctry"
 
-static llvm::cl::opt<int> IncTactic("set-inc-tactic", llvm::cl::init(2), llvm::cl::desc("Set the tactic for creating the incremental solver. The default value is 2."));
+static llvm::cl::opt<std::string> IncTactic("set-inc-tactic", llvm::cl::init("smt_tactic"),
+        llvm::cl::desc("Set the tactic for creating the incremental solver. Candidates are smt_tactic, qfbv_tactic, and pp_qfbv_tactic. Default: smt_tactic"));
+
 
 SMTExprVec SMTFactory::translate(const SMTExprVec & Exprs) {
 	if (Exprs.empty()) {
@@ -193,18 +195,19 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::unordered_map<std::string, SMTE
 }
 
 SMTSolver SMTFactory::createSMTSolver() {
-	int t = IncTactic.getValue();
+    std::string t = IncTactic.getValue();
     // Set the tactic for creating the incremental solver:
-    // If t == 0, the default tactic(smt_tactic)
-    // If t == 1, qfbv_tactic
-    // If t == 2, pp_qfbv_tactic
-    // TODO: if t == 3, inc_sat_solver(under development)
-	z3::set_param("inc_qfbv", t);
+    // TODO: inc_sat_solver(under development)
+    if (t == "smt_tactic") 	z3::set_param("inc_qfbv", 0);
+    else if (t == "qfbv_tactic") z3::set_param("inc_qfbv", 1);
+    else if (t == "pp_qfbv_tactic") z3::set_param("inc_qfbv", 2);
+
     z3::solver Ret(Ctx);
-    // If t > 0, only use the result of the incremental solver.
+    // If t == qfbv_tactic or pp_qfbv_tactic, 
+    // only use the result of the incremental solver.
     // That is, when the incremental solver returns unknown,
     // just return unknown.
-    if (t > 0) {
+    if (t == "qfbv_tactic" || t == "pp_qfbv_tactic") {
         z3::params Z3Params(Ctx);
         Z3Params.set("solver2-unknown", 0u);
         Ret.set(Z3Params);
