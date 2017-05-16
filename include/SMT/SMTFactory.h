@@ -92,9 +92,10 @@ public:
 
 	SMTExpr createIntDomainConstantArray(SMTExpr& ElmtExpr);
 
-	/// This function translate an SMTExprVec (the 1st parameter) created
+	/// This function translate an SMTExprVec/SMTExpr (the 1st parameter) created
 	/// by other SMTFactory to the context of this SMTFactory.
 	SMTExprVec translate(const SMTExprVec &);
+	SMTExpr translate(const SMTExpr & Expr);
 
 	/// The variables in the constraints will be renamed using a suffix
 	/// (the 2nd parameter).
