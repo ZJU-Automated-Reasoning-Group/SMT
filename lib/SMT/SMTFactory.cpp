@@ -9,8 +9,23 @@
 
 #define DEBUG_TYPE "smt-fctry"
 
+#include <llvm/Support/Debug.h>
+#include <llvm/Support/CommandLine.h>
+
 static llvm::cl::opt<std::string> IncTactic("set-inc-tactic", llvm::cl::init("smt_tactic"),
-        llvm::cl::desc("Set the tactic for creating the incremental solver. Candidates are smt_tactic, qfbv_tactic, and pp_qfbv_tactic. Default: smt_tactic"));
+											llvm::cl::desc("Set the tactic for creating the incremental solver. Candidates are smt_tactic, qfbv_tactic, and pp_qfbv_tactic. Default: smt_tactic"));
+
+
+
+SMTFactory::SMTFactory() :
+		TempSMTVaraibleIndex(0) {
+	Tactic = IncTactic.getValue();
+	// Set the tactic for creating the incremental solver:
+	// TODO: inc_sat_solver(under development)
+	if (Tactic == "smt_tactic")          z3::set_param("inc_qfbv", 0);
+	else if (Tactic == "qfbv_tactic")    z3::set_param("inc_qfbv", 1);
+	else if (Tactic == "pp_qfbv_tactic") z3::set_param("inc_qfbv", 2);
+}
 
 
 SMTExprVec SMTFactory::translate(const SMTExprVec & Exprs) {
@@ -195,13 +210,6 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::unordered_map<std::string, SMTE
 }
 
 SMTSolver SMTFactory::createSMTSolver() {
-    std::string& Tactic = IncTactic.getValue();
-    // Set the tactic for creating the incremental solver:
-    // TODO: inc_sat_solver(under development)
-    if (Tactic == "smt_tactic")          z3::set_param("inc_qfbv", 0);
-    else if (Tactic == "qfbv_tactic")    z3::set_param("inc_qfbv", 1);
-    else if (Tactic == "pp_qfbv_tactic") z3::set_param("inc_qfbv", 2);
-
     z3::solver Ret(Ctx);
     // If Tactic == qfbv_tactic or pp_qfbv_tactic,
     // only use the result of the incremental solver.
