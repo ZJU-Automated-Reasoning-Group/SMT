@@ -21,9 +21,10 @@ SMTFactory::SMTFactory() :
 		TempSMTVaraibleIndex(0) {
 	Tactic = IncTactic.getValue();
 	// Set the tactic for creating the incremental solver:
-	// TODO: inc_sat_solver(under development)
-	if (Tactic == "smt_tactic")          z3::set_param("inc_qfbv", 0);
-	else if (Tactic == "qfbv_tactic")    z3::set_param("inc_qfbv", 1);
+	// TODO: pp_inc_bv_solver(under development)
+	// The default tactic is smt_tactic. 
+	// if (Tactic == "smt_tactic")          z3::set_param("inc_qfbv", 0);
+	if (Tactic == "qfbv_tactic")    z3::set_param("inc_qfbv", 1);
 	else if (Tactic == "pp_qfbv_tactic") z3::set_param("inc_qfbv", 2);
 }
 
