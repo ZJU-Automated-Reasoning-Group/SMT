@@ -15,8 +15,6 @@
 #include "SMTExpr.h"
 #include "SMTSolver.h"
 
-
-
 class SMTRenamingAdvisor {
 public:
     virtual ~SMTRenamingAdvisor() {
