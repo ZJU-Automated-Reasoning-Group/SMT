@@ -46,7 +46,7 @@ private:
 
 	std::mutex FactoryLock;
 
-	std::string Tactic;
+	//std::string Tactic;
 
 	unsigned TempSMTVaraibleIndex;
 

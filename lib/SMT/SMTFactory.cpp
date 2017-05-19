@@ -19,7 +19,7 @@ static llvm::cl::opt<std::string> IncTactic("set-inc-tactic", llvm::cl::init("sm
 
 SMTFactory::SMTFactory() :
 		TempSMTVaraibleIndex(0) {
-	Tactic = IncTactic.getValue();
+	std::string& Tactic = IncTactic.getValue();
 	// Set the tactic for creating the incremental solver:
 	// TODO: inc_sat_solver(under development)
 	if (Tactic == "smt_tactic")          z3::set_param("inc_qfbv", 0);
@@ -215,6 +215,7 @@ SMTSolver SMTFactory::createSMTSolver() {
     // only use the result of the incremental solver.
     // That is, when the incremental solver returns unknown,
     // just return unknown.
+	std::string& Tactic = IncTactic.getValue();
     if (Tactic == "qfbv_tactic" || Tactic == "pp_qfbv_tactic") {
         z3::params Z3Params(Ctx);
         Z3Params.set("solver2-unknown", 0u);
