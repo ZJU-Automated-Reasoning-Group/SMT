@@ -44,12 +44,13 @@ private:
 
 	std::mutex FactoryLock;
 
+	//std::string Tactic;
+
 	unsigned TempSMTVaraibleIndex;
 
 public:
-	SMTFactory() :
-			TempSMTVaraibleIndex(0) {
-	}
+
+	SMTFactory();
 
 	~SMTFactory() {
 	}
