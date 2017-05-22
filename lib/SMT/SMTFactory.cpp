@@ -41,6 +41,20 @@ SMTExprVec SMTFactory::translate(const SMTExprVec & Exprs) {
 	return Ret;
 }
 
+SMTExpr SMTFactory::translate(const SMTExpr & Expr) {
+    if (Expr.isTrue()) {
+        return this->createBoolVal(true);
+    } else if (Expr.isFalse()) {
+        return this->createBoolVal(false);
+    }
+
+    std::lock_guard<std::mutex> L(Expr.getSMTFactory().getFactoryLock());
+
+    z3::expr RetExpr = z3::expr(Ctx, Z3_translate(Expr.Expr.ctx(), Expr.Expr, Ctx));
+    SMTExpr Ret(this, RetExpr);
+    return Ret;
+}
+
 std::pair<SMTExprVec, bool> SMTFactory::rename(const SMTExprVec& Exprs, const std::string& RenamingSuffix,
         std::unordered_map<std::string, SMTExpr>& Mapping, SMTRenamingAdvisor* Advisor) {
 
