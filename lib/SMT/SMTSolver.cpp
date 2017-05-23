@@ -288,6 +288,7 @@ void SMTSolver::add(SMTExpr E) {
     }
 }
 
+
 void SMTSolver::addAll(SMTExprVec EVec) {
     // TODO: more tactics
     // 1. Add one by one(the default tactic)
@@ -296,7 +297,7 @@ void SMTSolver::addAll(SMTExprVec EVec) {
     // 4. Take the size of EVec into considerations; choose the parameters of simplify()
     if (EnableLocalSimplify.getValue()) {
         // Turn EVec to a single Expr, and call simplify()
-        add(SMTExpr(&getSMTFactory(), EVec.toAndExpr().Expr.simplify()));
+        Solver.add(EVec.toAndExpr().Expr.simplify());
     } else {
         for (unsigned I = 0; I < EVec.size(); I++) {
             add(EVec[I]);
