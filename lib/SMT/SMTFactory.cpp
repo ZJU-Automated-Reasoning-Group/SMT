@@ -12,7 +12,7 @@
 #include <llvm/Support/Debug.h>
 #include <llvm/Support/CommandLine.h>
 
-static llvm::cl::opt<std::string> IncTactic("set-inc-tactic", llvm::cl::init("smt_tactic"),
+static llvm::cl::opt<std::string> IncTactic("set-inc-tactic", llvm::cl::init("pp_qfbv_tactic"),
      llvm::cl::desc("Set the tactic for creating the incremental solver. Candidates are smt_tactic, qfbv_tactic, pp_qfbv_tactic and pp_inc_bv_solver. Default: smt_tactic"));
 
 
@@ -23,11 +23,11 @@ SMTFactory::SMTFactory() :
 	// Set the tactic for creating the incremental solver:
 	// TODO: pp_inc_bv_solver(under development)
 	// The default tactic is smt_tactic. 
-	if (Tactic == "smt_tactic")          z3::set_param("inc_qfbv", 0);
-	else if (Tactic == "pp_qfbv_tactic") z3::set_param("inc_qfbv", 2);
+	if (Tactic == "pp_qfbv_tactic") z3::set_param("inc_qfbv", 2);
+	else if (Tactic == "smt_tactic") z3::set_param("inc_qfbv", 0);
     else if (Tactic == "pp_inc_bv_solver") z3::set_param("inc_qfbv", 3);
-    else if (Tactic == "qfbv_tactic")    z3::set_param("inc_qfbv", 1);
-    else z3::set_param("inc_qfbv", 3); // Default changes to pp_inc_bv_solver
+    else if (Tactic == "qfbv_tactic") z3::set_param("inc_qfbv", 1);
+    else z3::set_param("inc_qfbv", 2); // Default changes to pp qfbv tactic
 }
 
 
