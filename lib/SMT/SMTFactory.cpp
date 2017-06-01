@@ -23,10 +23,11 @@ SMTFactory::SMTFactory() :
 	// Set the tactic for creating the incremental solver:
 	// TODO: pp_inc_bv_solver(under development)
 	// The default tactic is smt_tactic. 
-	// if (Tactic == "smt_tactic")          z3::set_param("inc_qfbv", 0);
-    if (Tactic == "pp_qfbv_tactic") z3::set_param("inc_qfbv", 2);
+	if (Tactic == "smt_tactic")          z3::set_param("inc_qfbv", 0);
+	else if (Tactic == "pp_qfbv_tactic") z3::set_param("inc_qfbv", 2);
     else if (Tactic == "pp_inc_bv_solver") z3::set_param("inc_qfbv", 3);
     else if (Tactic == "qfbv_tactic")    z3::set_param("inc_qfbv", 1);
+    else z3::set_param("inc_qfbv", 3); // Default changes to pp_inc_bv_solver
 }
 
 
