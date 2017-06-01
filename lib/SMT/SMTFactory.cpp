@@ -13,7 +13,7 @@
 #include <llvm/Support/CommandLine.h>
 
 static llvm::cl::opt<std::string> IncTactic("set-inc-tactic", llvm::cl::init("pp_qfbv_tactic"),
-     llvm::cl::desc("Set the tactic for creating the incremental solver. Candidates are smt_tactic, qfbv_tactic, pp_qfbv_tactic and pp_inc_bv_solver. Default: smt_tactic"));
+     llvm::cl::desc("Set the tactic for creating the incremental solver. Candidates are smt_tactic, qfbv_tactic, pp_qfbv_tactic and pp_inc_bv_solver. Default: pp_qfbv_tactic"));
 
 
 
