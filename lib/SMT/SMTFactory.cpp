@@ -12,8 +12,8 @@
 #include <llvm/Support/Debug.h>
 #include <llvm/Support/CommandLine.h>
 
-static llvm::cl::opt<std::string> IncTactic("set-inc-tactic", llvm::cl::init("smt_tactic"),
-     llvm::cl::desc("Set the tactic for creating the incremental solver. Candidates are smt_tactic, qfbv_tactic, pp_qfbv_tactic and pp_inc_bv_solver. Default: smt_tactic"));
+static llvm::cl::opt<std::string> IncTactic("set-inc-tactic", llvm::cl::init("pp_qfbv_tactic"),
+     llvm::cl::desc("Set the tactic for creating the incremental solver. Candidates are smt_tactic, qfbv_tactic, pp_qfbv_tactic and pp_inc_bv_solver. Default: pp_qfbv_tactic"));
 
 
 
@@ -23,10 +23,11 @@ SMTFactory::SMTFactory() :
 	// Set the tactic for creating the incremental solver:
 	// TODO: pp_inc_bv_solver(under development)
 	// The default tactic is smt_tactic. 
-	// if (Tactic == "smt_tactic")          z3::set_param("inc_qfbv", 0);
-    if (Tactic == "pp_qfbv_tactic") z3::set_param("inc_qfbv", 2);
+	if (Tactic == "pp_qfbv_tactic") z3::set_param("inc_qfbv", 2);
+	else if (Tactic == "smt_tactic") z3::set_param("inc_qfbv", 0);
     else if (Tactic == "pp_inc_bv_solver") z3::set_param("inc_qfbv", 3);
-    else if (Tactic == "qfbv_tactic")    z3::set_param("inc_qfbv", 1);
+    else if (Tactic == "qfbv_tactic") z3::set_param("inc_qfbv", 1);
+    else z3::set_param("inc_qfbv", 2); // Default changes to pp qfbv tactic
 }
 
 
@@ -43,13 +44,13 @@ SMTExprVec SMTFactory::translate(const SMTExprVec & Exprs) {
 }
 
 SMTExpr SMTFactory::translate(const SMTExpr & Expr) {
+    std::lock_guard<std::mutex> L(Expr.getSMTFactory().getFactoryLock());
+
     if (Expr.isTrue()) {
         return this->createBoolVal(true);
     } else if (Expr.isFalse()) {
         return this->createBoolVal(false);
     }
-
-    std::lock_guard<std::mutex> L(Expr.getSMTFactory().getFactoryLock());
 
     z3::expr RetExpr = z3::expr(Ctx, Z3_translate(Expr.Expr.ctx(), Expr.Expr, Ctx));
     SMTExpr Ret(this, RetExpr);

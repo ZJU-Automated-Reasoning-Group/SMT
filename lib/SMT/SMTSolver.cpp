@@ -38,7 +38,7 @@ static llvm::cl::opt<int> EnableSMTD("solver-enable-smtd", llvm::cl::init(0), ll
 static llvm::cl::opt<bool> EnableSMTDIncremental("solver-enable-smtd-incremental", llvm::cl::init(false),
         llvm::cl::desc("Using incremental when smtd is enabled"));
 
-static llvm::cl::opt<bool> EnableLocalSimplify("enable-local-simplify", llvm::cl::init(false),
+static llvm::cl::opt<bool> EnableLocalSimplify("enable-local-simplify", llvm::cl::init(true),
                                                llvm::cl::desc("Enable local simplifications while adding a vector of constraints"));
 
 // only for debugging (single-thread)
