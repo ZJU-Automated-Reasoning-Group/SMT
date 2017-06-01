@@ -38,6 +38,9 @@ static llvm::cl::opt<int> EnableSMTD("solver-enable-smtd", llvm::cl::init(0), ll
 static llvm::cl::opt<bool> EnableSMTDIncremental("solver-enable-smtd-incremental", llvm::cl::init(false),
         llvm::cl::desc("Using incremental when smtd is enabled"));
 
+static llvm::cl::opt<bool> EnableLocalSimplify("enable-local-simplify", llvm::cl::init(false),
+                                               llvm::cl::desc("Enable local simplifications while adding a vector of constraints"));
+
 // only for debugging (single-thread)
 bool SMTSolvingTimeOut = false;
 
@@ -285,13 +288,25 @@ void SMTSolver::add(SMTExpr E) {
     }
 }
 
+
 void SMTSolver::addAll(SMTExprVec EVec) {
-    for (unsigned I = 0; I < EVec.size(); I++) {
-        add(EVec[I]);
+    // TODO: more tactics
+    // 1. Add one by one(the default tactic)
+    // 2. Call toAnd(EVec), and add the returned formula
+    // 3. Call toAnd(EVec), add add a simplified version of the returned formula
+    // 4. Take the size of EVec into considerations; choose the parameters of simplify()
+    if (EnableLocalSimplify.getValue()) {
+        // Turn EVec to a single Expr, and call simplify()
+        Solver.add(EVec.toAndExpr().Expr.simplify());
+    } else {
+        for (unsigned I = 0; I < EVec.size(); I++) {
+            add(EVec[I]);
+        }
     }
 }
 
 void SMTSolver::addAll(const std::vector<SMTExpr>& EVec) {
+    // TODO: add EnableLocalSimplify option for this.
     for (unsigned I = 0; I < EVec.size(); I++) {
         add(EVec[I]);
     }

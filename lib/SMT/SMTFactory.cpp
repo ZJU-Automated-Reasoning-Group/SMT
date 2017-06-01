@@ -13,7 +13,7 @@
 #include <llvm/Support/CommandLine.h>
 
 static llvm::cl::opt<std::string> IncTactic("set-inc-tactic", llvm::cl::init("smt_tactic"),
-											llvm::cl::desc("Set the tactic for creating the incremental solver. Candidates are smt_tactic, qfbv_tactic, and pp_qfbv_tactic. Default: smt_tactic"));
+     llvm::cl::desc("Set the tactic for creating the incremental solver. Candidates are smt_tactic, qfbv_tactic, pp_qfbv_tactic and pp_inc_bv_solver. Default: smt_tactic"));
 
 
 
@@ -24,8 +24,9 @@ SMTFactory::SMTFactory() :
 	// TODO: pp_inc_bv_solver(under development)
 	// The default tactic is smt_tactic. 
 	// if (Tactic == "smt_tactic")          z3::set_param("inc_qfbv", 0);
-	if (Tactic == "qfbv_tactic")    z3::set_param("inc_qfbv", 1);
-	else if (Tactic == "pp_qfbv_tactic") z3::set_param("inc_qfbv", 2);
+    if (Tactic == "pp_qfbv_tactic") z3::set_param("inc_qfbv", 2);
+    else if (Tactic == "pp_inc_bv_solver") z3::set_param("inc_qfbv", 3);
+    else if (Tactic == "qfbv_tactic")    z3::set_param("inc_qfbv", 1);
 }
 
 
@@ -231,7 +232,7 @@ SMTSolver SMTFactory::createSMTSolver() {
     // That is, when the incremental solver returns unknown,
     // just return unknown.
 	std::string& Tactic = IncTactic.getValue();
-    if (Tactic == "qfbv_tactic" || Tactic == "pp_qfbv_tactic") {
+    if (Tactic == "pp_qfbv_tactic" || Tactic == "pp_inc_bv_solver" || Tactic == "qfbv_tactic") {
         z3::params Z3Params(Ctx);
         Z3Params.set("solver2-unknown", 0u);
         Ret.set(Z3Params);
