@@ -42,13 +42,13 @@ SMTExprVec SMTFactory::translate(const SMTExprVec & Exprs) {
 }
 
 SMTExpr SMTFactory::translate(const SMTExpr & Expr) {
+    std::lock_guard<std::mutex> L(Expr.getSMTFactory().getFactoryLock());
+
     if (Expr.isTrue()) {
         return this->createBoolVal(true);
     } else if (Expr.isFalse()) {
         return this->createBoolVal(false);
     }
-
-    std::lock_guard<std::mutex> L(Expr.getSMTFactory().getFactoryLock());
 
     z3::expr RetExpr = z3::expr(Ctx, Z3_translate(Expr.Expr.ctx(), Expr.Expr, Ctx));
     SMTExpr Ret(this, RetExpr);
