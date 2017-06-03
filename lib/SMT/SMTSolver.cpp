@@ -296,8 +296,9 @@ void SMTSolver::addAll(SMTExprVec EVec) {
     // 3. Call toAnd(EVec), add add a simplified version of the returned formula
     // 4. Take the size of EVec into considerations; choose the parameters of simplify()
     if (EnableLocalSimplify.getValue()) {
+        add(EVec.toAndExpr());
         // Turn EVec to a single Expr, and call simplify()
-        Solver.add(EVec.toAndExpr().Expr.simplify());
+        // Solver.add(EVec.toAndExpr().Expr.simplify());
     } else {
         for (unsigned I = 0; I < EVec.size(); I++) {
             add(EVec[I]);
