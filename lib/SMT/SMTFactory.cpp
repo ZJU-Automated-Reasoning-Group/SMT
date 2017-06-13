@@ -13,21 +13,34 @@
 #include <llvm/Support/CommandLine.h>
 
 static llvm::cl::opt<std::string> IncTactic("set-inc-tactic", llvm::cl::init("pp_qfbv_tactic"),
-     llvm::cl::desc("Set the tactic for creating the incremental solver. Candidates are smt_tactic, qfbv_tactic, pp_qfbv_tactic and pp_inc_bv_solver. Default: pp_qfbv_tactic"));
+     llvm::cl::desc("Set the tactic for creating the incremental solver. Candidates are smt_tactic, qfbv_tactic, pp_qfbv_tactic, pp_inc_bv_solver and pp_qfbv_light_tactic. Default: pp_qfbv_tactic"));
 
+class SMTConfig {
+public:
+    static SMTConfig& get() {
+        static SMTConfig Instance;
+        return Instance;
+    }
+    std::string& getIncTactic() {
+        return Tactic;
+    }
 
+private:
+    SMTConfig() {
+        Tactic = IncTactic.getValue();
+        if (Tactic == "pp_qfbv_light_tactic") z3::set_param("inc_qfbv", 4);
+        else if (Tactic == "pp_qfbv_tactic") z3::set_param("inc_qfbv", 2);
+        else if (Tactic == "smt_tactic") z3::set_param("inc_qfbv", 0);
+        else if (Tactic == "pp_inc_bv_solver") z3::set_param("inc_qfbv", 3);
+        else if (Tactic == "qfbv_tactic") z3::set_param("inc_qfbv", 1);
+        else z3::set_param("inc_qfbv", 4); // Default changes to pp_qfbv_light_tactic
+    }
+    std::string Tactic;
+};
 
 SMTFactory::SMTFactory() :
 		TempSMTVaraibleIndex(0) {
-	std::string& Tactic = IncTactic.getValue();
-	// Set the tactic for creating the incremental solver:
-	// TODO: pp_inc_bv_solver(under development)
-	// The default tactic is smt_tactic. 
-	if (Tactic == "pp_qfbv_tactic") z3::set_param("inc_qfbv", 2);
-	else if (Tactic == "smt_tactic") z3::set_param("inc_qfbv", 0);
-    else if (Tactic == "pp_inc_bv_solver") z3::set_param("inc_qfbv", 3);
-    else if (Tactic == "qfbv_tactic") z3::set_param("inc_qfbv", 1);
-    else z3::set_param("inc_qfbv", 2); // Default changes to pp qfbv tactic
+
 }
 
 
@@ -232,8 +245,9 @@ SMTSolver SMTFactory::createSMTSolver() {
     // only use the result of the incremental solver.
     // That is, when the incremental solver returns unknown,
     // just return unknown.
-	std::string& Tactic = IncTactic.getValue();
-    if (Tactic == "pp_qfbv_tactic" || Tactic == "pp_inc_bv_solver" || Tactic == "qfbv_tactic") {
+	//std::string& Tactic = IncTactic.getValue();
+    std::string& Tactic = SMTConfig::get().getIncTactic();
+    if (Tactic == "pp_qfbv_tactic" || Tactic == "pp_qfbv_light_tactic" || Tactic == "pp_inc_bv_solver" || Tactic == "qfbv_tactic") {
         z3::params Z3Params(Ctx);
         Z3Params.set("solver2-unknown", 0u);
         Ret.set(Z3Params);
