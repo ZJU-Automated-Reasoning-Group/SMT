@@ -12,7 +12,7 @@
 #include <llvm/Support/Debug.h>
 #include <llvm/Support/CommandLine.h>
 
-static llvm::cl::opt<std::string> IncTactic("set-inc-tactic", llvm::cl::init("pp_qfbv_tactic"),
+static llvm::cl::opt<std::string> IncTactic("set-inc-tactic", llvm::cl::init("pp_qfbv_light_tactic"),
      llvm::cl::desc("Set the tactic for creating the incremental solver. Candidates are smt_tactic, qfbv_tactic, pp_qfbv_tactic, pp_inc_bv_solver and pp_qfbv_light_tactic. Default: pp_qfbv_tactic"));
 
 class SMTConfig {
