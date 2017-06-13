@@ -12,7 +12,7 @@
 #include <llvm/Support/Debug.h>
 #include <llvm/Support/CommandLine.h>
 
-static llvm::cl::opt<std::string> IncTactic("set-inc-tactic", llvm::cl::init("pp_qfbv_tactic"),
+static llvm::cl::opt<std::string> IncTactic("set-inc-tactic", llvm::cl::init("pp_qfbv_light_tactic"),
      llvm::cl::desc("Set the tactic for creating the incremental solver. Candidates are smt_tactic, qfbv_tactic, pp_qfbv_tactic, pp_inc_bv_solver and pp_qfbv_light_tactic. Default: pp_qfbv_tactic"));
 
 class SMTConfig {
@@ -240,13 +240,13 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::unordered_map<std::string, SMTE
 }
 
 SMTSolver SMTFactory::createSMTSolver() {
+    std::string& Tactic = SMTConfig::get().getIncTactic();
     z3::solver Ret(Ctx);
     // If Tactic == qfbv_tactic or pp_qfbv_tactic,
     // only use the result of the incremental solver.
     // That is, when the incremental solver returns unknown,
     // just return unknown.
 	//std::string& Tactic = IncTactic.getValue();
-    std::string& Tactic = SMTConfig::get().getIncTactic();
     if (Tactic == "pp_qfbv_tactic" || Tactic == "pp_qfbv_light_tactic" || Tactic == "pp_inc_bv_solver" || Tactic == "qfbv_tactic") {
         z3::params Z3Params(Ctx);
         Z3Params.set("solver2-unknown", 0u);
