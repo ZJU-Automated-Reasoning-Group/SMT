@@ -18,8 +18,8 @@ static llvm::cl::opt<std::string> IncTactic("set-inc-tactic", llvm::cl::init("pp
 class SMTConfig {
 public:
     static SMTConfig& get() {
-        static SMTConfig instance;
-        return instance;
+        static SMTConfig Instance;
+        return Instance;
     }
     std::string& getIncTactic() {
         return Tactic;
