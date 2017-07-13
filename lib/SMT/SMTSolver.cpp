@@ -30,7 +30,7 @@ static llvm::cl::opt<std::string> DumpingConstraintsDst("dump-cnts-dst", llvm::c
 static llvm::cl::opt<int> DumpingConstraintsTimeout("dump-cnts-timeout",
         llvm::cl::desc("If solving time is too large (ms), the constraints will be output to the destination that -dump-cnts-dst set."));
 
-static llvm::cl::opt<int> SolverTimeOut("solver-timeout", llvm::cl::init(1000), llvm::cl::desc("Set the timeout (ms) of the smt solver. The default value is 1000ms."));
+static llvm::cl::opt<int> SolverTimeOut("solver-timeout", llvm::cl::init(10000), llvm::cl::desc("Set the timeout (ms) of the smt solver. The default value is 10000ms (i.e. 10s)."));
 
 static llvm::cl::opt<int> EnableSMTD("solver-enable-smtd", llvm::cl::init(0), llvm::cl::ValueRequired,
         llvm::cl::desc("Using smtd service"));
