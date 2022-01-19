@@ -24,11 +24,13 @@ else()
  #           COMMAND "cp ${CMAKE_CURRENT_SOURCE_DIR}/z3/build/${z3library} ${PROJECT_BINARY_DIR}/lib/${z3library}"
  #   )
  
-    # currently, we hard-code the parallel building. if anyone knows how to propogate the parallel building to this, please feel free to add.                        
+    # currently, we hard-code the parallel building. if anyone knows how to propogate the parallel building to this, please feel free to add.
+    include(ProcessorCount)
+    ProcessorCount(N)
     ADD_CUSTOM_COMMAND(
         OUTPUT z3build
         COMMAND python2.7 scripts/mk_make.py --staticlib WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/z3
-        COMMAND make -j 8 -C ${CMAKE_CURRENT_SOURCE_DIR}/z3/build/  VERBATIM USES_TERMINAL
+        COMMAND make -j ${N} -C ${CMAKE_CURRENT_SOURCE_DIR}/z3/build/  VERBATIM USES_TERMINAL
         COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/z3/build/${z3library} ${PROJECT_BINARY_DIR}/lib/${z3library}
     )
 endif()
