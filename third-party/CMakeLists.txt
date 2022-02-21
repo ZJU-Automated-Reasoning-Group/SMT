@@ -31,7 +31,7 @@ else()
         OUTPUT z3build
         COMMAND python2.7 scripts/mk_make.py --staticlib WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/z3
         COMMAND make -j ${N} -C ${CMAKE_CURRENT_SOURCE_DIR}/z3/build/  VERBATIM USES_TERMINAL
-        COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/z3/build/${z3library} ${PROJECT_BINARY_DIR}/lib/${z3library}
+        COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/z3/build/${Z3LibraryName} ${PROJECT_BINARY_DIR}/lib/${Z3LibraryName}
     )
 endif()
 
