@@ -1,7 +1,7 @@
 dnl **************************************************************************
 dnl * Initialize
 dnl **************************************************************************
-AC_INIT([[[SMT]]],[[[1.0]]],[report@sbrella.com])
+AC_INIT([[[SMT]]],[[[1.0]]],[report@clearblue.com])
 
 dnl Tell autoconf that the auxilliary files are actually located in
 dnl the LLVM autoconf directory, not here.
