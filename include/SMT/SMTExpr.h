@@ -137,6 +137,12 @@ public:
 		return Expr.is_numeral();
 	}
 
+    //Please verify isNumeral() before getNumeralUint64()
+    uint64_t getNumeralUint64() {
+            assert(isNumeral());
+            return Expr.get_numeral_uint64();
+    }
+
 	bool isQuantifier() const {
 		return Expr.is_quantifier();
 	}
@@ -184,6 +190,10 @@ public:
 	std::string getSymbol() const {
 		return Z3_ast_to_string(Expr.ctx(), Expr);
 	}
+
+    unsigned getAstId() const {
+    	return Z3_get_ast_id(Expr.ctx(), Expr);
+    }
 
 	SMTExpr substitute(SMTExprVec& From, SMTExprVec& To);
 

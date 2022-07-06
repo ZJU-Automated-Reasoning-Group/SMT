@@ -230,6 +230,16 @@ SMTSolver SMTFactory::createSMTSolver() {
     return SMTSolver(this, Ret);
 }
 
+SMTSolver SMTFactory::createSMTSolverWithTactic(const std::string& TmpTactic) {
+    if (TmpTactic.empty()) {
+        z3::solver Ret(Ctx);
+        return SMTSolver(this, Ret);
+    } else {
+        z3::solver Ret = z3::tactic(Ctx, TmpTactic.c_str()).mk_solver();
+        return SMTSolver(this, Ret);
+    }
+}
+
 SMTExprVec SMTFactory::createBoolSMTExprVec(bool Content, size_t Size) {
 	SMTExprVec Ret = createEmptySMTExprVec();
 	for (unsigned J = 0; J < Size; J++) {
