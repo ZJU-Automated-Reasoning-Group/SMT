@@ -10,6 +10,9 @@
 #include "SMT/SMTExpr.h"
 #include "SMT/SMTModel.h"
 
+#include "SMT/SMTLIBSolver.h"
+#include "SMT/SMTConfigure.h"
+
 #include "Support/MessageQueue.h"
 
 #include <time.h>
@@ -139,6 +142,25 @@ void SMTSolver::reconnect() {
 }
 
 SMTSolver::SMTResultType SMTSolver::check() {
+
+    if (SMTConfig::get().UseSMTLIBSolver) {
+    	// TODO: try the current version of clearblue..
+
+       	SmtlibSmtSolver* BinSolver = new SmtlibSmtSolver(SMTConfig::get().SMTLIBSolverPath, SMTConfig::get().SMTLIBSolverArgs);
+       	BinSolver->setLogic("QF_BV");
+        std::string Query = this->Solver.to_smt2();
+    	auto Result = BinSolver->solveWholeFormula(Query);
+        // std::cout << "Res: " << Result << "\n";
+        delete BinSolver;
+    	if (Result == SMTLIBSolverResult::SMTRT_Sat) {
+    	    return SMTSolver::SMTResultType::SMTRT_Sat;
+    	} else if (Result == SMTLIBSolverResult::SMTRT_Unsat) {
+    	    return SMTSolver::SMTResultType::SMTRT_Unsat;
+    	} else {
+    	    return SMTSolver::SMTResultType::SMTRT_Unknown;
+    	}
+    }
+
     if (EnableSMTD.getNumOccurrences()) {
         std::string Contraints;
         llvm::raw_string_ostream StringStream(Contraints);
