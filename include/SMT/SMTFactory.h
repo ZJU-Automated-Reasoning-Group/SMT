@@ -63,9 +63,7 @@ public:
 	SMTFactory();
 
 	~SMTFactory() {
-		if (SmtlibSolver) {
-			delete SmtlibSolver;
-		}
+	    if (useSMTLIBSolver && SmtlibSolver) {delete SmtlibSolver;}
 	}
 
 	SMTSolver createSMTSolver();

@@ -27,7 +27,7 @@
 
 SmtlibSmtSolver::SmtlibSmtSolver(std::string path,
 		std::vector<std::string> cmdArgs) :
-		path(path), cmdLineArgs(cmdArgs), debug(false), contextLevel(0) {
+		path(path), cmdLineArgs(cmdArgs), debug(true), contextLevel(0) {
 	processIdOfSolver = 0;
 	init();
 }
@@ -126,6 +126,11 @@ void SmtlibSmtSolver::push(unsigned num) {
 void SmtlibSmtSolver::pop(unsigned num) {
 	writeCommand("(pop " + std::to_string(num) + ")");
 	contextLevel -= num;
+}
+
+// TOOD: use reset or reset-assertions
+void SmtlibSmtSolver::reset() {
+        writeCommand("(reset-assertions)");
 }
 
 unsigned SmtlibSmtSolver::getContextLevel() const {
@@ -260,7 +265,7 @@ SMTLIBSolverResult SmtlibSmtSolver::checkForErrorMessage(
 
 // TODO: allow more options
 SmtlibSmtSolver* createSMTLIBSolver() {
-  	SmtlibSmtSolver* BinSolver = new SmtlibSmtSolver(SMTConfig::get().SMTLIBSolverPath, SMTConfig::get().SMTLIBSolverArgs);
+  	SmtlibSmtSolver* BinSolver = new SmtlibSmtSolver(SMTConfig::SMTLIBSolverPath, SMTConfig::SMTLIBSolverArgs);
 	BinSolver->setLogic("QF_BV");
 	//gs->set_timeout(1);
 	return BinSolver;

@@ -16,10 +16,15 @@
 
 SMTFactory::SMTFactory() :
 		TempSMTVaraibleIndex(0) {
-	if (useSMTLIBSolver) {
-		SmtlibSolver = createSMTLIBSolver();
-	}
-
+        //   I will try to call SMTConfig::init() in lib/Platform/Globals.cpp 
+        if (SMTConfig::UseSMTLIBSolver) {
+            useSMTLIBSolver = true;
+            SmtlibSolver = createSMTLIBSolver();
+            if (SmtlibSolver == NULL) {
+                std::cout << "Creating SMTLIB solver failure!!!\n";
+                useSMTLIBSolver = false;
+            }
+        } 
 }
 
 
@@ -219,7 +224,7 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::unordered_map<std::string, SMTE
 }
 
 SMTSolver SMTFactory::createSMTSolver() {
-    std::string& Tactic = SMTConfig::get().getIncTactic();
+    std::string& Tactic = SMTConfig::Tactic;
     z3::solver Ret(Ctx);
     // If Tactic == qfbv_tactic or pp_qfbv_tactic,
     // only use the result of the incremental solver.

@@ -10,31 +10,20 @@
 
 class SMTConfig {
 public:
-    static SMTConfig& get() {
-        static SMTConfig Instance;
-        return Instance;
-    }
-
-    std::string& getIncTactic() {
-    	return Tactic;
-    }
-
-    // For using SMTLIBSolver
-    bool UseSMTLIBSolver;
-    std::string SMTLIBSolverPath;
-    std::vector<std::string> SMTLIBSolverArgs;
-    // End
-
-
-private:
-    SMTConfig(); // initialize the members once
-
-    std::string Tactic;
 
     // static int Timeout;
+    static std::string Tactic;
 
+    // For using SMTLIBSolver
+    static bool UseSMTLIBSolver;
+    static std::string SMTLIBSolverPath;
+    static std::vector<std::string> SMTLIBSolverArgs;
+    // End
 
-
+public:
+    static void init();
 };
+
+
 
 #endif

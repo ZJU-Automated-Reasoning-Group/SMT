@@ -144,6 +144,39 @@ void SMTSolver::reconnect() {
 
 SMTSolver::SMTResultType SMTSolver::check() {
 
+    if (SMTConfig::UseSMTLIBSolver) {
+        // NOTE: now, we just call the related staff for diff testing
+        // First, we run a bin solver from scractch
+        SmtlibSmtSolver* BinSolver = new SmtlibSmtSolver(SMTConfig::SMTLIBSolverPath, SMTConfig::SMTLIBSolverArgs);
+        BinSolver->setLogic("QF_BV");
+        std::string Query = this->Solver.to_smt2();
+        auto Result = BinSolver->solveWholeFormula(Query);
+        delete BinSolver;
+
+        // Second, we run the bin solver attached to the factory
+        if (this->Factory->useSMTLIBSolver) {
+                auto FacSolverRes = this->Factory->SmtlibSolver->check();
+                // std::cout << "Factory's bin solver res: " << FacSolverRes << "\n";
+                if (Result != FacSolverRes && Result != SMTLIBSolverResult::SMTRT_Unknown && FacSolverRes != SMTLIBSolverResult::SMTRT_Unknown) {
+                      std::cout << "Scratch bin solver res: " << Result << "\n";
+                      std::cout << "Factory's bin solver res: " << FacSolverRes << "\n";
+                      //abort();
+                } else {
+                      std::cout << "Factory' bin success once!!\n";
+                }
+        }
+
+        // if everything works well, we may use this->Factory->SmtlibSolver (instead of the tmp bin solver)
+        if (Result == SMTLIBSolverResult::SMTRT_Sat) {
+            return SMTSolver::SMTResultType::SMTRT_Sat;
+        } else if (Result == SMTLIBSolverResult::SMTRT_Unsat) {
+            return SMTSolver::SMTResultType::SMTRT_Unsat;
+        } else {
+            return SMTSolver::SMTResultType::SMTRT_Unknown;
+        }
+    } 
+    // else { std::cout << "Will not use SMTLIB solver \n"; }
+
     if (EnableSMTD.getNumOccurrences()) {
         std::string Contraints;
         llvm::raw_string_ostream StringStream(Contraints);
@@ -240,38 +273,6 @@ SMTSolver::SMTResultType SMTSolver::check() {
 
     // Use a return value to suppress gcc warning
     SMTResultType RetVal = SMTResultType::SMTRT_Unknown;
-
-    if (SMTConfig::get().UseSMTLIBSolver) {
-    	// NOTE: now, we just call the related staff for diff testing
-
-    	// First, we run a bin solver from scractch
-       	SmtlibSmtSolver* BinSolver = new SmtlibSmtSolver(SMTConfig::get().SMTLIBSolverPath, SMTConfig::get().SMTLIBSolverArgs);
-       	BinSolver->setLogic("QF_BV");
-        std::string Query = this->Solver.to_smt2();
-    	auto Result = BinSolver->solveWholeFormula(Query);
-        // std::cout << "Res: " << Result << "\n";
-        delete BinSolver;
-
-        // Second, we run the bin solver attached to the factory
-        if (this->Factory->useSMTLIBSolver) {
-        	auto FacSolverRes = this->Factory->SmtlibSolver->check();
-        	if (Result != FacSolverRes and Result != SMTLIBSolverResult::SMTRT_Unknown and FacSolverRes != SMTLIBSolverResult::SMTRT_Unknown) {
-        		std::cout << "Scratch bin solver res: " << Result << "\n";
-        		std::cout << "Factory's bin solver res: " << FacSolverRes << "\n";
-        		abort();
-        	}
-        }
-        // if everything works well, we may use the reult of the bin solver directly
-        /*
-    	if (Result == SMTLIBSolverResult::SMTRT_Sat) {
-    	    return SMTSolver::SMTResultType::SMTRT_Sat;
-    	} else if (Result == SMTLIBSolverResult::SMTRT_Unsat) {
-    	    return SMTSolver::SMTResultType::SMTRT_Unsat;
-    	} else {
-    	    return SMTSolver::SMTResultType::SMTRT_Unknown;
-    	}
-    	*/
-    }
 
     switch (Result) {
     case z3::check_result::sat:
@@ -386,9 +387,11 @@ SMTExprVec SMTSolver::assertions() {
 }
 
 void SMTSolver::reset() {
-	// TODO: we should support this for the SMTLIB solver
-	// Can we just send a (reset) command?
+    // TODO: should we send "reset" or "reset-assertions" to the SMTLIB solver
     Solver.reset();
+    if (this->Factory->useSMTLIBSolver) {
+       this->Factory->SmtlibSolver->reset();
+    }
 }
 
 bool SMTSolver::operator<(const SMTSolver& Solver) const {
