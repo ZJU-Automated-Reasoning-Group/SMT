@@ -7,6 +7,7 @@
 
 #include "SMT/SMTFactory.h"
 #include "SMT/SMTConfigure.h"
+#include "SMT/SMTLIBSolver.h"
 
 #define DEBUG_TYPE "smt-fctry"
 
@@ -15,6 +16,9 @@
 
 SMTFactory::SMTFactory() :
 		TempSMTVaraibleIndex(0) {
+	if (useSMTLIBSolver) {
+		SmtlibSolver = createSMTLIBSolver();
+	}
 
 }
 
@@ -288,13 +292,27 @@ SMTExpr SMTFactory::createRealVal(const std::string& ValStr) {
 }
 
 SMTExpr SMTFactory::createBitVecConst(const std::string& Name, uint64_t Sz) {
-	return SMTExpr(this, Ctx.bv_const(Name.c_str(), Sz));
+	// return SMTExpr(this, Ctx.bv_const(Name.c_str(), Sz));
+	z3::expr E = Ctx.bv_const(Name.c_str(), Sz);
+	if (useSMTLIBSolver) {
+		// For communicating with SMTLIB solvers
+		std::string varCmd = "(declare-fun " + E.to_string() + " () (_ BitVec " + std::to_string(Sz) + "))\n";
+		SmtlibSolver->add(varCmd);
+	}
+	return SMTExpr(this, E);
 }
 
 SMTExpr SMTFactory::createTemporaryBitVecConst(uint64_t Sz) {
 	std::string Symbol("temp_");
-	Symbol.append(std::to_string(TempSMTVaraibleIndex++));
+	// Symbol.append(std::to_string(TempSMTVaraibleIndex++));
 	return SMTExpr(this, Ctx.bv_const(Symbol.c_str(), Sz));
+	z3::expr E = Ctx.bv_const(Symbol.c_str(), Sz);
+	if (useSMTLIBSolver) {
+		// For communicating with SMTLIB solvers
+		std::string varCmd = "(declare-fun " + E.to_string() + " () (_ BitVec " + std::to_string(Sz) + "))\n";
+		SmtlibSolver->add(varCmd);
+	}
+	return SMTExpr(this, E);
 }
 
 SMTExpr SMTFactory::createBitVecVal(const std::string& ValStr, uint64_t Sz) {
@@ -302,7 +320,14 @@ SMTExpr SMTFactory::createBitVecVal(const std::string& ValStr, uint64_t Sz) {
 }
 
 SMTExpr SMTFactory::createBoolConst(const std::string& Name) {
-	return SMTExpr(this, Ctx.bool_const(Name.c_str()));
+	// return SMTExpr(this, Ctx.bool_const(Name.c_str()));
+	z3::expr E = Ctx.bool_const(Name.c_str());
+	if (useSMTLIBSolver) {
+		// For communicating with SMTLIB solvers
+		std::string varCmd = "declare-fun " + E.to_string() + " () Bool)\n";
+		SmtlibSolver->add(varCmd);
+	}
+	return SMTExpr(this, E);
 }
 
 SMTExpr SMTFactory::createBitVecVal(uint64_t Val, uint64_t Sz) {

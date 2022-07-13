@@ -14,6 +14,7 @@
 #include "z3++.h"
 #include "SMTExpr.h"
 #include "SMTSolver.h"
+#include "SMTLIBSolver.h"
 
 class SMTRenamingAdvisor {
 public:
@@ -49,10 +50,22 @@ private:
 	unsigned TempSMTVaraibleIndex;
 
 public:
+    // { Begin of SMTLIB solver related staff
+	bool useSMTLIBSolver = false;
+	SmtlibSmtSolver *SmtlibSolver; 	// For communicating with SMTLIB solvers
+
+	// NOTE: SMTLIBCnts, and SMTLIBBacktrackPoints are used for debugging
+	// Since we will directly send all the commands to the binary SMTLIB solver
+	std::vector<std::string> SMTLIBCnts = { ";\n" };
+	std::vector<unsigned> SMTLIBBacktrackPoints = { };
+	// } End
 
 	SMTFactory();
 
 	~SMTFactory() {
+		if (SmtlibSolver) {
+			delete SmtlibSolver;
+		}
 	}
 
 	SMTSolver createSMTSolver();

@@ -19,6 +19,7 @@
 #include <map>
 #include <iostream>
 #include <fstream>
+#include <vector>
 
 #define DEBUG_TYPE "solver"
 
@@ -143,24 +144,6 @@ void SMTSolver::reconnect() {
 
 SMTSolver::SMTResultType SMTSolver::check() {
 
-    if (SMTConfig::get().UseSMTLIBSolver) {
-    	// TODO: try the current version of clearblue..
-
-       	SmtlibSmtSolver* BinSolver = new SmtlibSmtSolver(SMTConfig::get().SMTLIBSolverPath, SMTConfig::get().SMTLIBSolverArgs);
-       	BinSolver->setLogic("QF_BV");
-        std::string Query = this->Solver.to_smt2();
-    	auto Result = BinSolver->solveWholeFormula(Query);
-        // std::cout << "Res: " << Result << "\n";
-        delete BinSolver;
-    	if (Result == SMTLIBSolverResult::SMTRT_Sat) {
-    	    return SMTSolver::SMTResultType::SMTRT_Sat;
-    	} else if (Result == SMTLIBSolverResult::SMTRT_Unsat) {
-    	    return SMTSolver::SMTResultType::SMTRT_Unsat;
-    	} else {
-    	    return SMTSolver::SMTResultType::SMTRT_Unknown;
-    	}
-    }
-
     if (EnableSMTD.getNumOccurrences()) {
         std::string Contraints;
         llvm::raw_string_ostream StringStream(Contraints);
@@ -258,6 +241,38 @@ SMTSolver::SMTResultType SMTSolver::check() {
     // Use a return value to suppress gcc warning
     SMTResultType RetVal = SMTResultType::SMTRT_Unknown;
 
+    if (SMTConfig::get().UseSMTLIBSolver) {
+    	// NOTE: now, we just call the related staff for diff testing
+
+    	// First, we run a bin solver from scractch
+       	SmtlibSmtSolver* BinSolver = new SmtlibSmtSolver(SMTConfig::get().SMTLIBSolverPath, SMTConfig::get().SMTLIBSolverArgs);
+       	BinSolver->setLogic("QF_BV");
+        std::string Query = this->Solver.to_smt2();
+    	auto Result = BinSolver->solveWholeFormula(Query);
+        // std::cout << "Res: " << Result << "\n";
+        delete BinSolver;
+
+        // Second, we run the bin solver attached to the factory
+        if (this->Factory->useSMTLIBSolver) {
+        	auto FacSolverRes = this->Factory->SmtlibSolver->check();
+        	if (Result != FacSolverRes and Result != SMTLIBSolverResult::SMTRT_Unknown and FacSolverRes != SMTLIBSolverResult::SMTRT_Unknown) {
+        		std::cout << "Scratch bin solver res: " << Result << "\n";
+        		std::cout << "Factory's bin solver res: " << FacSolverRes << "\n";
+        		abort();
+        	}
+        }
+        // if everything works well, we may use the reult of the bin solver directly
+        /*
+    	if (Result == SMTLIBSolverResult::SMTRT_Sat) {
+    	    return SMTSolver::SMTResultType::SMTRT_Sat;
+    	} else if (Result == SMTLIBSolverResult::SMTRT_Unsat) {
+    	    return SMTSolver::SMTResultType::SMTRT_Unsat;
+    	} else {
+    	    return SMTSolver::SMTResultType::SMTRT_Unknown;
+    	}
+    	*/
+    }
+
     switch (Result) {
     case z3::check_result::sat:
         RetVal = SMTResultType::SMTRT_Sat;
@@ -276,6 +291,12 @@ SMTSolver::SMTResultType SMTSolver::check() {
 void SMTSolver::push() {
     try {
         Solver.push();
+
+        if (this->Factory->useSMTLIBSolver) {
+        	this->Factory->SmtlibSolver->push(1);
+        	// NOTE: the followline line is just for debugging
+        	// this->Factory->SMTLIBBacktrackPoints.push_back(this->Factory->SMTLIBCnts.size());
+        }
     } catch (z3::exception &Ex) {
         std::cerr << __FILE__ << " : " << __LINE__ << " : " << Ex << "\n";
         exit(1);
@@ -285,6 +306,22 @@ void SMTSolver::push() {
 void SMTSolver::pop(unsigned N) {
     try {
         Solver.pop(N);
+
+        if (this->Factory->useSMTLIBSolver) {
+        	this->Factory->SmtlibSolver->pop(N);
+			// NOTE: the followline lines are just for debugging
+        	/*
+        	for (unsigned i = 0; i < N; i++) {
+        		unsigned popPoint = this->Factory->SMTLIBBacktrackPoints.back();
+        		this->Factory->SMTLIBBacktrackPoints.pop_back();
+        		if (popPoint >= 1) {
+        			auto& Cnts = this->Factory->SMTLIBCnts;
+        			this->Factory->SMTLIBCnts = std::vector<std::string>(Cnts.begin(), Cnts.begin() + popPoint);
+        		}
+        	}
+        	*/
+        }
+
     } catch (z3::exception &Ex) {
         std::cerr << __FILE__ << " : " << __LINE__ << " : " << Ex << "\n";
         exit(1);
@@ -304,6 +341,14 @@ void SMTSolver::add(SMTExpr E) {
         // FIXME In some cases (ar._bfd_elf_parse_eh_frame.bc),
         // simplify() will seriously affect the performance.
         Solver.add(E.Expr/*.simplify()*/);
+
+    	if (this->Factory->useSMTLIBSolver) {
+        	std::string Cnt = "(assert " + E.Expr.to_string() + ")";
+        	this->Factory->SmtlibSolver->add(Cnt);
+    		// NOTE: the following line is just for debugging
+        	// this->Factory->SMTLIBCnts.push_back(Cnt + "\n");
+    	}
+
     } catch (z3::exception &Ex) {
         std::cerr << __FILE__ << " : " << __LINE__ << " : " << Ex << "\n";
         exit(1);
@@ -341,6 +386,8 @@ SMTExprVec SMTSolver::assertions() {
 }
 
 void SMTSolver::reset() {
+	// TODO: we should support this for the SMTLIB solver
+	// Can we just send a (reset) command?
     Solver.reset();
 }
 

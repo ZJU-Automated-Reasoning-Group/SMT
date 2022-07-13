@@ -82,4 +82,10 @@ protected:
 
 };
 
+
+// The interface for cereating a solver
+// TODO: add more options for controlling the behavior
+SmtlibSmtSolver* createSMTLIBSolver();
+
+
 #endif /* SMTLIBSOLVER_SMTLIB_SOLVER_H_ */

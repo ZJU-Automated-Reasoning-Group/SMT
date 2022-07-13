@@ -5,6 +5,8 @@
 #include "SMT/SMTLIBSolver.h"
 #include "SMT/SMTExceptions.h"
 
+#include "SMT/SMTConfigure.h"
+
 #include <assert.h>
 #include <fcntl.h>
 #include <poll.h>
@@ -252,4 +254,14 @@ SMTLIBSolverResult SmtlibSmtSolver::checkForErrorMessage(
 	}
 
 	return SMTLIBSolverResult::SMTRT_TBD;
+}
+
+
+
+// TODO: allow more options
+SmtlibSmtSolver* createSMTLIBSolver() {
+  	SmtlibSmtSolver* BinSolver = new SmtlibSmtSolver(SMTConfig::get().SMTLIBSolverPath, SMTConfig::get().SMTLIBSolverArgs);
+	BinSolver->setLogic("QF_BV");
+	//gs->set_timeout(1);
+	return BinSolver;
 }

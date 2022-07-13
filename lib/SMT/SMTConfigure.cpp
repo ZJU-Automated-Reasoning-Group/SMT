@@ -7,10 +7,10 @@ static llvm::cl::opt<std::string> IncTactic("set-inc-tactic", llvm::cl::init("pp
      llvm::cl::desc("Set the tactic for creating the incremental solver. Candidates are smt_tactic, qfbv_tactic, pp_qfbv_tactic, pp_inc_bv_solver and pp_qfbv_light_tactic. Default: pp_qfbv_tactic"));
 
 
-
 static llvm::cl::opt<std::string> UsingSMTLIBSolver("use-smtlib-solver",
 		llvm::cl::init(""),
 		llvm::cl::desc("Use SMTLIB2 solver to solve the query."));
+
 
 
 /*
@@ -24,13 +24,13 @@ const std::vector<std::string> z3_args = { "-in", "-t:5000" };
 
 const std::string cvc5_path = "";
 const std::vector<std::string> cvc5_args =
-		{ "--lang=smt2", "--tlimit-per=5000" };
+		{ "--lang=smt2", "--tlimit-per=5000", "--incremental"};
 
 const std::string yices2_path = "";
-const std::vector<std::string> yices2_args = { "--timeout=5" };
+const std::vector<std::string> yices2_args = { "--timeout=5", "--incremental"};
 
 const std::string btor_path = "";
-const std::vector<std::string> btor_args = { "--time=5", "-i" };
+const std::vector<std::string> btor_args = { "--time=5", "--incremental" };
 
 
 // this function should only be called once
