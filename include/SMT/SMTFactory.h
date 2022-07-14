@@ -15,6 +15,7 @@
 #include "SMTExpr.h"
 #include "SMTSolver.h"
 
+class SmtlibSmtSolver;
 
 class SMTRenamingAdvisor {
 public:
@@ -51,11 +52,11 @@ private:
 	unsigned TempSMTVaraibleIndex;
 
 public:
-    // { Begin of SMTLIB solver related staff
+        // { Begin of SMTLIB solver related staff
 	bool useSMTLIBSolver = false;
-    std::vector<std::string> SMLTIBVariables = { };
-    std::vector<std::string> SMLTIBTraces = { };
-    std::vector<SMTSolver*> CreatedSMTSolvers = {}; // for sending new var commands
+        std::vector<std::string> SMLTIBVariables = { };
+        // for sending commands (only useful when SMTConfig::UseIncrementalSMTLIBSolver is true)
+        std::vector<SmtlibSmtSolver*> CreatedSMTSolvers = {}; // for sending new var commands
 	// } End
 
 	SMTFactory();

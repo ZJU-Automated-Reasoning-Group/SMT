@@ -231,14 +231,15 @@ SMTSolver SMTFactory::createSMTSolver() {
         Z3Params.set("solver2-unknown", 0u);
         Ret.set(Z3Params);
     }
-    if (useSMTLIBSolver) {
-        // For communicating with SMTLIB solvers
+    if (SMTConfig::UseIncrementalSMTLIBSolver) {
+        // For incrementally communicating with SMTLIB solvers
     	SMTSolver Sol = SMTSolver(this, Ret);
     	// Send all variable declarations upto now
-    	// TODO: but the factory may create new vars
-  		for (auto varCmd: SMLTIBVariables)
+  	for (auto varCmd: SMLTIBVariables) {
     	    Sol.SmtlibSolver->add(varCmd);
-  		CreatedSMTSolvers.push_back(&Sol);
+        } 
+        SmtlibSmtSolver* SS = Sol.SmtlibSolver;
+  	CreatedSMTSolvers.push_back(SS);
     	return Sol;
     } else {
     	return SMTSolver(this, Ret);
@@ -248,24 +249,27 @@ SMTSolver SMTFactory::createSMTSolver() {
 SMTSolver SMTFactory::createSMTSolverWithTactic(const std::string& TmpTactic) {
     if (TmpTactic.empty()) {
         z3::solver Ret(Ctx);
-        if (useSMTLIBSolver) {
+        if (SMTConfig::UseIncrementalSMTLIBSolver) {
         	SMTSolver Sol = SMTSolver(this, Ret);
-        	// Send all variable declarations upto now. TODO: but later the factory may create new vars
+        	// Send all variable declarations upto now
       		for (auto varCmd: SMLTIBVariables)
         	    Sol.SmtlibSolver->add(varCmd);
-      		CreatedSMTSolvers.push_back(&Sol);
+                SmtlibSmtSolver* SS = Sol.SmtlibSolver;
+      		CreatedSMTSolvers.push_back(SS);
         	return Sol;
         } else {
         	return SMTSolver(this, Ret);
         }
     } else {
         z3::solver Ret = z3::tactic(Ctx, TmpTactic.c_str()).mk_solver();
-        if (useSMTLIBSolver) {
+        if (SMTConfig::UseIncrementalSMTLIBSolver) {
         	SMTSolver Sol = SMTSolver(this, Ret);
         	// Send all variable declarations upto now. TODO: but later the factory may create new vars
-      		for (auto varCmd: SMLTIBVariables)
+      		for (auto varCmd: SMLTIBVariables) {
         	    Sol.SmtlibSolver->add(varCmd);
-      		CreatedSMTSolvers.push_back(&Sol);
+                }
+                SmtlibSmtSolver* SS = Sol.SmtlibSolver;
+      		CreatedSMTSolvers.push_back(SS);
         	return Sol;
         } else {
         	return SMTSolver(this, Ret);
@@ -327,10 +331,15 @@ SMTExpr SMTFactory::createBitVecConst(const std::string& Name, uint64_t Sz) {
 		// For communicating with SMTLIB solvers
 		std::string varCmd = "(declare-fun " + E.to_string() + " () (_ BitVec " + std::to_string(Sz) + "))\n";
 		SMLTIBVariables.push_back(varCmd);
-		for (SMTSolver* Sol: CreatedSMTSolvers) {
-			if (Sol)
-				Sol->SmtlibSolver->add(varCmd);
-		}
+
+                if (SMTConfig::UseIncrementalSMTLIBSolver) {
+                  // Send commands here?
+		  for (SmtlibSmtSolver* Sol: CreatedSMTSolvers) {
+		    if (Sol) {
+		       Sol->add(varCmd);
+                    }
+		  }
+                }
 	}
 	return SMTExpr(this, E);
 }
@@ -345,10 +354,12 @@ SMTExpr SMTFactory::createTemporaryBitVecConst(uint64_t Sz) {
 		std::string varCmd = "(declare-fun " + E.to_string() + " () (_ BitVec " + std::to_string(Sz) + "))\n";
 		SMLTIBVariables.push_back(varCmd);
 		// Should we "notify" all solvers?
-		for (SMTSolver* Sol: CreatedSMTSolvers) {
-			if (Sol)
-				Sol->SmtlibSolver->add(varCmd);
-		}
+                if (SMTConfig::UseIncrementalSMTLIBSolver) {
+		  for (SmtlibSmtSolver* Sol: CreatedSMTSolvers) {
+		    if (Sol)
+		        Sol->add(varCmd);
+		  }
+                }
 	}
 	return SMTExpr(this, E);
 }
@@ -365,10 +376,12 @@ SMTExpr SMTFactory::createBoolConst(const std::string& Name) {
 		std::string varCmd = "declare-fun " + E.to_string() + " () Bool)\n";
 		SMLTIBVariables.push_back(varCmd);
 		// Should we "notify" all solvers?
-		for (SMTSolver* Sol: CreatedSMTSolvers) {
-			if (Sol)
-				Sol->SmtlibSolver->add(varCmd);
-		}
+                if (SMTConfig::UseIncrementalSMTLIBSolver) {
+		  for (SmtlibSmtSolver*Sol: CreatedSMTSolvers) {
+		    if (Sol)
+		        Sol->add(varCmd);
+		  }
+                }
 	}
 	return SMTExpr(this, E);
 }

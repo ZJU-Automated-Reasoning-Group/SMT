@@ -45,6 +45,17 @@ static llvm::cl::opt<bool> EnableSMTDIncremental("solver-enable-smtd-incremental
 static llvm::cl::opt<bool> EnableLocalSimplify("enable-local-simplify", llvm::cl::init(true),
                                                llvm::cl::desc("Enable local simplifications while adding a vector of constraints"));
 
+
+// for generating SMT string queries
+template <typename T>
+std::string join(const T& v) {
+    std::ostringstream s;
+    for (const auto& i : v) {
+        s << i;
+    }
+    return s.str();
+}
+
 // only for debugging (single-thread)
 bool SMTSolvingTimeOut = false;
 
@@ -101,7 +112,7 @@ SMTSolver::SMTSolver(SMTFactory* F, z3::solver& Z3Solver) : SMTObject(F),
     }
 
     // For communicating with SMTLIB solvers
-    if (this->Factory->useSMTLIBSolver) {
+    if (SMTConfig::UseIncrementalSMTLIBSolver) {
         SmtlibSolver = createSMTLIBSolver();
         if (SmtlibSolver == NULL) {
             std::cout << "Creating SMTLIB solver failure!!!\n";
@@ -112,12 +123,8 @@ SMTSolver::SMTSolver(SMTFactory* F, z3::solver& Z3Solver) : SMTObject(F),
 SMTSolver::SMTSolver(const SMTSolver& Solver) : SMTObject(Solver),
         Solver(Solver.Solver), Channels(Solver.Channels) {
 
-    // For communicating with SMTLIB solvers
-    if (this->Factory->useSMTLIBSolver) {
-        SmtlibSolver = createSMTLIBSolver();
-        if (SmtlibSolver == NULL) {
-            std::cout << "Creating SMTLIB solver failure!!!\n";
-        }
+    if (SMTConfig::UseIncrementalSMTLIBSolver) {
+        SmtlibSolver = Solver.SmtlibSolver; // TODO: is this correct?
     }
 }
 
@@ -131,7 +138,7 @@ SMTSolver& SMTSolver::operator=(const SMTSolver& Solver) {
 }
 
 SMTSolver::~SMTSolver() {
-	if (SmtlibSolver) { delete SmtlibSolver; }
+    //if (SmtlibSolver) { delete SmtlibSolver; }
 }
 
 SMTSolver::SMTDMessageQueues::~SMTDMessageQueues() {
@@ -162,43 +169,35 @@ void SMTSolver::reconnect() {
 SMTSolver::SMTResultType SMTSolver::check() {
 
     if (SMTConfig::UseSMTLIBSolver) {
-        // NOTE: now, we just call the related staff for diff testing
-        // First, we run a bin solver from scractch
-        SmtlibSmtSolver* BinSolver = new SmtlibSmtSolver(SMTConfig::SMTLIBSolverPath, SMTConfig::SMTLIBSolverArgs);
-        BinSolver->setLogic("QF_BV");
-        std::string Query = this->Solver.to_smt2();
-        auto Result = BinSolver->solveWholeFormula(Query);
-        delete BinSolver;
-
-        // Second, we run the bin solver attached to the factory
-        if (this->Factory->useSMTLIBSolver) {
-                // this->Factory->SMLTIBTraces.push_back("(check-sat)\n");
-                auto FacSolverRes = this->SmtlibSolver->check();
-                if (FacSolverRes == SMTLIBSolverResult::SMTRT_Error) {
-                   for (auto var: this->Factory->SMLTIBVariables)
-                       std::cout << var;
-                   abort();
-                }
-                // std::cout << "Factory's bin solver res: " << FacSolverRes << "\n";
-                if (Result != FacSolverRes && Result != SMTLIBSolverResult::SMTRT_Unknown && FacSolverRes != SMTLIBSolverResult::SMTRT_Unknown) {
-                      std::cout << "Scratch bin solver res: " << Result << "\n";
-                      std::cout << "Factory's bin solver res: " << FacSolverRes << "\n";
-                      //abort();
-                } else {
-                      std::cout << "Factory' bin success once!!\n";
-                }
+        // FIXME: not stable (variables context ..)
+        // In incremental mode, we run the bin solver attached to the current SMTSolver
+        if (SMTConfig::UseIncrementalSMTLIBSolver) {
+            auto FacSolverRes = this->SmtlibSolver->check();
+            if (FacSolverRes == SMTLIBSolverResult::SMTRT_Error) {
+               // TODO: figure out why missing...(note: CmdTraces are not enabled for now)
+               //for (auto cmd: this->SmtlibSolver->CmdTraces)
+               //   std::cout << cmd;
+               //abort();
+            }
+            std::cout << "Factory's bin solver res: " << FacSolverRes << "\n";
         }
+        else {
+            SmtlibSmtSolver* BinSolver = new SmtlibSmtSolver(SMTConfig::SMTLIBSolverPath, SMTConfig::SMTLIBSolverArgs);
+            BinSolver->setLogic("QF_BV");
+            // std::string Query = this->Solver.to_smt2();
+            std::string Query = join(this->Factory->SMLTIBVariables) + join(this->SMTLIBCnts) +  + "(check-sat)\n";
+            auto Result = BinSolver->solveWholeFormula(Query);
+            delete BinSolver;
 
-        // if everything works well, we may use this->SmtlibSolver (instead of the tmp bin solver)
-        if (Result == SMTLIBSolverResult::SMTRT_Sat) {
-            return SMTSolver::SMTResultType::SMTRT_Sat;
-        } else if (Result == SMTLIBSolverResult::SMTRT_Unsat) {
-            return SMTSolver::SMTResultType::SMTRT_Unsat;
-        } else {
-            return SMTSolver::SMTResultType::SMTRT_Unknown;
-        }
-    } 
-    // else { std::cout << "Will not use SMTLIB solver \n"; }
+            if (Result == SMTLIBSolverResult::SMTRT_Sat) {
+                return SMTSolver::SMTResultType::SMTRT_Sat;
+            } else if (Result == SMTLIBSolverResult::SMTRT_Unsat) {
+                return SMTSolver::SMTResultType::SMTRT_Unsat;
+            } else {
+                return SMTSolver::SMTResultType::SMTRT_Unknown;
+            }
+        } 
+    }
 
     if (EnableSMTD.getNumOccurrences()) {
         std::string Contraints;
@@ -316,10 +315,8 @@ void SMTSolver::push() {
     try {
         Solver.push();
         if (this->Factory->useSMTLIBSolver) {
-        	this->SmtlibSolver->push(1);
-        	// NOTE: the followline line is just for debugging
-        	this->SMTLIBBacktrackPoints.push_back(this->SMTLIBCnts.size());
-            // this->Factory->SMLTIBTraces.push_back("(push 1)\n");
+             if (SMTConfig::UseIncrementalSMTLIBSolver) { this->SmtlibSolver->push(1); }
+             else { this->SMTLIBBacktrackPoints.push_back(this->SMTLIBCnts.size()); }
         }
     } catch (z3::exception &Ex) {
         std::cerr << __FILE__ << " : " << __LINE__ << " : " << Ex << "\n";
@@ -332,16 +329,18 @@ void SMTSolver::pop(unsigned N) {
         Solver.pop(N);
 
         if (this->Factory->useSMTLIBSolver) {
-        	this->SmtlibSolver->pop(N);
-	        // NOTE: the followline lines are just for debugging
-        	for (unsigned i = 0; i < N; i++) {
+        	if (SMTConfig::UseIncrementalSMTLIBSolver) { this->SmtlibSolver->pop(N); }
+	        else {
+                   // explicitly maintain the assertion stacks
+        	   for (unsigned i = 0; i < N; i++) {
         		unsigned popPoint = this->SMTLIBBacktrackPoints.back();
         		this->SMTLIBBacktrackPoints.pop_back();
         		if (popPoint >= 1) {
         			auto& Cnts = this->SMTLIBCnts;
         			this->SMTLIBCnts = std::vector<std::string>(Cnts.begin(), Cnts.begin() + popPoint);
         		}
-        	}
+        	   }
+                }
         }
 
     } catch (z3::exception &Ex) {
@@ -366,9 +365,8 @@ void SMTSolver::add(SMTExpr E) {
 
     	if (this->Factory->useSMTLIBSolver) {
         	std::string Cnt = "(assert " + E.Expr.to_string() + ")";
-        	this->SmtlibSolver->add(Cnt);
-    		// NOTE: the following line is just for debugging
-        	this->SMTLIBCnts.push_back(Cnt + "\n");
+        	if (SMTConfig::UseIncrementalSMTLIBSolver) { this->SmtlibSolver->add(Cnt); }
+        	else { this->SMTLIBCnts.push_back(Cnt + "\n"); }
     	}
 
     } catch (z3::exception &Ex) {
@@ -410,8 +408,7 @@ SMTExprVec SMTSolver::assertions() {
 void SMTSolver::reset() {
     // TODO: should we send "reset" or "reset-assertions" to the SMTLIB solver
     Solver.reset();
-    if (this->Factory->useSMTLIBSolver) {
-       // this->Factory->SMLTIBTraces.push_back("(reset-assertions)\n");
+    if (SMTConfig::UseIncrementalSMTLIBSolver) {
        this->SmtlibSolver->reset();
     }
 }

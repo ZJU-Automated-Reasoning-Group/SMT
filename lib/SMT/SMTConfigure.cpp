@@ -17,6 +17,9 @@ static llvm::cl::opt<std::string> UsingSMTLIBSolver("use-smtlib-solver", llvm::c
         llvm::cl::desc("Use SMTLIB2 solver to solve the query."));
 
 
+bool SMTConfig::UseIncrementalSMTLIBSolver;
+static llvm::cl::opt<bool> EnableIncrementalSMTLIBSolver("enable-incremental-smtlib-solver", llvm::cl::init(false),
+        llvm::cl::desc("Using incremental when SMTLIB sovler is chosen"));
 
 /*
  * TODO: 1. If we pre-build (or pre-download) the third-party solvers in SMT/third-party, then the paths can be hard-coded.
@@ -69,6 +72,7 @@ void SMTConfig::init() {
 
     if (UsingSMTLIBSolver.getNumOccurrences()) {
         SMTConfig::UseSMTLIBSolver = true;
+        SMTConfig::UseIncrementalSMTLIBSolver = false; // default false
         std::string& SolverName = UsingSMTLIBSolver.getValue();
         if (SolverName == "z3") {
             SMTConfig::SMTLIBSolverPath = z3_path;
@@ -85,6 +89,10 @@ void SMTConfig::init() {
         } else {
             SMTConfig::SMTLIBSolverPath = z3_path;
             SMTConfig::SMTLIBSolverArgs = z3_args;
+        }
+
+        if (EnableIncrementalSMTLIBSolver.getValue()) {
+           SMTConfig::UseIncrementalSMTLIBSolver = true;
         }
     } else {
         SMTConfig::UseSMTLIBSolver = false;

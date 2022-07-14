@@ -16,6 +16,7 @@ public:
 
     // For using SMTLIBSolver
     static bool UseSMTLIBSolver;
+    static bool UseIncrementalSMTLIBSolver;
     static std::string SMTLIBSolverPath;
     static std::vector<std::string> SMTLIBSolverArgs;
     // End

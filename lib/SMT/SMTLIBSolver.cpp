@@ -97,10 +97,12 @@ void SmtlibSmtSolver::init() {
 
 void SmtlibSmtSolver::add(std::string cmd) {
 	writeCommand(cmd);
+        // if (debug) CmdTraces.push_back(cmd);
 }
 
 SMTLIBSolverResult SmtlibSmtSolver::check() {
-	writeCommand("(check-sat)");
+        // if (debug) CmdTraces.push_back("(check-sat)\n");
+	writeCommand("(check-sat)\n");
 	auto solverOutput = readSolverOutput();
 	auto errorRes = checkForErrorMessage(solverOutput);
 	if (errorRes != SMTLIBSolverResult::SMTRT_TBD) // unknown or error
@@ -115,17 +117,20 @@ SMTLIBSolverResult SmtlibSmtSolver::check() {
 }
 
 void SmtlibSmtSolver::setLogic(std::string logic) {
-	writeCommand("(set-logic " + logic + ")");
+	writeCommand("(set-logic " + logic + ")\n");
+        // if (debug) CmdTraces.push_back("(set-logic " + logic + ")\n");
 }
 
 void SmtlibSmtSolver::push(unsigned num) {
-	writeCommand("(push " + std::to_string(num) + ")");
+	writeCommand("(push " + std::to_string(num) + ")\n");
 	contextLevel += num;
+        // if (debug) CmdTraces.push_back("(push " + std::to_string(num) + ")\n");
 }
 
 void SmtlibSmtSolver::pop(unsigned num) {
-	writeCommand("(pop " + std::to_string(num) + ")");
+	writeCommand("(pop " + std::to_string(num) + ")\n");
 	contextLevel -= num;
+        // if (debug) CmdTraces.push_back("(pop " + std::to_string(num) + ")\n");
 }
 
 // TOOD: use reset or reset-assertions

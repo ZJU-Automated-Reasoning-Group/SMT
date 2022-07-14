@@ -24,6 +24,8 @@ public:
 
 	SmtlibSmtSolver(std::string path, std::vector<std::string> cmdLineArgs);
 	~SmtlibSmtSolver();
+        
+        std::vector<std::string> CmdTraces = { };
 
 	void setLogic(std::string logic);
 
@@ -37,7 +39,7 @@ public:
 	void pop(unsigned num = 1);
 	unsigned getContextLevel() const;
   
-    void reset();
+        void reset();
 
 	// path to the solver binary
 	std::string path;
