@@ -37,7 +37,7 @@ public:
 	void pop(unsigned num = 1);
 	unsigned getContextLevel() const;
   
-        void reset();
+    void reset();
 
 	// path to the solver binary
 	std::string path;

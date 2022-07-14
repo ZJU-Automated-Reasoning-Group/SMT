@@ -10,6 +10,7 @@
 
 #include "z3++.h"
 #include "SMTObject.h"
+#include "SMTLIBSolver.h"
 
 class SMTFactory;
 class SMTModel;
@@ -32,6 +33,15 @@ private:
     SMTSolver(SMTFactory* F, z3::solver& Z3Solver);
 
 public:
+
+    // { Begin of SMTLIB solver related staff
+	SmtlibSmtSolver *SmtlibSolver; 	// For communicating with SMTLIB solvers
+	// NOTE:the following vectors are used for debugging
+	// Since we will directly send all the commands to the binary SMTLIB solver
+	std::vector<std::string> SMTLIBCnts = { ";\n" };
+	std::vector<unsigned> SMTLIBBacktrackPoints = { };
+	// } End
+
     virtual ~SMTSolver();
 
     SMTSolver(const SMTSolver& Solver);

@@ -14,7 +14,7 @@
 #include "z3++.h"
 #include "SMTExpr.h"
 #include "SMTSolver.h"
-#include "SMTLIBSolver.h"
+
 
 class SMTRenamingAdvisor {
 public:
@@ -39,6 +39,7 @@ public:
 /// Constraints built by the same SMTFactory instance cannot be
 /// accessed concurrently. SMTFactory provides a FactoryLock
 /// for concurrency issues.
+
 class SMTFactory {
 private:
 	z3::context Ctx;
@@ -52,19 +53,14 @@ private:
 public:
     // { Begin of SMTLIB solver related staff
 	bool useSMTLIBSolver = false;
-	SmtlibSmtSolver *SmtlibSolver; 	// For communicating with SMTLIB solvers
-
-	// NOTE:the following vectors are used for debugging
-	// Since we will directly send all the commands to the binary SMTLIB solver
-	std::vector<std::string> SMTLIBCnts = { ";\n" };
-	std::vector<unsigned> SMTLIBBacktrackPoints = { };
-        std::vector<std::string> SMLTIBVariables = { };
+    std::vector<std::string> SMLTIBVariables = { };
+    std::vector<std::string> SMLTIBTraces = { };
+    std::vector<SMTSolver*> CreatedSMTSolvers = {}; // for sending new var commands
 	// } End
 
 	SMTFactory();
 
 	~SMTFactory() {
-	    if (useSMTLIBSolver && SmtlibSolver) {delete SmtlibSolver;}
 	}
 
 	SMTSolver createSMTSolver();

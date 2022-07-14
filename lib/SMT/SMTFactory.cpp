@@ -16,15 +16,9 @@ static int FactoryId = 0;
 
 SMTFactory::SMTFactory() :
 		TempSMTVaraibleIndex(0) {
-        //   I will try to call SMTConfig::init() in lib/Platform/Globals.cpp 
         if (SMTConfig::UseSMTLIBSolver) {
-            FactoryId += 1;
+            FactoryId += 1; // for debugging
             useSMTLIBSolver = true;
-            SmtlibSolver = createSMTLIBSolver();
-            if (SmtlibSolver == NULL) {
-                std::cout << "Creating SMTLIB solver failure!!!\n";
-                useSMTLIBSolver = false;
-            }
         } 
 }
 
@@ -239,23 +233,43 @@ SMTSolver SMTFactory::createSMTSolver() {
     }
     if (useSMTLIBSolver) {
         // For communicating with SMTLIB solvers
-        SMLTIBVariables.push_back("; Factory: " + std::to_string(FactoryId) + " creates a solver\n"); // just for debugging
+    	SMTSolver Sol = SMTSolver(this, Ret);
+    	// Send all variable declarations upto now
+    	// TODO: but the factory may create new vars
+  		for (auto varCmd: SMLTIBVariables)
+    	    Sol.SmtlibSolver->add(varCmd);
+  		CreatedSMTSolvers.push_back(&Sol);
+    	return Sol;
+    } else {
+    	return SMTSolver(this, Ret);
     }
-    return SMTSolver(this, Ret);
 }
 
 SMTSolver SMTFactory::createSMTSolverWithTactic(const std::string& TmpTactic) {
-    if (useSMTLIBSolver) {
-        // For communicating with SMTLIB solvers
-       SMLTIBVariables.push_back("; Factory: " + std::to_string(FactoryId) + " creates a solver\n"); // just for debugging
-    }
-
     if (TmpTactic.empty()) {
         z3::solver Ret(Ctx);
-        return SMTSolver(this, Ret);
+        if (useSMTLIBSolver) {
+        	SMTSolver Sol = SMTSolver(this, Ret);
+        	// Send all variable declarations upto now. TODO: but later the factory may create new vars
+      		for (auto varCmd: SMLTIBVariables)
+        	    Sol.SmtlibSolver->add(varCmd);
+      		CreatedSMTSolvers.push_back(&Sol);
+        	return Sol;
+        } else {
+        	return SMTSolver(this, Ret);
+        }
     } else {
         z3::solver Ret = z3::tactic(Ctx, TmpTactic.c_str()).mk_solver();
-        return SMTSolver(this, Ret);
+        if (useSMTLIBSolver) {
+        	SMTSolver Sol = SMTSolver(this, Ret);
+        	// Send all variable declarations upto now. TODO: but later the factory may create new vars
+      		for (auto varCmd: SMLTIBVariables)
+        	    Sol.SmtlibSolver->add(varCmd);
+      		CreatedSMTSolvers.push_back(&Sol);
+        	return Sol;
+        } else {
+        	return SMTSolver(this, Ret);
+        }
     }
 }
 
@@ -312,8 +326,11 @@ SMTExpr SMTFactory::createBitVecConst(const std::string& Name, uint64_t Sz) {
 	if (useSMTLIBSolver) {
 		// For communicating with SMTLIB solvers
 		std::string varCmd = "(declare-fun " + E.to_string() + " () (_ BitVec " + std::to_string(Sz) + "))\n";
-		SmtlibSolver->add(varCmd);
-                SMLTIBVariables.push_back(varCmd); // just for debugging
+		SMLTIBVariables.push_back(varCmd);
+		for (SMTSolver* Sol: CreatedSMTSolvers) {
+			if (Sol)
+				Sol->SmtlibSolver->add(varCmd);
+		}
 	}
 	return SMTExpr(this, E);
 }
@@ -326,8 +343,12 @@ SMTExpr SMTFactory::createTemporaryBitVecConst(uint64_t Sz) {
 	if (useSMTLIBSolver) {
 		// For communicating with SMTLIB solvers
 		std::string varCmd = "(declare-fun " + E.to_string() + " () (_ BitVec " + std::to_string(Sz) + "))\n";
-		SmtlibSolver->add(varCmd);
-                SMLTIBVariables.push_back(varCmd); // just for debugging
+		SMLTIBVariables.push_back(varCmd);
+		// Should we "notify" all solvers?
+		for (SMTSolver* Sol: CreatedSMTSolvers) {
+			if (Sol)
+				Sol->SmtlibSolver->add(varCmd);
+		}
 	}
 	return SMTExpr(this, E);
 }
@@ -342,8 +363,12 @@ SMTExpr SMTFactory::createBoolConst(const std::string& Name) {
 	if (useSMTLIBSolver) {
 		// For communicating with SMTLIB solvers
 		std::string varCmd = "declare-fun " + E.to_string() + " () Bool)\n";
-		SmtlibSolver->add(varCmd);
-                SMLTIBVariables.push_back(varCmd); // just for debugging
+		SMLTIBVariables.push_back(varCmd);
+		// Should we "notify" all solvers?
+		for (SMTSolver* Sol: CreatedSMTSolvers) {
+			if (Sol)
+				Sol->SmtlibSolver->add(varCmd);
+		}
 	}
 	return SMTExpr(this, E);
 }

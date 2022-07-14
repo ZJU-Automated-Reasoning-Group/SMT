@@ -99,10 +99,26 @@ SMTSolver::SMTSolver(SMTFactory* F, z3::solver& Z3Solver) : SMTObject(F),
         Channels->WorkerMSQ = std::make_shared<MessageQueue>(SlaveID);
         DEBUG_WITH_TYPE("solver-smtd", errs() << "[Client] Connect to Slave\n");
     }
+
+    // For communicating with SMTLIB solvers
+    if (this->Factory->useSMTLIBSolver) {
+        SmtlibSolver = createSMTLIBSolver();
+        if (SmtlibSolver == NULL) {
+            std::cout << "Creating SMTLIB solver failure!!!\n";
+        }
+    }
 }
 
 SMTSolver::SMTSolver(const SMTSolver& Solver) : SMTObject(Solver),
         Solver(Solver.Solver), Channels(Solver.Channels) {
+
+    // For communicating with SMTLIB solvers
+    if (this->Factory->useSMTLIBSolver) {
+        SmtlibSolver = createSMTLIBSolver();
+        if (SmtlibSolver == NULL) {
+            std::cout << "Creating SMTLIB solver failure!!!\n";
+        }
+    }
 }
 
 SMTSolver& SMTSolver::operator=(const SMTSolver& Solver) {
@@ -115,6 +131,7 @@ SMTSolver& SMTSolver::operator=(const SMTSolver& Solver) {
 }
 
 SMTSolver::~SMTSolver() {
+	if (SmtlibSolver) { delete SmtlibSolver; }
 }
 
 SMTSolver::SMTDMessageQueues::~SMTDMessageQueues() {
@@ -155,8 +172,8 @@ SMTSolver::SMTResultType SMTSolver::check() {
 
         // Second, we run the bin solver attached to the factory
         if (this->Factory->useSMTLIBSolver) {
-                this->Factory->SMLTIBVariables.push_back("(check-sat)\n");
-                auto FacSolverRes = this->Factory->SmtlibSolver->check();
+                // this->Factory->SMLTIBTraces.push_back("(check-sat)\n");
+                auto FacSolverRes = this->SmtlibSolver->check();
                 if (FacSolverRes == SMTLIBSolverResult::SMTRT_Error) {
                    for (auto var: this->Factory->SMLTIBVariables)
                        std::cout << var;
@@ -172,7 +189,7 @@ SMTSolver::SMTResultType SMTSolver::check() {
                 }
         }
 
-        // if everything works well, we may use this->Factory->SmtlibSolver (instead of the tmp bin solver)
+        // if everything works well, we may use this->SmtlibSolver (instead of the tmp bin solver)
         if (Result == SMTLIBSolverResult::SMTRT_Sat) {
             return SMTSolver::SMTResultType::SMTRT_Sat;
         } else if (Result == SMTLIBSolverResult::SMTRT_Unsat) {
@@ -298,12 +315,11 @@ SMTSolver::SMTResultType SMTSolver::check() {
 void SMTSolver::push() {
     try {
         Solver.push();
-
         if (this->Factory->useSMTLIBSolver) {
-        	this->Factory->SmtlibSolver->push(1);
+        	this->SmtlibSolver->push(1);
         	// NOTE: the followline line is just for debugging
-        	// this->Factory->SMTLIBBacktrackPoints.push_back(this->Factory->SMTLIBCnts.size());
-                this->Factory->SMLTIBVariables.push_back("(push 1)\n");
+        	this->SMTLIBBacktrackPoints.push_back(this->SMTLIBCnts.size());
+            // this->Factory->SMLTIBTraces.push_back("(push 1)\n");
         }
     } catch (z3::exception &Ex) {
         std::cerr << __FILE__ << " : " << __LINE__ << " : " << Ex << "\n";
@@ -316,19 +332,16 @@ void SMTSolver::pop(unsigned N) {
         Solver.pop(N);
 
         if (this->Factory->useSMTLIBSolver) {
-        	this->Factory->SmtlibSolver->pop(N);
+        	this->SmtlibSolver->pop(N);
 	        // NOTE: the followline lines are just for debugging
-        	/*
         	for (unsigned i = 0; i < N; i++) {
-        		unsigned popPoint = this->Factory->SMTLIBBacktrackPoints.back();
-        		this->Factory->SMTLIBBacktrackPoints.pop_back();
+        		unsigned popPoint = this->SMTLIBBacktrackPoints.back();
+        		this->SMTLIBBacktrackPoints.pop_back();
         		if (popPoint >= 1) {
-        			auto& Cnts = this->Factory->SMTLIBCnts;
-        			this->Factory->SMTLIBCnts = std::vector<std::string>(Cnts.begin(), Cnts.begin() + popPoint);
+        			auto& Cnts = this->SMTLIBCnts;
+        			this->SMTLIBCnts = std::vector<std::string>(Cnts.begin(), Cnts.begin() + popPoint);
         		}
         	}
-        	*/
-                this->Factory->SMLTIBVariables.push_back("(pop " + std::to_string(N) + " )\n");
         }
 
     } catch (z3::exception &Ex) {
@@ -353,9 +366,9 @@ void SMTSolver::add(SMTExpr E) {
 
     	if (this->Factory->useSMTLIBSolver) {
         	std::string Cnt = "(assert " + E.Expr.to_string() + ")";
-        	this->Factory->SmtlibSolver->add(Cnt);
+        	this->SmtlibSolver->add(Cnt);
     		// NOTE: the following line is just for debugging
-        	// this->Factory->SMTLIBCnts.push_back(Cnt + "\n");
+        	this->SMTLIBCnts.push_back(Cnt + "\n");
     	}
 
     } catch (z3::exception &Ex) {
@@ -398,8 +411,8 @@ void SMTSolver::reset() {
     // TODO: should we send "reset" or "reset-assertions" to the SMTLIB solver
     Solver.reset();
     if (this->Factory->useSMTLIBSolver) {
-       this->Factory->SMLTIBVariables.push_back("(reset-assertions)\n");
-       this->Factory->SmtlibSolver->reset();
+       // this->Factory->SMLTIBTraces.push_back("(reset-assertions)\n");
+       this->SmtlibSolver->reset();
     }
 }
 
