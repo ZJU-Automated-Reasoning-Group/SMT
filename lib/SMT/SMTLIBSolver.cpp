@@ -131,6 +131,7 @@ void SmtlibSmtSolver::pop(unsigned num) {
 // TOOD: use reset or reset-assertions
 void SmtlibSmtSolver::reset() {
         writeCommand("(reset-assertions)");
+        // writeCommand("(reset)");
 }
 
 unsigned SmtlibSmtSolver::getContextLevel() const {

@@ -54,10 +54,11 @@ public:
 	bool useSMTLIBSolver = false;
 	SmtlibSmtSolver *SmtlibSolver; 	// For communicating with SMTLIB solvers
 
-	// NOTE: SMTLIBCnts, and SMTLIBBacktrackPoints are used for debugging
+	// NOTE:the following vectors are used for debugging
 	// Since we will directly send all the commands to the binary SMTLIB solver
 	std::vector<std::string> SMTLIBCnts = { ";\n" };
 	std::vector<unsigned> SMTLIBBacktrackPoints = { };
+        std::vector<std::string> SMLTIBVariables = { };
 	// } End
 
 	SMTFactory();

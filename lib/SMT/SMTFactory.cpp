@@ -12,12 +12,13 @@
 #define DEBUG_TYPE "smt-fctry"
 
 
-
+static int FactoryId = 0;
 
 SMTFactory::SMTFactory() :
 		TempSMTVaraibleIndex(0) {
         //   I will try to call SMTConfig::init() in lib/Platform/Globals.cpp 
         if (SMTConfig::UseSMTLIBSolver) {
+            FactoryId += 1;
             useSMTLIBSolver = true;
             SmtlibSolver = createSMTLIBSolver();
             if (SmtlibSolver == NULL) {
@@ -236,10 +237,19 @@ SMTSolver SMTFactory::createSMTSolver() {
         Z3Params.set("solver2-unknown", 0u);
         Ret.set(Z3Params);
     }
+    if (useSMTLIBSolver) {
+        // For communicating with SMTLIB solvers
+        SMLTIBVariables.push_back("; Factory: " + std::to_string(FactoryId) + " creates a solver\n"); // just for debugging
+    }
     return SMTSolver(this, Ret);
 }
 
 SMTSolver SMTFactory::createSMTSolverWithTactic(const std::string& TmpTactic) {
+    if (useSMTLIBSolver) {
+        // For communicating with SMTLIB solvers
+       SMLTIBVariables.push_back("; Factory: " + std::to_string(FactoryId) + " creates a solver\n"); // just for debugging
+    }
+
     if (TmpTactic.empty()) {
         z3::solver Ret(Ctx);
         return SMTSolver(this, Ret);
@@ -303,6 +313,7 @@ SMTExpr SMTFactory::createBitVecConst(const std::string& Name, uint64_t Sz) {
 		// For communicating with SMTLIB solvers
 		std::string varCmd = "(declare-fun " + E.to_string() + " () (_ BitVec " + std::to_string(Sz) + "))\n";
 		SmtlibSolver->add(varCmd);
+                SMLTIBVariables.push_back(varCmd); // just for debugging
 	}
 	return SMTExpr(this, E);
 }
@@ -316,6 +327,7 @@ SMTExpr SMTFactory::createTemporaryBitVecConst(uint64_t Sz) {
 		// For communicating with SMTLIB solvers
 		std::string varCmd = "(declare-fun " + E.to_string() + " () (_ BitVec " + std::to_string(Sz) + "))\n";
 		SmtlibSolver->add(varCmd);
+                SMLTIBVariables.push_back(varCmd); // just for debugging
 	}
 	return SMTExpr(this, E);
 }
@@ -331,6 +343,7 @@ SMTExpr SMTFactory::createBoolConst(const std::string& Name) {
 		// For communicating with SMTLIB solvers
 		std::string varCmd = "declare-fun " + E.to_string() + " () Bool)\n";
 		SmtlibSolver->add(varCmd);
+                SMLTIBVariables.push_back(varCmd); // just for debugging
 	}
 	return SMTExpr(this, E);
 }

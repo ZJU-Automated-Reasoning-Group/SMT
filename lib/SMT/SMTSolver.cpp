@@ -155,7 +155,13 @@ SMTSolver::SMTResultType SMTSolver::check() {
 
         // Second, we run the bin solver attached to the factory
         if (this->Factory->useSMTLIBSolver) {
+                this->Factory->SMLTIBVariables.push_back("(check-sat)\n");
                 auto FacSolverRes = this->Factory->SmtlibSolver->check();
+                if (FacSolverRes == SMTLIBSolverResult::SMTRT_Error) {
+                   for (auto var: this->Factory->SMLTIBVariables)
+                       std::cout << var;
+                   abort();
+                }
                 // std::cout << "Factory's bin solver res: " << FacSolverRes << "\n";
                 if (Result != FacSolverRes && Result != SMTLIBSolverResult::SMTRT_Unknown && FacSolverRes != SMTLIBSolverResult::SMTRT_Unknown) {
                       std::cout << "Scratch bin solver res: " << Result << "\n";
@@ -297,6 +303,7 @@ void SMTSolver::push() {
         	this->Factory->SmtlibSolver->push(1);
         	// NOTE: the followline line is just for debugging
         	// this->Factory->SMTLIBBacktrackPoints.push_back(this->Factory->SMTLIBCnts.size());
+                this->Factory->SMLTIBVariables.push_back("(push 1)\n");
         }
     } catch (z3::exception &Ex) {
         std::cerr << __FILE__ << " : " << __LINE__ << " : " << Ex << "\n";
@@ -310,7 +317,7 @@ void SMTSolver::pop(unsigned N) {
 
         if (this->Factory->useSMTLIBSolver) {
         	this->Factory->SmtlibSolver->pop(N);
-			// NOTE: the followline lines are just for debugging
+	        // NOTE: the followline lines are just for debugging
         	/*
         	for (unsigned i = 0; i < N; i++) {
         		unsigned popPoint = this->Factory->SMTLIBBacktrackPoints.back();
@@ -321,6 +328,7 @@ void SMTSolver::pop(unsigned N) {
         		}
         	}
         	*/
+                this->Factory->SMLTIBVariables.push_back("(pop " + std::to_string(N) + " )\n");
         }
 
     } catch (z3::exception &Ex) {
@@ -390,6 +398,7 @@ void SMTSolver::reset() {
     // TODO: should we send "reset" or "reset-assertions" to the SMTLIB solver
     Solver.reset();
     if (this->Factory->useSMTLIBSolver) {
+       this->Factory->SMLTIBVariables.push_back("(reset-assertions)\n");
        this->Factory->SmtlibSolver->reset();
     }
 }
