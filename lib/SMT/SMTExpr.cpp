@@ -225,7 +225,7 @@ SMTExpr SMTExpr::getQuantifierBody() const {
 }
 
 
-bool SMTExpr::getVariables(std::vector& Vars) {
+bool SMTExpr::getVariables(z3::expr_vector& Vars) {
 	// After calling this function, the variables in Expr will be put in Vars.
 
     // TODO: examine the efficiency of this function (could be slow)

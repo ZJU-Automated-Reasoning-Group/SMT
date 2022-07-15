@@ -49,7 +49,7 @@ const std::string cvc5_path = "/home/peisen/test/tofuzz/cvc5-Linux";
 const std::vector<std::string> cvc5_args = {"--lang=smt2", "--tlimit-per=5000", "--incremental"};
 
 const std::string yices2_path = "/home/peisen/test/tofuzz/yices-2.6.4/bin/yices-smt2";
-const std::vector<std::string> yices2_args = { "--timeout=5", "--incremental" };
+const std::vector<std::string> yices2_args = { "--timeout=5"};
 
 const std::string btor_path = "/home/peisen/test/tofuzz/boolector/build/bin/boolector";
 const std::vector<std::string> btor_args = { "--time=5", "-i"};
@@ -72,7 +72,11 @@ void SMTConfig::init() {
 
     if (UsingSMTLIBSolver.getNumOccurrences()) {
         SMTConfig::UseSMTLIBSolver = true;
-        SMTConfig::UseIncrementalSMTLIBSolver = false; // default false
+        if (EnableIncrementalSMTLIBSolver.getValue()) {
+           SMTConfig::UseIncrementalSMTLIBSolver = true;
+        } else {
+           SMTConfig::UseIncrementalSMTLIBSolver = false;
+        }
         std::string& SolverName = UsingSMTLIBSolver.getValue();
         if (SolverName == "z3") {
             SMTConfig::SMTLIBSolverPath = z3_path;
@@ -80,19 +84,17 @@ void SMTConfig::init() {
         } else if (SolverName == "cvc5") {
             SMTConfig::SMTLIBSolverPath = cvc5_path;
             SMTConfig::SMTLIBSolverArgs = cvc5_args;
+            if (SMTConfig::UseIncrementalSMTLIBSolver) SMTConfig::SMTLIBSolverArgs.push_back("--incremental");
         } else if (SolverName == "btor") {
             SMTConfig::SMTLIBSolverPath = btor_path;
             SMTConfig::SMTLIBSolverArgs = btor_args;
         } else if (SolverName == "yices2") {
             SMTConfig::SMTLIBSolverPath = yices2_path;
             SMTConfig::SMTLIBSolverArgs = yices2_args;
+            if (SMTConfig::UseIncrementalSMTLIBSolver) SMTConfig::SMTLIBSolverArgs.push_back("--incremental");
         } else {
             SMTConfig::SMTLIBSolverPath = z3_path;
             SMTConfig::SMTLIBSolverArgs = z3_args;
-        }
-
-        if (EnableIncrementalSMTLIBSolver.getValue()) {
-           SMTConfig::UseIncrementalSMTLIBSolver = true;
         }
     } else {
         SMTConfig::UseSMTLIBSolver = false;
