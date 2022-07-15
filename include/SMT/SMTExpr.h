@@ -98,6 +98,7 @@ public:
 
 	friend std::ostream & operator<<(std::ostream &, SMTExpr const &);
 
+
 	bool isSameSort(SMTExpr const & E) const {
 		return z3::eq(Expr.get_sort(), E.Expr.get_sort());
 	}
@@ -148,6 +149,8 @@ public:
 	}
 
 	SMTExpr getQuantifierBody() const;
+
+	bool getVariables(std::vector& Vars);
 
 	bool isVar() const {
 		return Expr.is_var();
