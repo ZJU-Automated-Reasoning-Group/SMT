@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <set>
+#include <functional>
 
 #include <llvm/Support/Debug.h>
 
@@ -225,7 +226,6 @@ SMTExpr SMTExpr::getQuantifierBody() const {
 }
 
 
-/*
 bool SMTExpr::getVariables(z3::expr_vector& Vars) {
     // After calling this function, the variables in Expr will be put in Vars.
 
@@ -266,7 +266,6 @@ bool SMTExpr::getVariables(z3::expr_vector& Vars) {
     }
 	return true;
 }
-*/
 
 SMTExpr SMTExpr::getArg(unsigned I) const {
 	return SMTExpr(&getSMTFactory(), Expr.arg(I));
