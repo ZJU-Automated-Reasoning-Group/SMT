@@ -10,12 +10,18 @@
 #include "SMT/SMTExpr.h"
 #include "SMT/SMTModel.h"
 
+#include "SMT/SMTLIBSolver.h"
+#include "SMT/SMTConfigure.h"
+// #include "SMT/PushPopUtil.h"
+
 #include "Support/MessageQueue.h"
 
 #include <time.h>
 #include <map>
 #include <iostream>
 #include <fstream>
+#include <vector>
+#include <chrono>
 
 #define DEBUG_TYPE "solver"
 
@@ -41,11 +47,25 @@ static llvm::cl::opt<bool> EnableSMTDIncremental("solver-enable-smtd-incremental
 static llvm::cl::opt<bool> EnableLocalSimplify("enable-local-simplify", llvm::cl::init(true),
                                                llvm::cl::desc("Enable local simplifications while adding a vector of constraints"));
 
+
+
+// for generating SMT string queries
+template <typename T>
+std::string join(const T& v) {
+    std::ostringstream s;
+    for (const auto& i : v) {
+        s << i;
+    }
+    return s.str();
+}
+
 // only for debugging (single-thread)
 bool SMTSolvingTimeOut = false;
 
 SMTSolver::SMTSolver(SMTFactory* F, z3::solver& Z3Solver) : SMTObject(F),
         Solver(Z3Solver) {
+
+
     if (SolverTimeOut.getValue() > 0) {
         z3::params Z3Params(Z3Solver.ctx());
         Z3Params.set("timeout", (unsigned) SolverTimeOut.getValue());
@@ -95,10 +115,25 @@ SMTSolver::SMTSolver(SMTFactory* F, z3::solver& Z3Solver) : SMTObject(F),
         Channels->WorkerMSQ = std::make_shared<MessageQueue>(SlaveID);
         DEBUG_WITH_TYPE("solver-smtd", errs() << "[Client] Connect to Slave\n");
     }
+
+    // For communicating with SMTLIB solvers
+    if (SMTConfig::UseIncrementalSMTLIBSolver) {
+        SmtlibSolver = createSMTLIBSolver();
+        if (SmtlibSolver == NULL) {
+            std::cout << "Creating SMTLIB solver failure!!!\n";
+        }
+        // SmtlibSolver->setLogic("QF_BV");
+    }
 }
 
 SMTSolver::SMTSolver(const SMTSolver& Solver) : SMTObject(Solver),
         Solver(Solver.Solver), Channels(Solver.Channels) {
+
+    if (SMTConfig::UseIncrementalSMTLIBSolver) {
+        SmtlibSolver = Solver.SmtlibSolver; // TODO: is this correct? 
+        //SmtlibSolver = createSMTLIBSolver();
+        //AssertionsCache = Solver.AssertionsCache; // correct?     
+    }
 }
 
 SMTSolver& SMTSolver::operator=(const SMTSolver& Solver) {
@@ -107,10 +142,20 @@ SMTSolver& SMTSolver::operator=(const SMTSolver& Solver) {
         this->Solver = Solver.Solver;
         this->Channels = Solver.Channels;
     }
+
+    if (SMTConfig::UseIncrementalSMTLIBSolver) {
+        SmtlibSolver = Solver.SmtlibSolver; // TODO: is this correct?
+        //SmtlibSolver = createSMTLIBSolver(); 
+        //AssertionsCache = Solver.AssertionsCache; // correct?     
+    }
+
     return *this;
 }
 
 SMTSolver::~SMTSolver() {
+    //if (SMTConfig::UseIncrementalSMTLIBSolver) {
+    //  if (SmtlibSolver && SmtlibSolver->processIdOfSolver == 0) { delete SmtlibSolver; }
+    //}
 }
 
 SMTSolver::SMTDMessageQueues::~SMTDMessageQueues() {
@@ -139,6 +184,40 @@ void SMTSolver::reconnect() {
 }
 
 SMTSolver::SMTResultType SMTSolver::check() {
+    if (SMTConfig::UseSMTLIBSolver) {
+        if (SMTConfig::UseIncrementalSMTLIBSolver) {
+            // FIXME: enable "true incrmental"
+            // NOTE: AssertionsCache is not used currently 
+            // std::string Query = this->Solver.decls_to_string() + join(AssertionsCache.getCacheVector()) +  + "(check-sat)\n";
+            std::string Query = "(set-logic QF_BV)\n" + this->Solver.to_smt2(); // slow
+            this->SmtlibSolver->reset(); // clear last query?
+            auto Result = SmtlibSolver->solveWholeFormula(Query);
+            if (Result == SMTLIBSolverResult::SMTRT_Sat) {
+                return SMTSolver::SMTResultType::SMTRT_Sat;
+            } else if (Result == SMTLIBSolverResult::SMTRT_Unsat) {
+                return SMTSolver::SMTResultType::SMTRT_Unsat;
+            } else {
+                return SMTSolver::SMTResultType::SMTRT_Unknown;
+            }
+        } else {
+            std::string Query = "(set-logic QF_BV)\n" + this->Solver.to_smt2(); // slow
+            auto dump_end = std::chrono::high_resolution_clock::now();
+
+            SmtlibSmtSolver* BinSolver = new SmtlibSmtSolver(SMTConfig::SMTLIBSolverPath, SMTConfig::SMTLIBSolverArgs);
+            // BinSolver->setLogic("QF_BV");
+            auto Result = BinSolver->solveWholeFormula(Query);
+            delete BinSolver;
+
+            if (Result == SMTLIBSolverResult::SMTRT_Sat) {
+                return SMTSolver::SMTResultType::SMTRT_Sat;
+            } else if (Result == SMTLIBSolverResult::SMTRT_Unsat) {
+                return SMTSolver::SMTResultType::SMTRT_Unsat;
+            } else {
+                return SMTSolver::SMTResultType::SMTRT_Unknown;
+            }
+        } 
+    }
+
     if (EnableSMTD.getNumOccurrences()) {
         std::string Contraints;
         llvm::raw_string_ostream StringStream(Contraints);
@@ -244,10 +323,10 @@ SMTSolver::SMTResultType SMTSolver::check() {
         RetVal = SMTResultType::SMTRT_Unsat;
         break;
     case z3::check_result::unknown:
+        // std::cout << Solver.reason_unknown() << "\n";
         RetVal = SMTResultType::SMTRT_Unknown;
         break;
     }
-
     return RetVal;
 }
 
@@ -263,6 +342,10 @@ void SMTSolver::push() {
 void SMTSolver::pop(unsigned N) {
     try {
         Solver.pop(N);
+        //if (SMTConfig::UseIncrementalSMTLIBSolver) {
+            // explicitly maintain the assertion stacks
+        //    AssertionsCache.pop(N);
+        //}
     } catch (z3::exception &Ex) {
         std::cerr << __FILE__ << " : " << __LINE__ << " : " << Ex << "\n";
         exit(1);
@@ -282,6 +365,11 @@ void SMTSolver::add(SMTExpr E) {
         // FIXME In some cases (ar._bfd_elf_parse_eh_frame.bc),
         // simplify() will seriously affect the performance.
         Solver.add(E.Expr/*.simplify()*/);
+
+    	//if (SMTConfig::UseIncrementalSMTLIBSolver) {
+        //    std::string Cnt = "(assert " + E.Expr.to_string() + ")";
+        //    AssertionsCache.add(Cnt + "\n");
+    	//}
     } catch (z3::exception &Ex) {
         std::cerr << __FILE__ << " : " << __LINE__ << " : " << Ex << "\n";
         exit(1);
@@ -319,7 +407,11 @@ SMTExprVec SMTSolver::assertions() {
 }
 
 void SMTSolver::reset() {
+    // TODO: should we send "reset" or "reset-assertions" to the SMTLIB solver
     Solver.reset();
+    //if (SMTConfig::UseIncrementalSMTLIBSolver) {
+    //     AssertionsCache.reset();
+    //}
 }
 
 bool SMTSolver::operator<(const SMTSolver& Solver) const {

@@ -10,12 +10,16 @@
 
 #include "z3++.h"
 #include "SMTObject.h"
+#include "SMTLIBSolver.h"
+#include "PushPopUtil.h"
 
 class SMTFactory;
 class SMTModel;
 class SMTExpr;
 class SMTExprVec;
 class MessageQueue;
+
+
 
 class SMTSolver : public SMTObject {
 public:
@@ -32,6 +36,13 @@ private:
     SMTSolver(SMTFactory* F, z3::solver& Z3Solver);
 
 public:
+
+    // { Begin of SMTLIB solver related staff
+    SmtlibSmtSolver *SmtlibSolver; 	// For communicating with SMTLIB solvers
+    // NOTE:the following vectors are used for debugging
+    PushPopVec<std::string> AssertionsCache; // replace the above two
+    // } End
+
     virtual ~SMTSolver();
 
     SMTSolver(const SMTSolver& Solver);

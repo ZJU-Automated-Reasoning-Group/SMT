@@ -9,7 +9,7 @@ class SMTFactory;
 
 class SMTObject {
 protected:
-	SMTFactory* Factory;
+	// SMTFactory* Factory;
 
 	SMTObject(SMTFactory* F) : Factory(F) {
 	}
@@ -30,6 +30,8 @@ public:
 	SMTFactory& getSMTFactory() const {
 		return *Factory;
 	}
+
+	SMTFactory* Factory; // for easy assessing from SMTSolver
 };
 
 #endif

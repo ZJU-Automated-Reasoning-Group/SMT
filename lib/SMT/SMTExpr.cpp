@@ -224,6 +224,48 @@ SMTExpr SMTExpr::getQuantifierBody() const {
 	return SMTExpr(&getSMTFactory(), Expr.body());
 }
 
+
+bool SMTExpr::getVariables(z3::expr_vector& Vars) {
+	// After calling this function, the variables in Expr will be put in Vars.
+
+    // TODO: examine the efficiency of this function (could be slow)
+	// Maybe we can learn from the implementation from z3's Python API (get_vars from z3.z3util)
+    try {
+        auto& ctx = Expr.ctx();
+        auto compare_func = [](const z3::expr& a, const z3::expr& b) {
+            Z3_symbol sym_a = a.decl().name();
+            Z3_symbol sym_b = b.decl().name();
+            return sym_a < sym_b;
+        };
+        std::set<z3::expr, decltype(compare_func)> syms(compare_func);
+        std::function<void(const z3::expr&)> recur = [&recur, &syms, &ctx](
+                const z3::expr& e) {
+            assert(Z3_is_app(ctx, e));
+            auto app = Z3_to_app(ctx, e);
+            unsigned n_args = Z3_get_app_num_args(ctx, app);
+
+            auto fdecl = Z3_get_app_decl(ctx, app);
+            if (n_args == 0 && Z3_get_decl_kind(ctx, fdecl) == Z3_OP_UNINTERPRETED)
+                syms.insert(e);
+
+            for (unsigned i = 0; i < n_args; ++i) {
+                z3::expr arg(ctx, Z3_get_app_arg(ctx, app, i));
+                recur(arg);
+            }
+        };
+        recur(Expr);
+        // if the return type is std::vector<z3::expr>
+        //return std::vector<z3::expr>(syms.begin(), syms.end());;
+        for (auto& i : syms) {
+            Vars.push_back(i);
+        }
+    } catch (z3::exception & ex) {
+        std::cout << ex.msg() << std::endl;
+        return false;
+    }
+	return true;
+}
+
 SMTExpr SMTExpr::getArg(unsigned I) const {
 	return SMTExpr(&getSMTFactory(), Expr.arg(I));
 }

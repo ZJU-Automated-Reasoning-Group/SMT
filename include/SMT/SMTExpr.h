@@ -98,6 +98,7 @@ public:
 
 	friend std::ostream & operator<<(std::ostream &, SMTExpr const &);
 
+
 	bool isSameSort(SMTExpr const & E) const {
 		return z3::eq(Expr.get_sort(), E.Expr.get_sort());
 	}
@@ -137,11 +138,19 @@ public:
 		return Expr.is_numeral();
 	}
 
+    //Please verify isNumeral() before getNumeralUint64()
+    uint64_t getNumeralUint64() {
+            assert(isNumeral());
+            return Expr.get_numeral_uint64();
+    }
+
 	bool isQuantifier() const {
 		return Expr.is_quantifier();
 	}
 
 	SMTExpr getQuantifierBody() const;
+
+	bool getVariables(z3::expr_vector& Vars);
 
 	bool isVar() const {
 		return Expr.is_var();
@@ -184,6 +193,10 @@ public:
 	std::string getSymbol() const {
 		return Z3_ast_to_string(Expr.ctx(), Expr);
 	}
+
+    unsigned getAstId() const {
+    	return Z3_get_ast_id(Expr.ctx(), Expr);
+    }
 
 	SMTExpr substitute(SMTExprVec& From, SMTExprVec& To);
 

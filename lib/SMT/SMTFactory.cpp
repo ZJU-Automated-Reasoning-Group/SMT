@@ -6,41 +6,20 @@
 #include <llvm/Support/CommandLine.h>
 
 #include "SMT/SMTFactory.h"
+#include "SMT/SMTConfigure.h"
+#include "SMT/SMTLIBSolver.h"
 
 #define DEBUG_TYPE "smt-fctry"
 
-#include <llvm/Support/Debug.h>
-#include <llvm/Support/CommandLine.h>
 
-static llvm::cl::opt<std::string> IncTactic("set-inc-tactic", llvm::cl::init("pp_qfbv_light_tactic"),
-     llvm::cl::desc("Set the tactic for creating the incremental solver. Candidates are smt_tactic, qfbv_tactic, pp_qfbv_tactic, pp_inc_bv_solver and pp_qfbv_light_tactic. Default: pp_qfbv_tactic"));
-
-class SMTConfig {
-public:
-    static SMTConfig& get() {
-        static SMTConfig Instance;
-        return Instance;
-    }
-    std::string& getIncTactic() {
-        return Tactic;
-    }
-
-private:
-    SMTConfig() {
-        Tactic = IncTactic.getValue();
-        if (Tactic == "pp_qfbv_light_tactic") z3::set_param("inc_qfbv", 4);
-        else if (Tactic == "pp_qfbv_tactic") z3::set_param("inc_qfbv", 2);
-        else if (Tactic == "smt_tactic") z3::set_param("inc_qfbv", 0);
-        else if (Tactic == "pp_inc_bv_solver") z3::set_param("inc_qfbv", 3);
-        else if (Tactic == "qfbv_tactic") z3::set_param("inc_qfbv", 1);
-        else z3::set_param("inc_qfbv", 4); // Default changes to pp_qfbv_light_tactic
-    }
-    std::string Tactic;
-};
+static int FactoryId = 0;
 
 SMTFactory::SMTFactory() :
 		TempSMTVaraibleIndex(0) {
-
+        if (SMTConfig::UseSMTLIBSolver) {
+            FactoryId += 1; // for debugging
+            useSMTLIBSolver = true;
+        } 
 }
 
 
@@ -240,19 +219,51 @@ bool SMTFactory::visit(SMTExpr& Expr2Visit, std::unordered_map<std::string, SMTE
 }
 
 SMTSolver SMTFactory::createSMTSolver() {
-    std::string& Tactic = SMTConfig::get().getIncTactic();
+    std::string& Tactic = SMTConfig::Tactic;
     z3::solver Ret(Ctx);
     // If Tactic == qfbv_tactic or pp_qfbv_tactic,
     // only use the result of the incremental solver.
     // That is, when the incremental solver returns unknown,
     // just return unknown.
 	//std::string& Tactic = IncTactic.getValue();
-    if (Tactic == "pp_qfbv_tactic" || Tactic == "pp_qfbv_light_tactic" || Tactic == "pp_inc_bv_solver" || Tactic == "qfbv_tactic") {
-        z3::params Z3Params(Ctx);
-        Z3Params.set("solver2-unknown", 0u);
-        Ret.set(Z3Params);
+    //if (Tactic == "pp_qfbv_tactic" || Tactic == "pp_qfbv_light_tactic" || Tactic == "pp_inc_bv_solver" || Tactic == "qfbv_tactic") {
+    //    z3::params Z3Params(Ctx);
+    //    Z3Params.set("solver2-unknown", 0u);
+    //    Ret.set(Z3Params);
+    //}
+    if (SMTConfig::UseIncrementalSMTLIBSolver) {
+        // For incrementally communicating with SMTLIB solvers
+    	SMTSolver Sol = SMTSolver(this, Ret);
+        SmtlibSmtSolver* SS = Sol.SmtlibSolver;
+  	CreatedSMTSolvers.push_back(SS);
+    	return Sol;
+    } else {
+    	return SMTSolver(this, Ret);
     }
-    return SMTSolver(this, Ret);
+}
+
+SMTSolver SMTFactory::createSMTSolverWithTactic(const std::string& TmpTactic) {
+    if (TmpTactic.empty()) {
+        z3::solver Ret(Ctx);
+        if (SMTConfig::UseIncrementalSMTLIBSolver) {
+        	SMTSolver Sol = SMTSolver(this, Ret);
+                SmtlibSmtSolver* SS = Sol.SmtlibSolver;
+      		CreatedSMTSolvers.push_back(SS);
+        	return Sol;
+        } else {
+        	return SMTSolver(this, Ret);
+        }
+    } else {
+        z3::solver Ret = z3::tactic(Ctx, TmpTactic.c_str()).mk_solver();
+        if (SMTConfig::UseIncrementalSMTLIBSolver) {
+        	SMTSolver Sol = SMTSolver(this, Ret);
+                SmtlibSmtSolver* SS = Sol.SmtlibSolver;
+      		CreatedSMTSolvers.push_back(SS);
+        	return Sol;
+        } else {
+        	return SMTSolver(this, Ret);
+        }
+    }
 }
 
 SMTExprVec SMTFactory::createBoolSMTExprVec(bool Content, size_t Size) {
@@ -303,13 +314,26 @@ SMTExpr SMTFactory::createRealVal(const std::string& ValStr) {
 }
 
 SMTExpr SMTFactory::createBitVecConst(const std::string& Name, uint64_t Sz) {
-	return SMTExpr(this, Ctx.bv_const(Name.c_str(), Sz));
+	// return SMTExpr(this, Ctx.bv_const(Name.c_str(), Sz));
+	z3::expr E = Ctx.bv_const(Name.c_str(), Sz);
+	if (SMTConfig::UseIncrementalSMTLIBSolver) {
+	    // For communicating with SMTLIB solvers
+	    // std::string varCmd = "(declare-fun " + E.to_string() + " () (_ BitVec " + std::to_string(Sz) + "))\n";
+            // TODO: do we need varCmd?
+	}
+	return SMTExpr(this, E);
 }
 
 SMTExpr SMTFactory::createTemporaryBitVecConst(uint64_t Sz) {
 	std::string Symbol("temp_");
-	Symbol.append(std::to_string(TempSMTVaraibleIndex++));
+	// Symbol.append(std::to_string(TempSMTVaraibleIndex++));
 	return SMTExpr(this, Ctx.bv_const(Symbol.c_str(), Sz));
+	z3::expr E = Ctx.bv_const(Symbol.c_str(), Sz);
+	if (SMTConfig::UseIncrementalSMTLIBSolver) {
+		// For communicating with SMTLIB solvers
+		// std::string varCmd = "(declare-fun " + E.to_string() + " () (_ BitVec " + std::to_string(Sz) + "))\n";
+	}
+	return SMTExpr(this, E);
 }
 
 SMTExpr SMTFactory::createBitVecVal(const std::string& ValStr, uint64_t Sz) {
@@ -317,7 +341,18 @@ SMTExpr SMTFactory::createBitVecVal(const std::string& ValStr, uint64_t Sz) {
 }
 
 SMTExpr SMTFactory::createBoolConst(const std::string& Name) {
-	return SMTExpr(this, Ctx.bool_const(Name.c_str()));
+	// return SMTExpr(this, Ctx.bool_const(Name.c_str()));
+	z3::expr E = Ctx.bool_const(Name.c_str());
+	//if (SMTConfig::UseIncrementalSMTLIBSolver) {
+		// For communicating with SMTLIB solvers
+		// std::string varCmd = "declare-fun " + E.to_string() + " () Bool)\n";
+		// Should we "notify" all solvers?
+		//for (SmtlibSmtSolver*Sol: CreatedSMTSolvers) {
+		//  if (Sol)
+		//    Sol->add(varCmd);
+		//}
+	//}
+	return SMTExpr(this, E);
 }
 
 SMTExpr SMTFactory::createBitVecVal(uint64_t Val, uint64_t Sz) {

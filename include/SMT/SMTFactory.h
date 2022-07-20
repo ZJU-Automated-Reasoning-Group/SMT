@@ -15,6 +15,8 @@
 #include "SMTExpr.h"
 #include "SMTSolver.h"
 
+class SmtlibSmtSolver;
+
 class SMTRenamingAdvisor {
 public:
     virtual ~SMTRenamingAdvisor() {
@@ -38,6 +40,7 @@ public:
 /// Constraints built by the same SMTFactory instance cannot be
 /// accessed concurrently. SMTFactory provides a FactoryLock
 /// for concurrency issues.
+
 class SMTFactory {
 private:
 	z3::context Ctx;
@@ -49,6 +52,11 @@ private:
 	unsigned TempSMTVaraibleIndex;
 
 public:
+        // { Begin of SMTLIB solver related staff
+	bool useSMTLIBSolver = false;
+        // for sending commands (only useful when SMTConfig::UseIncrementalSMTLIBSolver is true)
+        std::vector<SmtlibSmtSolver*> CreatedSMTSolvers = {};
+	// } End
 
 	SMTFactory();
 
@@ -56,6 +64,8 @@ public:
 	}
 
 	SMTSolver createSMTSolver();
+
+	SMTSolver createSMTSolverWithTactic(const std::string& Tactic="smt");
 
 	SMTExpr createEmptySMTExpr();
 
