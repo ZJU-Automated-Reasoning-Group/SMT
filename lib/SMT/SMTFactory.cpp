@@ -226,11 +226,11 @@ SMTSolver SMTFactory::createSMTSolver() {
     // That is, when the incremental solver returns unknown,
     // just return unknown.
 	//std::string& Tactic = IncTactic.getValue();
-    if (Tactic == "pp_qfbv_tactic" || Tactic == "pp_qfbv_light_tactic" || Tactic == "pp_inc_bv_solver" || Tactic == "qfbv_tactic") {
-        z3::params Z3Params(Ctx);
-        Z3Params.set("solver2-unknown", 0u);
-        Ret.set(Z3Params);
-    }
+    //if (Tactic == "pp_qfbv_tactic" || Tactic == "pp_qfbv_light_tactic" || Tactic == "pp_inc_bv_solver" || Tactic == "qfbv_tactic") {
+    //    z3::params Z3Params(Ctx);
+    //    Z3Params.set("solver2-unknown", 0u);
+    //    Ret.set(Z3Params);
+    //}
     if (SMTConfig::UseIncrementalSMTLIBSolver) {
         // For incrementally communicating with SMTLIB solvers
     	SMTSolver Sol = SMTSolver(this, Ret);
@@ -318,7 +318,7 @@ SMTExpr SMTFactory::createBitVecConst(const std::string& Name, uint64_t Sz) {
 	z3::expr E = Ctx.bv_const(Name.c_str(), Sz);
 	if (SMTConfig::UseIncrementalSMTLIBSolver) {
 	    // For communicating with SMTLIB solvers
-	    std::string varCmd = "(declare-fun " + E.to_string() + " () (_ BitVec " + std::to_string(Sz) + "))\n";
+	    // std::string varCmd = "(declare-fun " + E.to_string() + " () (_ BitVec " + std::to_string(Sz) + "))\n";
             // TODO: do we need varCmd?
 	}
 	return SMTExpr(this, E);

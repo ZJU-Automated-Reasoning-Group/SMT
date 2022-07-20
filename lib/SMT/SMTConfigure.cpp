@@ -27,7 +27,6 @@ static llvm::cl::opt<bool> EnableIncrementalSMTLIBSolver("enable-incremental-smt
  *       2. Or, should be allow the user to specify the bin paths of the solver explicitly?
  */
 
-/*
 const std::string z3_path = "";
 const std::vector<std::string> z3_args = { "-in", "-t:5000" };
 
@@ -40,26 +39,14 @@ const std::vector<std::string> yices2_args = { "--timeout=5", "--incremental"};
 
 const std::string btor_path = "";
 const std::vector<std::string> btor_args = { "--time=5", "--incremental" };
-*/
 
-const std::string z3_path =  "/home/peisen/test/tofuzz/z3-release/build/z3";
-const std::vector<std::string> z3_args =  { "-in", "-t:5000"};
-
-const std::string cvc5_path = "/home/peisen/test/tofuzz/cvc5-Linux";
-const std::vector<std::string> cvc5_args = {"--lang=smt2", "--tlimit-per=5000", "--incremental"};
-
-const std::string yices2_path = "/home/peisen/test/tofuzz/yices-2.6.4/bin/yices-smt2";
-const std::vector<std::string> yices2_args = { "--timeout=5"};
-
-const std::string btor_path = "/home/peisen/test/tofuzz/boolector/build/bin/boolector";
-const std::vector<std::string> btor_args = { "--time=5", "-i"};
 
 
 void SMTConfig::init() {
-    std::cout << "initializing smtconfig!!!\n";
-    //if (T != -1 && SolverTimeOut.getNumOccurrences() == 0) {
+    // std::cout << "initializing smtconfig!!!\n";
+    // if (T != -1 && SolverTimeOut.getNumOccurrences() == 0) {
     //    Timeout = T;
-    //}
+    // }
 
     std::string& Tactic = IncTactic.getValue();
     if (Tactic == "pp_qfbv_light_tactic") z3::set_param("inc_qfbv", 4);

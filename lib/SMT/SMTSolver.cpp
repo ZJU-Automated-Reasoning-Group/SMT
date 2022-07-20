@@ -52,6 +52,7 @@ static llvm::cl::opt<bool> EnableLocalSimplify("enable-local-simplify", llvm::cl
 static llvm::cl::opt<std::string> SMTProfileFile("smt-profile-log", llvm::cl::init("smt-profile.dat"),llvm::cl::ValueRequired, llvm::cl::desc("Set the name of the SMT profile file"));
 
 static int g_total_smt_call = 0;
+static int g_total_smt_timeout = 0;
 static double g_total_smt_time = 0;
 static double g_total_smt_dumping_time = 0;
 
@@ -74,6 +75,7 @@ private:
         fputs("Finished!!!!!!!!!!!!\n", fp);
 
         fprintf(fp, "Total number of SMT calls: %d\n", g_total_smt_call);
+        fprintf(fp, "Total number of SMT timeout: %d\n", g_total_smt_timeout);
         fprintf(fp, "Total of SMT time: %f ms\n", g_total_smt_time);
         fprintf(fp, "Total of SMT dumping time: %f ms\n", g_total_smt_dumping_time);
         //fprintf(fp, "Total SMT time: %f\n", g_smt_total_time / 1000);
@@ -244,9 +246,11 @@ SMTSolver::SMTResultType SMTSolver::check() {
             } else if (Result == SMTLIBSolverResult::SMTRT_Unsat) {
                 return SMTSolver::SMTResultType::SMTRT_Unsat;
             } else {
+                g_total_smt_timeout++;
                 return SMTSolver::SMTResultType::SMTRT_Unknown;
             }
         } else {
+            // std::cout << "!!!!!!!!!!!\n";
             std::string Query = "(set-logic QF_BV)\n" + this->Solver.to_smt2(); // slow
             // A trick: solver::decls_to_string() plus expr::to_string
             // std::string Query = Solver.decls_to_string() + "\n (assert " + z3::mk_and(Solver.assertions()).to_string() + ")\n (check-sat)\n" ;
@@ -273,6 +277,7 @@ SMTSolver::SMTResultType SMTSolver::check() {
             } else if (Result == SMTLIBSolverResult::SMTRT_Unsat) {
                 return SMTSolver::SMTResultType::SMTRT_Unsat;
             } else {
+                g_total_smt_timeout++;
                 return SMTSolver::SMTResultType::SMTRT_Unknown;
             }
         } 
@@ -383,6 +388,8 @@ SMTSolver::SMTResultType SMTSolver::check() {
         RetVal = SMTResultType::SMTRT_Unsat;
         break;
     case z3::check_result::unknown:
+        g_total_smt_timeout++;
+        // std::cout << Solver.reason_unknown() << "\n";
         RetVal = SMTResultType::SMTRT_Unknown;
         break;
     }
