@@ -27,48 +27,17 @@
 #include <cstdio>
 #include <chrono>
 
-static double g_total_smtlib_init_del_time = 0;
-static double g_total_smtlib_write_time = 0;
-static double g_total_smtlib_checking_time = 0;
-
-struct smtlib_profile_reporter {
-    static smtlib_profile_reporter& get() {
-        static smtlib_profile_reporter sr;
-        return sr;
-    }
-    void initialize() { }
-private:
-    FILE *fp;
-    smtlib_profile_reporter() {
-        std::string fname = "smtlib-profile.dat";
-        std::cout << fname << std::endl;
-        printf("I am an SMTLIB profiler reporter\n");
-        fp = fopen(fname.c_str(), "w");
-    }
-
-    ~smtlib_profile_reporter() {
-        fputs("Finished!!!!!!!!!!!!\n", fp);
-        fprintf(fp, "Total of SMTLIB init del time: %f ms\n", g_total_smtlib_init_del_time);
-        fprintf(fp, "Total of SMTLIB write time: %f ms\n", g_total_smtlib_write_time);
-        fprintf(fp, "Total of SMTLIB check time: %f ms\n", g_total_smtlib_checking_time);
-        fclose(fp);
-    }
-};
 
 
 SmtlibSmtSolver::SmtlibSmtSolver(std::string path,
 		std::vector<std::string> cmdArgs) :
 		path(path), cmdLineArgs(cmdArgs), debug(true), contextLevel(0) {
 
-        // smtlib_profile_reporter::get().initialize(); // tmp; for profiling  
-
 	processIdOfSolver = 0;
 	init();
 }
 
 SmtlibSmtSolver::~SmtlibSmtSolver() {
-        // auto start = std::chrono::high_resolution_clock::now();
-
 	writeCommand("( exit )"); // TOOD: perhaps some solvers do not suppor this command
 	// do not wait for success because it does not matter at this point and may cause problems if the solver is not running properly
 	if (processIdOfSolver != 0) {
@@ -78,15 +47,9 @@ SmtlibSmtSolver::~SmtlibSmtSolver() {
 		kill(processIdOfSolver, SIGTERM);
 		waitpid(processIdOfSolver, nullptr, 0); // make sure the process has exited
 	}
-
-        // auto end = std::chrono::high_resolution_clock::now();
-        // std::chrono::duration<double, std::milli> float_ms = end - start;
-        // g_total_smtlib_init_del_time += float_ms.count();
 }
 
 void SmtlibSmtSolver::init() {
-        // auto start = std::chrono::high_resolution_clock::now();
-
 	signal(SIGPIPE, SIG_IGN);
 
 	// get the pipes started
@@ -136,10 +99,6 @@ void SmtlibSmtSolver::init() {
 	// writeCommand("( set-option :print-success true )");
 	// writeCommand("( set-logic ALL )");
 	// writeCommand("( get-info :name )");
-
-        // auto end = std::chrono::high_resolution_clock::now();
-        // std::chrono::duration<double, std::milli> float_ms = end - start;
-        // g_total_smtlib_init_del_time += float_ms.count();
 }
 
 void SmtlibSmtSolver::add(std::string cmd) {
@@ -192,20 +151,11 @@ unsigned SmtlibSmtSolver::getContextLevel() const {
 
 SMTLIBSolverResult SmtlibSmtSolver::solveWholeFormula(std::string query) {
         queries += 1;
-        // auto start = std::chrono::high_resolution_clock::now();
 
 	writeCommand(query);
 
-        auto dump_end = std::chrono::high_resolution_clock::now();
-        // std::chrono::duration<double, std::milli> float_ms = dump_end - start;
-        // g_total_smtlib_write_time += float_ms.count();
-
 	auto solverOutput = readSolverOutput();
 	auto errorRes = checkForErrorMessage(solverOutput);
-        
-        // auto solve_end = std::chrono::high_resolution_clock::now();
-        // float_ms = solve_end - start;
-        // g_total_smtlib_checking_time += float_ms.count();
         
 	if (errorRes != SMTLIBSolverResult::SMTRT_TBD) // unknown or error
 		return errorRes;
