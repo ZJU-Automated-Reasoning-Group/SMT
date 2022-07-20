@@ -234,10 +234,6 @@ SMTSolver SMTFactory::createSMTSolver() {
     if (SMTConfig::UseIncrementalSMTLIBSolver) {
         // For incrementally communicating with SMTLIB solvers
     	SMTSolver Sol = SMTSolver(this, Ret);
-    	// Send all variable declarations upto now
-  	for (auto varCmd: SMLTIBVariables) {
-    	    Sol.SmtlibSolver->add(varCmd);
-        } 
         SmtlibSmtSolver* SS = Sol.SmtlibSolver;
   	CreatedSMTSolvers.push_back(SS);
     	return Sol;
@@ -251,9 +247,6 @@ SMTSolver SMTFactory::createSMTSolverWithTactic(const std::string& TmpTactic) {
         z3::solver Ret(Ctx);
         if (SMTConfig::UseIncrementalSMTLIBSolver) {
         	SMTSolver Sol = SMTSolver(this, Ret);
-        	// Send all variable declarations upto now
-      		for (auto varCmd: SMLTIBVariables)
-        	    Sol.SmtlibSolver->add(varCmd);
                 SmtlibSmtSolver* SS = Sol.SmtlibSolver;
       		CreatedSMTSolvers.push_back(SS);
         	return Sol;
@@ -264,10 +257,6 @@ SMTSolver SMTFactory::createSMTSolverWithTactic(const std::string& TmpTactic) {
         z3::solver Ret = z3::tactic(Ctx, TmpTactic.c_str()).mk_solver();
         if (SMTConfig::UseIncrementalSMTLIBSolver) {
         	SMTSolver Sol = SMTSolver(this, Ret);
-        	// Send all variable declarations upto now. TODO: but later the factory may create new vars
-      		for (auto varCmd: SMLTIBVariables) {
-        	    Sol.SmtlibSolver->add(varCmd);
-                }
                 SmtlibSmtSolver* SS = Sol.SmtlibSolver;
       		CreatedSMTSolvers.push_back(SS);
         	return Sol;
@@ -330,13 +319,7 @@ SMTExpr SMTFactory::createBitVecConst(const std::string& Name, uint64_t Sz) {
 	if (SMTConfig::UseIncrementalSMTLIBSolver) {
 	    // For communicating with SMTLIB solvers
 	    std::string varCmd = "(declare-fun " + E.to_string() + " () (_ BitVec " + std::to_string(Sz) + "))\n";
-	    SMLTIBVariables.push_back(varCmd);
-            // Send commands here?
-	    for (SmtlibSmtSolver* Sol: CreatedSMTSolvers) {
-               if (Sol) {
-	          Sol->add(varCmd);
-               }
-	    }
+            // TODO: do we need varCmd?
 	}
 	return SMTExpr(this, E);
 }
@@ -348,13 +331,7 @@ SMTExpr SMTFactory::createTemporaryBitVecConst(uint64_t Sz) {
 	z3::expr E = Ctx.bv_const(Symbol.c_str(), Sz);
 	if (SMTConfig::UseIncrementalSMTLIBSolver) {
 		// For communicating with SMTLIB solvers
-		std::string varCmd = "(declare-fun " + E.to_string() + " () (_ BitVec " + std::to_string(Sz) + "))\n";
-		SMLTIBVariables.push_back(varCmd);
-		// Should we "notify" all solvers?
-		for (SmtlibSmtSolver* Sol: CreatedSMTSolvers) {
-		  if (Sol)
-		      Sol->add(varCmd);
-		}
+		// std::string varCmd = "(declare-fun " + E.to_string() + " () (_ BitVec " + std::to_string(Sz) + "))\n";
 	}
 	return SMTExpr(this, E);
 }
@@ -366,16 +343,15 @@ SMTExpr SMTFactory::createBitVecVal(const std::string& ValStr, uint64_t Sz) {
 SMTExpr SMTFactory::createBoolConst(const std::string& Name) {
 	// return SMTExpr(this, Ctx.bool_const(Name.c_str()));
 	z3::expr E = Ctx.bool_const(Name.c_str());
-	if (SMTConfig::UseIncrementalSMTLIBSolver) {
+	//if (SMTConfig::UseIncrementalSMTLIBSolver) {
 		// For communicating with SMTLIB solvers
-		std::string varCmd = "declare-fun " + E.to_string() + " () Bool)\n";
-		SMLTIBVariables.push_back(varCmd);
+		// std::string varCmd = "declare-fun " + E.to_string() + " () Bool)\n";
 		// Should we "notify" all solvers?
-		for (SmtlibSmtSolver*Sol: CreatedSMTSolvers) {
-		  if (Sol)
-		    Sol->add(varCmd);
-		}
-	}
+		//for (SmtlibSmtSolver*Sol: CreatedSMTSolvers) {
+		//  if (Sol)
+		//    Sol->add(varCmd);
+		//}
+	//}
 	return SMTExpr(this, E);
 }
 

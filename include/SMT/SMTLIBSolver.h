@@ -48,6 +48,8 @@ public:
 	std::vector<std::string> cmdLineArgs;
 
 	bool debug;
+        int queries = 0; // number of queries
+        
 
 protected:
 
@@ -60,7 +62,7 @@ protected:
 	 * @param waitForOutput if this is true and there is currently no output, we will wait until there is output.
 	 * @return the output of the solver. Every entry of the vector corresponds to one output line
 	 */
-     std::string readSolverOutput(bool waitForOutput = true);
+         std::string readSolverOutput(bool waitForOutput = true);
 
 	/*!
 	 * Checks if the given message contains an error message and throws an exception.
@@ -71,12 +73,14 @@ protected:
 	 * However, the whole message is always written to the debug log (providing there is an error)
 	 * @param message the considered message which should be an output of the solver.
 	 */
-     SMTLIBSolverResult checkForErrorMessage(const std::string message);
+        SMTLIBSolverResult checkForErrorMessage(const std::string message);
 
 	// descriptors for the pipe from and to the solver
 	int toSolver;
 	int fromSolver;
 	// A flag storing the Process ID of the solver. If this is zero, then the solver is not running
+
+public:
 	pid_t processIdOfSolver;
 
 	// tracks the context level of the solver

@@ -40,9 +40,6 @@ public:
     // { Begin of SMTLIB solver related staff
     SmtlibSmtSolver *SmtlibSolver; 	// For communicating with SMTLIB solvers
     // NOTE:the following vectors are used for debugging
-    // Since we will directly send all the commands to the binary SMTLIB solver
-    // std::vector<std::string> SMTLIBCnts = { ";\n" };
-    // std::vector<unsigned> SMTLIBBacktrackPoints = { };
     PushPopVec<std::string> AssertionsCache; // replace the above two
     // } End
 

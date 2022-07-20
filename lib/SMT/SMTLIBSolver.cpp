@@ -1,5 +1,5 @@
 /**
- * Authors: rainoftime
+ Authors: rainoftime
  */
 
 #include "SMT/SMTLIBSolver.h"
@@ -20,19 +20,55 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 
+
 #include <algorithm>
 #include <iostream>
 #include <exception>
 #include <cstdio>
+#include <chrono>
+
+static double g_total_smtlib_init_del_time = 0;
+static double g_total_smtlib_write_time = 0;
+static double g_total_smtlib_checking_time = 0;
+
+struct smtlib_profile_reporter {
+    static smtlib_profile_reporter& get() {
+        static smtlib_profile_reporter sr;
+        return sr;
+    }
+    void initialize() { }
+private:
+    FILE *fp;
+    smtlib_profile_reporter() {
+        std::string fname = "smtlib-profile.dat";
+        std::cout << fname << std::endl;
+        printf("I am an SMTLIB profiler reporter\n");
+        fp = fopen(fname.c_str(), "w");
+    }
+
+    ~smtlib_profile_reporter() {
+        fputs("Finished!!!!!!!!!!!!\n", fp);
+        fprintf(fp, "Total of SMTLIB init del time: %f ms\n", g_total_smtlib_init_del_time);
+        fprintf(fp, "Total of SMTLIB write time: %f ms\n", g_total_smtlib_write_time);
+        fprintf(fp, "Total of SMTLIB check time: %f ms\n", g_total_smtlib_checking_time);
+        fclose(fp);
+    }
+};
+
 
 SmtlibSmtSolver::SmtlibSmtSolver(std::string path,
 		std::vector<std::string> cmdArgs) :
 		path(path), cmdLineArgs(cmdArgs), debug(true), contextLevel(0) {
+
+        // smtlib_profile_reporter::get().initialize(); // tmp; for profiling  
+
 	processIdOfSolver = 0;
 	init();
 }
 
 SmtlibSmtSolver::~SmtlibSmtSolver() {
+        // auto start = std::chrono::high_resolution_clock::now();
+
 	writeCommand("( exit )"); // TOOD: perhaps some solvers do not suppor this command
 	// do not wait for success because it does not matter at this point and may cause problems if the solver is not running properly
 	if (processIdOfSolver != 0) {
@@ -42,9 +78,14 @@ SmtlibSmtSolver::~SmtlibSmtSolver() {
 		kill(processIdOfSolver, SIGTERM);
 		waitpid(processIdOfSolver, nullptr, 0); // make sure the process has exited
 	}
+
+        // auto end = std::chrono::high_resolution_clock::now();
+        // std::chrono::duration<double, std::milli> float_ms = end - start;
+        // g_total_smtlib_init_del_time += float_ms.count();
 }
 
 void SmtlibSmtSolver::init() {
+        // auto start = std::chrono::high_resolution_clock::now();
 
 	signal(SIGPIPE, SIG_IGN);
 
@@ -53,10 +94,12 @@ void SmtlibSmtSolver::init() {
 	int pipeOut[2];
 	const int READ = 0;
 	const int WRITE = 1;
-	assert(pipe(pipeIn) == 0);
-	assert(pipe(pipeOut) == 0);
-
-	// now start the child process, i.e., the solver
+        //if (pipe(pipeIn) != 0) { printf("%s\n", strerror(errno)); abort(); }
+        //if (pipe(pipeOut) != 0) { printf("%s\n", strerror(errno)); abort(); }
+	assert(pipe(pipeIn) == 0); // what is the reason of failure?
+	//assert(pipe(pipeOut) == 0); // what is the reason
+        if (pipe(pipeOut) != 0) { printf("%s\n", strerror(errno)); abort(); }
+   	// now start the child process, i.e., the solver
 	pid_t pid = fork();
 	assert(pid >= 0);
 	if (pid == 0) {
@@ -93,6 +136,10 @@ void SmtlibSmtSolver::init() {
 	// writeCommand("( set-option :print-success true )");
 	// writeCommand("( set-logic ALL )");
 	// writeCommand("( get-info :name )");
+
+        // auto end = std::chrono::high_resolution_clock::now();
+        // std::chrono::duration<double, std::milli> float_ms = end - start;
+        // g_total_smtlib_init_del_time += float_ms.count();
 }
 
 void SmtlibSmtSolver::add(std::string cmd) {
@@ -117,26 +164,26 @@ SMTLIBSolverResult SmtlibSmtSolver::check() {
 }
 
 void SmtlibSmtSolver::setLogic(std::string logic) {
-	writeCommand("(set-logic " + logic + ")\n");
+	writeCommand("(set-logic " + logic + ")");
         // if (debug) CmdTraces.push_back("(set-logic " + logic + ")\n");
 }
 
 void SmtlibSmtSolver::push(unsigned num) {
-	writeCommand("(push " + std::to_string(num) + ")\n");
+	writeCommand("(push " + std::to_string(num) + ")");
 	contextLevel += num;
         // if (debug) CmdTraces.push_back("(push " + std::to_string(num) + ")\n");
 }
 
 void SmtlibSmtSolver::pop(unsigned num) {
-	writeCommand("(pop " + std::to_string(num) + ")\n");
+	writeCommand("(pop " + std::to_string(num) + ")");
 	contextLevel -= num;
         // if (debug) CmdTraces.push_back("(pop " + std::to_string(num) + ")\n");
 }
 
 // TOOD: use reset or reset-assertions
 void SmtlibSmtSolver::reset() {
-        writeCommand("(reset-assertions)");
-        // writeCommand("(reset)");
+        // writeCommand("(reset-assertions)");
+        writeCommand("(reset)");
 }
 
 unsigned SmtlibSmtSolver::getContextLevel() const {
@@ -144,12 +191,24 @@ unsigned SmtlibSmtSolver::getContextLevel() const {
 }
 
 SMTLIBSolverResult SmtlibSmtSolver::solveWholeFormula(std::string query) {
+        queries += 1;
+        // auto start = std::chrono::high_resolution_clock::now();
+
 	writeCommand(query);
+
+        auto dump_end = std::chrono::high_resolution_clock::now();
+        // std::chrono::duration<double, std::milli> float_ms = dump_end - start;
+        // g_total_smtlib_write_time += float_ms.count();
+
 	auto solverOutput = readSolverOutput();
 	auto errorRes = checkForErrorMessage(solverOutput);
+        
+        // auto solve_end = std::chrono::high_resolution_clock::now();
+        // float_ms = solve_end - start;
+        // g_total_smtlib_checking_time += float_ms.count();
+        
 	if (errorRes != SMTLIBSolverResult::SMTRT_TBD) // unknown or error
 		return errorRes;
-
 	if (solverOutput.find("unsat") != std::string::npos) {
 		return SMTLIBSolverResult::SMTRT_Unsat;
 	} else {

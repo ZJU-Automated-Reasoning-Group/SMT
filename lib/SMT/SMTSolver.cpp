@@ -156,18 +156,17 @@ SMTSolver::SMTSolver(SMTFactory* F, z3::solver& Z3Solver) : SMTObject(F),
         if (SmtlibSolver == NULL) {
             std::cout << "Creating SMTLIB solver failure!!!\n";
         }
+        // SmtlibSolver->setLogic("QF_BV");
     }
 }
 
 SMTSolver::SMTSolver(const SMTSolver& Solver) : SMTObject(Solver),
         Solver(Solver.Solver), Channels(Solver.Channels) {
 
-    if (SMTConfig::UseSMTLIBSolver) {
-      if (SMTConfig::UseIncrementalSMTLIBSolver) {
-        SmtlibSolver = Solver.SmtlibSolver; // TODO: is this correct?
-      } else {
-        AssertionsCache = Solver.AssertionsCache; // correct?     
-      }
+    if (SMTConfig::UseIncrementalSMTLIBSolver) {
+        SmtlibSolver = Solver.SmtlibSolver; // TODO: is this correct? 
+        //SmtlibSolver = createSMTLIBSolver();
+        //AssertionsCache = Solver.AssertionsCache; // correct?     
     }
 }
 
@@ -178,19 +177,19 @@ SMTSolver& SMTSolver::operator=(const SMTSolver& Solver) {
         this->Channels = Solver.Channels;
     }
 
-    if (SMTConfig::UseSMTLIBSolver) {
-      if (SMTConfig::UseIncrementalSMTLIBSolver) {
+    if (SMTConfig::UseIncrementalSMTLIBSolver) {
         SmtlibSolver = Solver.SmtlibSolver; // TODO: is this correct?
-      } else {
-        AssertionsCache = Solver.AssertionsCache; // correct?     
-      }
+        //SmtlibSolver = createSMTLIBSolver(); 
+        //AssertionsCache = Solver.AssertionsCache; // correct?     
     }
 
     return *this;
 }
 
 SMTSolver::~SMTSolver() {
-    //if (SmtlibSolver) { delete SmtlibSolver; }
+    //if (SMTConfig::UseIncrementalSMTLIBSolver) {
+    //  if (SmtlibSolver && SmtlibSolver->processIdOfSolver == 0) { delete SmtlibSolver; }
+    //}
 }
 
 SMTSolver::SMTDMessageQueues::~SMTDMessageQueues() {
@@ -223,35 +222,45 @@ SMTSolver::SMTResultType SMTSolver::check() {
     auto start = std::chrono::high_resolution_clock::now();
 
     if (SMTConfig::UseSMTLIBSolver) {
-        // FIXME: not stable (variables context ..)
         // In incremental mode, we run the bin solver attached to the current SMTSolver
         if (SMTConfig::UseIncrementalSMTLIBSolver) {
-            auto FacSolverRes = this->SmtlibSolver->check();
-            if (FacSolverRes == SMTLIBSolverResult::SMTRT_Error) {
-               // TODO: figure out why missing...(note: CmdTraces are not enabled for now)
-               //for (auto cmd: this->SmtlibSolver->CmdTraces)
-               //   std::cout << cmd;
-               //abort();
-            }
-            std::cout << "Factory's bin solver res: " << FacSolverRes << "\n";
-
+            // FIXME: enable "true incrmental"
+            // NOTE: AssertionsCache is not used currently 
+            // std::string Query = this->Solver.decls_to_string() + join(AssertionsCache.getCacheVector()) +  + "(check-sat)\n";
+ 
+            std::string Query = "(set-logic QF_BV)\n" + this->Solver.to_smt2(); // slow
+            this->SmtlibSolver->reset(); // clear last query?
+            auto Result = SmtlibSolver->solveWholeFormula(Query);
+            //if (FacSolverRes == SMTLIBSolverResult::SMTRT_Error) {
+            //}
+            // std::cout << "Factory's bin solver res: " << Result << "\n";
+           
             auto solve_end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double, std::milli> float_ms = solve_end - start;
             g_total_smt_time += float_ms.count();
-        }
-        else {
-            // std::string Query = this->Solver.to_smt2(); // this can be slow
-            // The decls_to_string is an API we introduced (inside z3); Another way is to use the SMTExpr::getVariables API
-            // SMTExpr Whole = this->assertions().toAndExpr();
-            std::string Query = this->Solver.decls_to_string() + join(AssertionsCache.getCacheVector()) +  + "(check-sat)\n";
-            // std::string Query = this->Solver.decls_to_string() + join(this->SMTLIBCnts) +  + "(check-sat)\n";
-            
+
+            if (Result == SMTLIBSolverResult::SMTRT_Sat) {
+                return SMTSolver::SMTResultType::SMTRT_Sat;
+            } else if (Result == SMTLIBSolverResult::SMTRT_Unsat) {
+                return SMTSolver::SMTResultType::SMTRT_Unsat;
+            } else {
+                return SMTSolver::SMTResultType::SMTRT_Unknown;
+            }
+        } else {
+            std::string Query = "(set-logic QF_BV)\n" + this->Solver.to_smt2(); // slow
+            // A trick: solver::decls_to_string() plus expr::to_string
+            // std::string Query = Solver.decls_to_string() + "\n (assert " + z3::mk_and(Solver.assertions()).to_string() + ")\n (check-sat)\n" ;
+            // Another trick: use a new "contaienr"
+            // z3::solver TmpSol(Solver.ctx());
+            // TmpSol.add(z3::mk_and(Solver.assertions()));
+            // std::string Query = TmpSol.to_smt2();
+
             auto dump_end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double, std::milli> float_ms = dump_end - start;
             g_total_smt_dumping_time += float_ms.count();
 
             SmtlibSmtSolver* BinSolver = new SmtlibSmtSolver(SMTConfig::SMTLIBSolverPath, SMTConfig::SMTLIBSolverArgs);
-            BinSolver->setLogic("QF_BV");
+            // BinSolver->setLogic("QF_BV");
             auto Result = BinSolver->solveWholeFormula(Query);
             delete BinSolver;
 
@@ -388,13 +397,9 @@ SMTSolver::SMTResultType SMTSolver::check() {
 void SMTSolver::push() {
     try {
         Solver.push();
-        if (this->Factory->useSMTLIBSolver) {
-             if (SMTConfig::UseIncrementalSMTLIBSolver) { this->SmtlibSolver->push(1); }
-             else { 
-                // this->SMTLIBBacktrackPoints.push_back(this->SMTLIBCnts.size());
-                AssertionsCache.push();
-             }
-        }
+        //if (SMTConfig::UseIncrementalSMTLIBSolver) {
+        //    AssertionsCache.push();
+        //}
     } catch (z3::exception &Ex) {
         std::cerr << __FILE__ << " : " << __LINE__ << " : " << Ex << "\n";
         exit(1);
@@ -404,24 +409,10 @@ void SMTSolver::push() {
 void SMTSolver::pop(unsigned N) {
     try {
         Solver.pop(N);
-
-        if (this->Factory->useSMTLIBSolver) {
-        	if (SMTConfig::UseIncrementalSMTLIBSolver) { this->SmtlibSolver->pop(N); }
-	        else {
-                   // explicitly maintain the assertion stacks
-                   AssertionsCache.pop(N);
-        	   /*for (unsigned i = 0; i < N; i++) {
-        		unsigned popPoint = this->SMTLIBBacktrackPoints.back();
-        		this->SMTLIBBacktrackPoints.pop_back();
-                         // TODO: the current implementation may be slow
-        		if (popPoint >= 1) {
-        			auto& Cnts = this->SMTLIBCnts;
-        			this->SMTLIBCnts = std::vector<std::string>(Cnts.begin(), Cnts.begin() + popPoint);
-        		}
-        	   } */
-                }
-        }
-
+        //if (SMTConfig::UseIncrementalSMTLIBSolver) {
+            // explicitly maintain the assertion stacks
+        //    AssertionsCache.pop(N);
+        //}
     } catch (z3::exception &Ex) {
         std::cerr << __FILE__ << " : " << __LINE__ << " : " << Ex << "\n";
         exit(1);
@@ -442,15 +433,10 @@ void SMTSolver::add(SMTExpr E) {
         // simplify() will seriously affect the performance.
         Solver.add(E.Expr/*.simplify()*/);
 
-    	if (this->Factory->useSMTLIBSolver) {
-        	std::string Cnt = "(assert " + E.Expr.to_string() + ")";
-        	if (SMTConfig::UseIncrementalSMTLIBSolver) { this->SmtlibSolver->add(Cnt); }
-        	else { 
-                  AssertionsCache.add(Cnt + "\n");
-                  // this->SMTLIBCnts.push_back(Cnt + "\n");
-                }
-    	}
-
+    	//if (SMTConfig::UseIncrementalSMTLIBSolver) {
+        //    std::string Cnt = "(assert " + E.Expr.to_string() + ")";
+        //    AssertionsCache.add(Cnt + "\n");
+    	//}
     } catch (z3::exception &Ex) {
         std::cerr << __FILE__ << " : " << __LINE__ << " : " << Ex << "\n";
         exit(1);
@@ -490,15 +476,9 @@ SMTExprVec SMTSolver::assertions() {
 void SMTSolver::reset() {
     // TODO: should we send "reset" or "reset-assertions" to the SMTLIB solver
     Solver.reset();
-    if (SMTConfig::UseSMTLIBSolver) {
-      if (SMTConfig::UseIncrementalSMTLIBSolver) {
-         this->SmtlibSolver->reset();
-      } else {
-         AssertionsCache.reset();
-         //this->SMTLIBCnts = { ";\n" };
-         //this->SMTLIBBacktrackPoints = { };
-      }
-    }
+    //if (SMTConfig::UseIncrementalSMTLIBSolver) {
+    //     AssertionsCache.reset();
+    //}
 }
 
 bool SMTSolver::operator<(const SMTSolver& Solver) const {

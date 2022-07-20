@@ -54,9 +54,8 @@ private:
 public:
         // { Begin of SMTLIB solver related staff
 	bool useSMTLIBSolver = false;
-        std::vector<std::string> SMLTIBVariables = { };
         // for sending commands (only useful when SMTConfig::UseIncrementalSMTLIBSolver is true)
-        std::vector<SmtlibSmtSolver*> CreatedSMTSolvers = {}; // for sending new var commands
+        std::vector<SmtlibSmtSolver*> CreatedSMTSolvers = {};
 	// } End
 
 	SMTFactory();
