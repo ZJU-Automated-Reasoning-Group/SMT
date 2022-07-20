@@ -150,7 +150,7 @@ public:
 
 	SMTExpr getQuantifierBody() const;
 
-	bool getVariables(z3::expr_vector& Vars);
+	// bool getVariables(z3::expr_vector& Vars);
 
 	bool isVar() const {
 		return Expr.is_var();

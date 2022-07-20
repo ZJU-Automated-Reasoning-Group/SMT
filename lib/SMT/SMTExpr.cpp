@@ -225,11 +225,12 @@ SMTExpr SMTExpr::getQuantifierBody() const {
 }
 
 
+/*
 bool SMTExpr::getVariables(z3::expr_vector& Vars) {
-	// After calling this function, the variables in Expr will be put in Vars.
+    // After calling this function, the variables in Expr will be put in Vars.
 
     // TODO: examine the efficiency of this function (could be slow)
-	// Maybe we can learn from the implementation from z3's Python API (get_vars from z3.z3util)
+    // Maybe we can learn from the implementation from z3's Python API (get_vars from z3.z3util)
     try {
         auto& ctx = Expr.ctx();
         auto compare_func = [](const z3::expr& a, const z3::expr& b) {
@@ -265,6 +266,7 @@ bool SMTExpr::getVariables(z3::expr_vector& Vars) {
     }
 	return true;
 }
+*/
 
 SMTExpr SMTExpr::getArg(unsigned I) const {
 	return SMTExpr(&getSMTFactory(), Expr.arg(I));
