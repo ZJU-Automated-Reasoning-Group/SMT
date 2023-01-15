@@ -11,8 +11,12 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
-#include <string.h>
+#include <cstring>
+#ifdef __APPLE__
+#include <mach/error.h>
+#else
 #include <error.h>
+#endif
 #include <string>
 
 #include "Support/MessageQueue.h"

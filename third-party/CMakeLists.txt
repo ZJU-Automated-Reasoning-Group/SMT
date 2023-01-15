@@ -1,3 +1,4 @@
+MESSAGE(STATUS "Z3 library: ${CMAKE_CURRENT_SOURCE_DIR}/z3/build/${Z3LibraryName}")
 IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/z3/build/${Z3LibraryName})
     ADD_CUSTOM_COMMAND(
         OUTPUT z3build
@@ -29,7 +30,7 @@ else()
     ProcessorCount(N)
     ADD_CUSTOM_COMMAND(
         OUTPUT z3build
-        COMMAND python2.7 scripts/mk_make.py --staticlib WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/z3
+        COMMAND python3 scripts/mk_make.py --staticlib WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/z3
         COMMAND make -j ${N} -C ${CMAKE_CURRENT_SOURCE_DIR}/z3/build/  VERBATIM USES_TERMINAL
         COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/z3/build/${Z3LibraryName} ${PROJECT_BINARY_DIR}/lib/${Z3LibraryName}
     )

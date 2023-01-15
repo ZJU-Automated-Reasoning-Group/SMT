@@ -56,17 +56,23 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti -Wall -Wno-comment -Wno-deprec
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11")
 set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -L/usr/local/lib")
 
-if(UNIX)
+if (APPLE)
+    SET(Z3LibExt .dylib)
+elseif (UNIX)
     SET(Z3LibExt .so)
-else()
+else ()
     SET(Z3LibExt .dll)
-endif()
+endif ()
+
+if (APPLE)
+    SET(Z3LinkOption -Xpreprocessor -fopenmp -lomp)
+else ()
+    SET(Z3LinkOption -fopenmp -lrt)
+endif ()
 
 if(NOT ENABLE_STATICZ3)
-    SET(Z3LinkOption -fopenmp -lrt)
     SET(Z3LibraryName "libz3${Z3LibExt}")
 else()
-    SET(Z3LinkOption -fopenmp -lrt)
     SET(Z3LibraryName "libz3.a")
 endif()
 
