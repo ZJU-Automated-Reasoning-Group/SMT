@@ -300,6 +300,10 @@ public:
 
 	unsigned size(std::map<SMTExpr, unsigned, SMTExprComparator>&);
 
+	bool isEquiv(const SMTExpr &R) const;
+
+	size_t hash() const;
+
 	friend class SMTFactory;
 	friend class SMTSolver;
 	friend class SMTExprVec;
