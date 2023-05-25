@@ -221,6 +221,14 @@ unsigned SMTExpr::size(std::map<SMTExpr, unsigned, SMTExprComparator>& SizeCache
 	}
 }
 
+bool SMTExpr::isEquiv(const SMTExpr &R) const {
+    return z3::eq(Expr, R.Expr);
+}
+
+size_t SMTExpr::hash() const {
+    return Expr.hash();
+}
+
 SMTExpr SMTExpr::getQuantifierBody() const {
 	return SMTExpr(&getSMTFactory(), Expr.body());
 }
