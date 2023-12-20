@@ -285,15 +285,21 @@ SMTExprVec SMTFactory::createSMTExprVec(const std::vector<SMTExpr>& ExprVec) {
 }
 
 SMTExpr SMTFactory::parseSMTLib2File(const std::string& FileName) {
-	Z3_ast Ast = Z3_parse_smtlib2_file(Ctx, FileName.c_str(), 0, 0, 0, 0, 0, 0);
-	z3::expr Whole(Ctx, Ast);
-	return SMTExpr(this, Whole);
+	Z3_ast_vector AstVec = Z3_parse_smtlib2_file(Ctx, FileName.c_str(), 0, 0, 0, 0, 0, 0);
+        Z3_ast_vector_inc_ref(Ctx, AstVec);
+        unsigned sz = Z3_ast_vector_size(Ctx, AstVec);
+        auto* AST = (Z3_ast*) malloc(sz);
+	z3::expr Whole(Ctx, *AST);
+	return {this, Whole};
 }
 
 SMTExpr SMTFactory::parseSMTLib2String(const std::string& Raw) {
-    Z3_ast Ast = Z3_parse_smtlib2_string(Ctx, Raw.c_str(), 0, 0, 0, 0, 0, 0);
-    z3::expr Whole(Ctx, Ast);
-    return SMTExpr(this, Whole);
+        Z3_ast_vector AstVec = Z3_parse_smtlib2_file(Ctx, Raw.c_str(), 0, 0, 0, 0, 0, 0);
+        Z3_ast_vector_inc_ref(Ctx, AstVec);
+        unsigned sz = Z3_ast_vector_size(Ctx, AstVec);
+        auto* AST = (Z3_ast*) malloc(sz);
+        z3::expr Whole(Ctx, *AST);
+        return {this, Whole};
 }
 
 SMTExpr SMTFactory::createEmptySMTExpr() {
@@ -356,7 +362,7 @@ SMTExpr SMTFactory::createBoolConst(const std::string& Name) {
 }
 
 SMTExpr SMTFactory::createBitVecVal(uint64_t Val, uint64_t Sz) {
-	return SMTExpr(this, Ctx.bv_val((__uint64 ) Val, Sz));
+	return SMTExpr(this, Ctx.bv_val((uint64_t ) Val, Sz));
 }
 
 SMTExpr SMTFactory::createIntVal(int Val) {

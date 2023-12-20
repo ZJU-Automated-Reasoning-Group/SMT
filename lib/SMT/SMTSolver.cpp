@@ -16,12 +16,13 @@
 
 #include "Support/MessageQueue.h"
 
-#include <time.h>
+#include <ctime>
 #include <map>
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <chrono>
+#include <sstream>
 
 #define DEBUG_TYPE "solver"
 

@@ -14,6 +14,8 @@ find_package(LLVM
         PATHS ${LLVM_BUILD_PATH}
         NO_DEFAULT_PATH)
 
+find_library(gmp gmp REQUIRED)
+
 if(NOT LLVM_FOUND)
     message(FATAL_ERROR "can not find LLVMConfig.cmake under paths: ${LLVM_BUILD_PATH}")
 else()
@@ -52,7 +54,7 @@ include_directories(BEFORE
 include_directories(BEFORE
         ${CMAKE_CURRENT_SOURCE_DIR}/lib/)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti -Wall -Wno-comment -Wno-deprecated -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-comment -Wno-deprecated -std=c++11")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11")
 set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -L/usr/local/lib")
 

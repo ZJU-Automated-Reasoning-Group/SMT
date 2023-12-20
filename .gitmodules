@@ -1,5 +1,5 @@
 
 [submodule "third-party/z3"]
 	path = third-party/z3
-	url = ../../prismers/z3.git
+	url = https://github.com/Z3Prover/z3
 	branch = master

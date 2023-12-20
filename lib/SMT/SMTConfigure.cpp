@@ -49,13 +49,13 @@ void SMTConfig::init() {
     //    Timeout = T;
     // }
 
-    std::string& Tactic = IncTactic.getValue();
-    if (Tactic == "pp_qfbv_light_tactic") z3::set_param("inc_qfbv", 4);
-    else if (Tactic == "pp_qfbv_tactic") z3::set_param("inc_qfbv", 2);
-    else if (Tactic == "smt_tactic") z3::set_param("inc_qfbv", 0);
-    else if (Tactic == "pp_inc_bv_solver") z3::set_param("inc_qfbv", 3);
-    else if (Tactic == "qfbv_tactic") z3::set_param("inc_qfbv", 1);
-    else z3::set_param("inc_qfbv", 4); // Default changes to pp_qfbv_light_tactic
+//    std::string& Tactic = IncTactic.getValue();
+//    if (Tactic == "pp_qfbv_light_tactic") z3::set_param("inc_qfbv", 4);
+//    else if (Tactic == "pp_qfbv_tactic") z3::set_param("inc_qfbv", 2);
+//    else if (Tactic == "smt_tactic") z3::set_param("inc_qfbv", 0);
+//    else if (Tactic == "pp_inc_bv_solver") z3::set_param("inc_qfbv", 3);
+//    else if (Tactic == "qfbv_tactic") z3::set_param("inc_qfbv", 1);
+//    else z3::set_param("inc_qfbv", 4); // Default changes to pp_qfbv_light_tactic
 
 
     if (UsingSMTLIBSolver.getNumOccurrences()) {
