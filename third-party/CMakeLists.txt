@@ -125,8 +125,8 @@ add_subdirectory(z3/src/tactic/fpa)
 add_subdirectory(z3/src/tactic/fd_solver)
 add_subdirectory(z3/src/tactic/portfolio)
 #add_subdirectory(z3/src/opt)
-remove_definitions()
 
+file(REMOVE "${CMAKE_CURRENT_SOURCE_DIR}/z3/src/opt/opt_params.hpp")
 z3_add_component(opt1
         SOURCES
         z3/src/opt/maxcore.cpp
