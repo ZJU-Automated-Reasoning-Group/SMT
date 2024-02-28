@@ -14,8 +14,6 @@ find_package(LLVM
         PATHS ${LLVM_BUILD_PATH}
         NO_DEFAULT_PATH)
 
-find_library(gmp gmp REQUIRED)
-
 if(NOT LLVM_FOUND)
     message(FATAL_ERROR "can not find LLVMConfig.cmake under paths: ${LLVM_BUILD_PATH}")
 else()

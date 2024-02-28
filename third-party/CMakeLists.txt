@@ -2,6 +2,9 @@ MESSAGE(STATUS "Z3 library: ${CMAKE_CURRENT_SOURCE_DIR}/z3/build/${Z3LibraryName
 # TODO workaround for the duplicate target name
 cmake_policy(SET CMP0048 NEW)
 project(Z3 VERSION 4.12.5.0 LANGUAGES CXX)
+set(LLVM_ENABLE_RTTI ON)
+set(Z3_USE_LIB_GMP OFF)
+add_definitions(-D_DEBUG=0 -UZ3DEBUG -D_MP_INTERNAL)
 ################################################################################
 # Project version
 ################################################################################
@@ -16,10 +19,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #set(Python3_EXECUTABLE /usr/bin/python3)
 find_program(Python3_EXECUTABLE NAMES python3)
 set(Z3_FULL_VERSION "\"4.12\"")
-add_definitions(-D_DEBUG=0 -UZ3DEBUG -D_MP_GMP)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/z3/src)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/z3/src)
-set(LLVM_ENABLE_RTTI ON)
 
 ################################################################################
 # API header files
