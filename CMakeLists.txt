@@ -64,12 +64,6 @@ else ()
     SET(Z3LibExt .dll)
 endif ()
 
-if (APPLE)
-    SET(Z3LinkOption -Xpreprocessor -fopenmp -lomp)
-else ()
-    SET(Z3LinkOption -fopenmp -lrt)
-endif ()
-
 if(NOT ENABLE_STATICZ3)
     SET(Z3LibraryName "libz3${Z3LibExt}")
 else()
