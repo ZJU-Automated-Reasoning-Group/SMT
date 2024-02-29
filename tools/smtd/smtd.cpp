@@ -12,8 +12,7 @@
 #include <llvm/Support/FileSystem.h>
 
 #include <sys/wait.h> // waitpid
-#include <signal.h> // kill
-#include <error.h>
+#include <csignal> // kill
 #include <unistd.h> // fork
 
 #include <map>
