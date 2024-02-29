@@ -4,7 +4,7 @@ if (NOT TEXT MATCHES ".*opt1.*")
     file(WRITE "${CMAKE_CURRENT_SOURCE_DIR}/z3/src/opt/CMakeLists.txt" "${TEXT}")
 endif ()
 if (UNIX AND NOT APPLE) # Linux
-    add_compile_definitions(-D_DEBUG=0)
+    add_compile_definitions(_DEBUG=0)
 endif ()
 SET(Z3_BUILD_LIBZ3_SHARED OFF)
 add_subdirectory(z3 EXCLUDE_FROM_ALL)
