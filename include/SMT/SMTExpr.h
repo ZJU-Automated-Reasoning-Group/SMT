@@ -198,6 +198,10 @@ public:
     	return Z3_get_ast_id(Expr.ctx(), Expr);
     }
 
+	z3::context& getContext() const {
+		return Expr.ctx();
+	}
+
 	SMTExpr substitute(SMTExprVec& From, SMTExprVec& To);
 
 	/*==-- basic operations --==*/
